@@ -1,9 +1,3 @@
-/tg/station 13 v1.0 - 6 October 2010
-
-Website:http://nanotrasen.com
-Code: https://github.com/tgstation/-tg-station
-IRC: irc://irc.rizon.net/coderbus
-
 ================================================================================
 KYRAHABATTOIR'S TG-STATION MODS INFORMATIONS
 ================================================================================
