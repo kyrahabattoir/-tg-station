@@ -71,6 +71,12 @@ So, hopefully this is helpful if any more icons are to be added/changed/wonderin
 	var/strength = null
 	var/desc_holder = null
 
+/obj/structure/particle_accelerator/Destroy()
+	construction_state = 0
+	if(master)
+		master.part_scan()
+	..()
+
 /obj/structure/particle_accelerator/end_cap
 	name = "Alpha Particle Generation Array"
 	desc_holder = "This is where Alpha particles are generated from \[REDACTED\]"
@@ -137,15 +143,15 @@ So, hopefully this is helpful if any more icons are to be added/changed/wonderin
 /obj/structure/particle_accelerator/ex_act(severity)
 	switch(severity)
 		if(1.0)
-			del(src)
+			qdel(src)
 			return
 		if(2.0)
 			if (prob(50))
-				del(src)
+				qdel(src)
 				return
 		if(3.0)
 			if (prob(25))
-				del(src)
+				qdel(src)
 				return
 		else
 	return
@@ -153,14 +159,9 @@ So, hopefully this is helpful if any more icons are to be added/changed/wonderin
 
 /obj/structure/particle_accelerator/blob_act()
 	if(prob(50))
-		del(src)
+		qdel(src)
 	return
 
-
-/obj/structure/particle_accelerator/meteorhit()
-	if(prob(50))
-		del(src)
-	return
 
 /obj/structure/particle_accelerator/update_icon()
 	switch(construction_state)
@@ -224,11 +225,15 @@ So, hopefully this is helpful if any more icons are to be added/changed/wonderin
 				user.visible_message("[user.name] detaches the [src.name] from the floor.", \
 					"You remove the external bolts.")
 				temp_state--
-			else if(istype(O, /obj/item/weapon/cable_coil))
-				if(O:use(1,user))
+			else if(istype(O, /obj/item/stack/cable_coil))
+				var/obj/item/stack/cable_coil/C = O
+				if(C.use(1))
 					user.visible_message("[user.name] adds wires to the [src.name].", \
 						"You add some wires.")
 					temp_state++
+				else
+					user << "<span class='warning'>You need one length of cable to wire the [src.name].</span>"
+					return
 		if(2)
 			if(istype(O, /obj/item/weapon/wirecutters))//TODO:Shock user if its on?
 				user.visible_message("[user.name] removes some wires from the [src.name].", \
@@ -324,15 +329,15 @@ So, hopefully this is helpful if any more icons are to be added/changed/wonderin
 /obj/machinery/particle_accelerator/ex_act(severity)
 	switch(severity)
 		if(1.0)
-			del(src)
+			qdel(src)
 			return
 		if(2.0)
 			if (prob(50))
-				del(src)
+				qdel(src)
 				return
 		if(3.0)
 			if (prob(25))
-				del(src)
+				qdel(src)
 				return
 		else
 	return
@@ -340,13 +345,7 @@ So, hopefully this is helpful if any more icons are to be added/changed/wonderin
 
 /obj/machinery/particle_accelerator/blob_act()
 	if(prob(50))
-		del(src)
-	return
-
-
-/obj/machinery/particle_accelerator/meteorhit()
-	if(prob(50))
-		del(src)
+		qdel(src)
 	return
 
 
@@ -375,7 +374,7 @@ So, hopefully this is helpful if any more icons are to be added/changed/wonderin
 				user.visible_message("[user.name] detaches the [src.name] from the floor.", \
 					"You remove the external bolts.")
 				temp_state--
-			else if(istype(O, /obj/item/weapon/cable_coil))
+			else if(istype(O, /obj/item/stack/cable_coil))
 				if(O:use(1))
 					user.visible_message("[user.name] adds wires to the [src.name].", \
 						"You add some wires.")

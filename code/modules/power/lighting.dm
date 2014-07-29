@@ -16,7 +16,7 @@
 	desc = "Used for building lights."
 	icon = 'icons/obj/lighting.dmi'
 	icon_state = "tube-construct-item"
-	flags = FPRINT | TABLEPASS| CONDUCT
+	flags = CONDUCT
 	var/fixture_type = "tube"
 	var/obj/machinery/light/newlight = null
 	var/sheets_refunded = 2
@@ -24,7 +24,7 @@
 /obj/item/light_fixture_frame/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if (istype(W, /obj/item/weapon/wrench))
 		new /obj/item/stack/sheet/metal( get_turf(src.loc), sheets_refunded )
-		del(src)
+		qdel(src)
 		return
 	..()
 
@@ -56,14 +56,14 @@
 
 	usr.visible_message("[usr.name] attaches [src] to the wall.", \
 		"You attach [src] to the wall.")
-	del(src)
+	qdel(src)
 
 /obj/item/light_fixture_frame/small
 	name = "small light fixture frame"
 	desc = "Used for building small lights."
 	icon = 'icons/obj/lighting.dmi'
 	icon_state = "bulb-construct-item"
-	flags = FPRINT | TABLEPASS| CONDUCT
+	flags = CONDUCT
 	fixture_type = "bulb"
 	sheets_refunded = 1
 
@@ -111,7 +111,7 @@
 			user.visible_message("[user.name] deconstructs [src].", \
 				"You deconstruct [src].", "You hear a noise.")
 			playsound(src.loc, 'sound/items/Deconstruct.ogg', 75, 1)
-			del(src)
+			qdel(src)
 		if (src.stage == 2)
 			usr << "You have to remove the wires first."
 			return
@@ -128,24 +128,26 @@
 				src.icon_state = "tube-construct-stage1"
 			if("bulb")
 				src.icon_state = "bulb-construct-stage1"
-		new /obj/item/weapon/cable_coil(get_turf(src.loc), 1, "red")
+		new /obj/item/stack/cable_coil(get_turf(src.loc), 1, "red")
 		user.visible_message("[user.name] removes the wiring from [src].", \
 			"You remove the wiring from [src].", "You hear a noise.")
 		playsound(src.loc, 'sound/items/Wirecutter.ogg', 100, 1)
 		return
 
-	if(istype(W, /obj/item/weapon/cable_coil))
+	if(istype(W, /obj/item/stack/cable_coil))
 		if (src.stage != 1) return
-		var/obj/item/weapon/cable_coil/coil = W
-		coil.use(1)
-		switch(fixture_type)
-			if ("tube")
-				src.icon_state = "tube-construct-stage2"
-			if("bulb")
-				src.icon_state = "bulb-construct-stage2"
-		src.stage = 2
-		user.visible_message("[user.name] adds wires to [src].", \
-			"You add wires to [src].")
+		var/obj/item/stack/cable_coil/coil = W
+		if (coil.use(1))
+			switch(fixture_type)
+				if ("tube")
+					src.icon_state = "tube-construct-stage2"
+				if("bulb")
+					src.icon_state = "bulb-construct-stage2"
+			src.stage = 2
+			user.visible_message("[user.name] adds wires to [src].", \
+				"You add wires to [src].")
+		else
+			user << "<span class='warning'>You need one length of cable to wire [src]."
 		return
 
 	if(istype(W, /obj/item/weapon/screwdriver))
@@ -169,7 +171,7 @@
 
 			newlight.dir = src.dir
 			src.transfer_fingerprints_to(newlight)
-			del(src)
+			qdel(src)
 			return
 	..()
 
@@ -251,7 +253,7 @@
 		spawn(1)
 			update(0)
 
-/obj/machinery/light/Del()
+/obj/machinery/light/Destroy()
 	var/area/A = get_area(src)
 	if(A)
 		on = 0
@@ -355,7 +357,7 @@
 				update()
 
 				user.drop_item()	//drop the item to update overlays and such
-				del(L)
+				qdel(L)
 
 				if(on && rigged)
 					explode()
@@ -405,7 +407,7 @@
 			newlight.fingerprints = src.fingerprints
 			newlight.fingerprintshidden = src.fingerprintshidden
 			newlight.fingerprintslast = src.fingerprintslast
-			del(src)
+			qdel(src)
 			return
 
 		user << "You stick \the [W] into the light socket!"
@@ -498,7 +500,6 @@
 			user << "You try to remove the light [fitting], but you burn your hand on it!"
 
 			var/obj/item/organ/limb/affecting = H.get_organ("[user.hand ? "l" : "r" ]_arm")
-
 			if(affecting.take_damage( 0, 5 ))		// 5 burn damage
 				H.update_damage_overlays(0)
 			H.updatehealth()
@@ -577,7 +578,7 @@
 /obj/machinery/light/ex_act(severity)
 	switch(severity)
 		if(1.0)
-			del(src)
+			qdel(src)
 			return
 		if(2.0)
 			if (prob(75))
@@ -605,10 +606,9 @@
 
 // called when area power state changes
 /obj/machinery/light/power_change()
-	spawn(10)
-		var/area/A = src.loc.loc
-		A = A.master
-		seton(A.lightswitch && A.power_light)
+	var/area/A = get_area(src)
+	A = A.master
+	seton(A.lightswitch && A.power_light)
 
 // called when on fire
 
@@ -625,7 +625,7 @@
 		sleep(2)
 		explosion(T, 0, 0, 2, 2)
 		sleep(1)
-		del(src)
+		qdel(src)
 
 // the light item
 // can be tube or bulb subtypes
@@ -633,7 +633,6 @@
 
 /obj/item/weapon/light
 	icon = 'icons/obj/lighting.dmi'
-	flags = FPRINT | TABLEPASS
 	force = 2
 	throwforce = 5
 	w_class = 1
@@ -653,11 +652,6 @@
 	g_amt = 100
 	brightness = 8
 
-/obj/item/weapon/light/tube/large
-	w_class = 2
-	name = "large light tube"
-	brightness = 15
-
 /obj/item/weapon/light/bulb
 	name = "light bulb"
 	desc = "A replacement light bulb."
@@ -665,20 +659,11 @@
 	base_state = "lbulb"
 	item_state = "contvapour"
 	g_amt = 100
-	brightness = 5
+	brightness = 4
 
 /obj/item/weapon/light/throw_impact(atom/hit_atom)
 	..()
 	shatter()
-
-/obj/item/weapon/light/bulb/fire
-	name = "fire bulb"
-	desc = "A replacement fire bulb."
-	icon_state = "fbulb"
-	base_state = "fbulb"
-	item_state = "egg4"
-	g_amt = 100
-	brightness = 5
 
 // update the icon state and description of the light
 
@@ -697,11 +682,6 @@
 
 /obj/item/weapon/light/New()
 	..()
-	switch(name)
-		if("light tube")
-			brightness = rand(6,9)
-		if("light bulb")
-			brightness = rand(4,6)
 	update()
 
 

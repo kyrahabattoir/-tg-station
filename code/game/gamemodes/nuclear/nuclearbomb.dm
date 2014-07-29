@@ -7,7 +7,6 @@ var/bomb_set
 	icon_state = "nuclearbomb0"
 	density = 1
 
-	var/extended = 0.0
 	var/timeleft = 60.0
 	var/timing = 0.0
 	var/r_code = "ADMIN"
@@ -15,8 +14,8 @@ var/bomb_set
 	var/yes_code = 0.0
 	var/safety = 1.0
 	var/obj/item/weapon/disk/nuclear/auth = null
-	flags = FPRINT
 	use_power = 0
+	var/previous_level = ""
 
 /obj/machinery/nuclearbomb/New()
 	..()
@@ -29,7 +28,8 @@ var/bomb_set
 		if (src.timeleft <= 0)
 			explode()
 		else
-			playsound(loc, 'sound/items/timer.ogg', 5, 0)
+			var/volume = (timeleft <= 20 ? 30 : 5)
+			playsound(loc, 'sound/items/timer.ogg', volume, 0)
 		for(var/mob/M in viewers(1, src))
 			if ((M.client && M.machine == src))
 				src.attack_hand(M)
@@ -37,9 +37,6 @@ var/bomb_set
 
 /obj/machinery/nuclearbomb/attackby(obj/item/weapon/I as obj, mob/user as mob)
 	if (istype(I, /obj/item/weapon/disk/nuclear))
-		if (!src.extended)
-			user << "<span class='notice'>You have to deploy the bomb first.</span>"
-			return
 		usr.drop_item()
 		I.loc = src
 		src.auth = I
@@ -50,44 +47,32 @@ var/bomb_set
 /obj/machinery/nuclearbomb/attack_paw(mob/user as mob)
 	return src.attack_hand(user)
 
-/obj/machinery/nuclearbomb/attack_hand(mob/user as mob)
-	if (src.extended)
-		user.set_machine(src)
-		var/dat = text("<TT>\nAuth. Disk: <A href='?src=\ref[];auth=1'>[]</A><HR>", src, (src.auth ? "++++++++++" : "----------"))
-		if (src.auth)
-			if (src.yes_code)
-				dat += text("\n<B>Status</B>: []-[]<BR>\n<B>Timer</B>: []<BR>\n<BR>\nTimer: [] <A href='?src=\ref[];timer=1'>Toggle</A><BR>\nTime: <A href='?src=\ref[];time=-10'>-</A> <A href='?src=\ref[];time=-1'>-</A> [] <A href='?src=\ref[];time=1'>+</A> <A href='?src=\ref[];time=10'>+</A><BR>\n<BR>\nSafety: [] <A href='?src=\ref[];safety=1'>Toggle</A><BR>\nAnchor: [] <A href='?src=\ref[];anchor=1'>Toggle</A><BR>\n", (src.timing ? "Func/Set" : "Functional"), (src.safety ? "Safe" : "Engaged"), src.timeleft, (src.timing ? "On" : "Off"), src, src, src, src.timeleft, src, src, (src.safety ? "On" : "Off"), src, (src.anchored ? "Engaged" : "Off"), src)
-			else
-				dat += text("\n<B>Status</B>: Auth. S2-[]<BR>\n<B>Timer</B>: []<BR>\n<BR>\nTimer: [] Toggle<BR>\nTime: - - [] + +<BR>\n<BR>\n[] Safety: Toggle<BR>\nAnchor: [] Toggle<BR>\n", (src.safety ? "Safe" : "Engaged"), src.timeleft, (src.timing ? "On" : "Off"), src.timeleft, (src.safety ? "On" : "Off"), (src.anchored ? "Engaged" : "Off"))
-		else
-			if (src.timing)
-				dat += text("\n<B>Status</B>: Set-[]<BR>\n<B>Timer</B>: []<BR>\n<BR>\nTimer: [] Toggle<BR>\nTime: - - [] + +<BR>\n<BR>\nSafety: [] Toggle<BR>\nAnchor: [] Toggle<BR>\n", (src.safety ? "Safe" : "Engaged"), src.timeleft, (src.timing ? "On" : "Off"), src.timeleft, (src.safety ? "On" : "Off"), (src.anchored ? "Engaged" : "Off"))
-			else
-				dat += text("\n<B>Status</B>: Auth. S1-[]<BR>\n<B>Timer</B>: []<BR>\n<BR>\nTimer: [] Toggle<BR>\nTime: - - [] + +<BR>\n<BR>\nSafety: [] Toggle<BR>\nAnchor: [] Toggle<BR>\n", (src.safety ? "Safe" : "Engaged"), src.timeleft, (src.timing ? "On" : "Off"), src.timeleft, (src.safety ? "On" : "Off"), (src.anchored ? "Engaged" : "Off"))
-		var/message = "AUTH"
-		if (src.auth)
-			message = text("[]", src.code)
-			if (src.yes_code)
-				message = "*****"
-		dat += text("<HR>\n>[]<BR>\n<A href='?src=\ref[];type=1'>1</A><A href='?src=\ref[];type=2'>2</A><A href='?src=\ref[];type=3'>3</A><BR>\n<A href='?src=\ref[];type=4'>4</A><A href='?src=\ref[];type=5'>5</A><A href='?src=\ref[];type=6'>6</A><BR>\n<A href='?src=\ref[];type=7'>7</A><A href='?src=\ref[];type=8'>8</A><A href='?src=\ref[];type=9'>9</A><BR>\n<A href='?src=\ref[];type=R'>R</A><A href='?src=\ref[];type=0'>0</A><A href='?src=\ref[];type=E'>E</A><BR>\n</TT>", message, src, src, src, src, src, src, src, src, src, src, src, src)
-		var/datum/browser/popup = new(user, "nuclearbomb", name, 300, 400)
-		popup.set_content(dat)
-		popup.open()
-	else
-		user << "<span class='notice'>You have to deploy the bomb first.</span>"
+/obj/machinery/nuclearbomb/attack_ai(mob/user as mob)
 	return
 
-/obj/machinery/nuclearbomb/verb/make_deployable()
-	set category = "Object"
-	set name = "Deploy Bomb"
-	set src in oview(1)
-
-	if(isliving(usr))
-		if(!src.extended)
-			src.anchored = 1
-			flick("nuclearbombc", src)
-			src.icon_state = "nuclearbomb1"
-			src.extended = 1
+/obj/machinery/nuclearbomb/attack_hand(mob/user as mob)
+	user.set_machine(src)
+	var/dat = text("<TT>\nAuth. Disk: <A href='?src=\ref[];auth=1'>[]</A><HR>", src, (src.auth ? "++++++++++" : "----------"))
+	if (src.auth)
+		if (src.yes_code)
+			dat += text("\n<B>Status</B>: []-[]<BR>\n<B>Timer</B>: []<BR>\n<BR>\nTimer: [] <A href='?src=\ref[];timer=1'>Toggle</A><BR>\nTime: <A href='?src=\ref[];time=-10'>-</A> <A href='?src=\ref[];time=-1'>-</A> [] <A href='?src=\ref[];time=1'>+</A> <A href='?src=\ref[];time=10'>+</A><BR>\n<BR>\nSafety: [] <A href='?src=\ref[];safety=1'>Toggle</A><BR>\nAnchor: [] <A href='?src=\ref[];anchor=1'>Toggle</A><BR>\n", (src.timing ? "Func/Set" : "Functional"), (src.safety ? "Safe" : "Engaged"), src.timeleft, (src.timing ? "On" : "Off"), src, src, src, src.timeleft, src, src, (src.safety ? "On" : "Off"), src, (src.anchored ? "Engaged" : "Off"), src)
+		else
+			dat += text("\n<B>Status</B>: Auth. S2-[]<BR>\n<B>Timer</B>: []<BR>\n<BR>\nTimer: [] Toggle<BR>\nTime: - - [] + +<BR>\n<BR>\n[] Safety: Toggle<BR>\nAnchor: [] Toggle<BR>\n", (src.safety ? "Safe" : "Engaged"), src.timeleft, (src.timing ? "On" : "Off"), src.timeleft, (src.safety ? "On" : "Off"), (src.anchored ? "Engaged" : "Off"))
+	else
+		if (src.timing)
+			dat += text("\n<B>Status</B>: Set-[]<BR>\n<B>Timer</B>: []<BR>\n<BR>\nTimer: [] Toggle<BR>\nTime: - - [] + +<BR>\n<BR>\nSafety: [] Toggle<BR>\nAnchor: [] Toggle<BR>\n", (src.safety ? "Safe" : "Engaged"), src.timeleft, (src.timing ? "On" : "Off"), src.timeleft, (src.safety ? "On" : "Off"), (src.anchored ? "Engaged" : "Off"))
+		else
+			dat += text("\n<B>Status</B>: Auth. S1-[]<BR>\n<B>Timer</B>: []<BR>\n<BR>\nTimer: [] Toggle<BR>\nTime: - - [] + +<BR>\n<BR>\nSafety: [] Toggle<BR>\nAnchor: [] Toggle<BR>\n", (src.safety ? "Safe" : "Engaged"), src.timeleft, (src.timing ? "On" : "Off"), src.timeleft, (src.safety ? "On" : "Off"), (src.anchored ? "Engaged" : "Off"))
+	var/message = "AUTH"
+	if (src.auth)
+		message = text("[]", src.code)
+		if (src.yes_code)
+			message = "*****"
+	dat += text("<HR>\n>[]<BR>\n<A href='?src=\ref[];type=1'>1</A><A href='?src=\ref[];type=2'>2</A><A href='?src=\ref[];type=3'>3</A><BR>\n<A href='?src=\ref[];type=4'>4</A><A href='?src=\ref[];type=5'>5</A><A href='?src=\ref[];type=6'>6</A><BR>\n<A href='?src=\ref[];type=7'>7</A><A href='?src=\ref[];type=8'>8</A><A href='?src=\ref[];type=9'>9</A><BR>\n<A href='?src=\ref[];type=R'>R</A><A href='?src=\ref[];type=0'>0</A><A href='?src=\ref[];type=E'>E</A><BR>\n</TT>", message, src, src, src, src, src, src, src, src, src, src, src, src)
+	var/datum/browser/popup = new(user, "nuclearbomb", name, 300, 400)
+	popup.set_content(dat)
+	popup.open()
+	return
 
 /obj/machinery/nuclearbomb/Topic(href, href_list)
 	if(..())
@@ -136,18 +121,26 @@ var/bomb_set
 					src.icon_state = "nuclearbomb2"
 					if(!src.safety)
 						bomb_set = 1//There can still be issues with this reseting when there are multiple bombs. Not a big deal tho for Nuke/N
+						src.previous_level = "[get_security_level()]"
+						set_security_level("delta")
 					else
 						bomb_set = 0
+						set_security_level("[previous_level]")
 				else
 					src.icon_state = "nuclearbomb1"
 					bomb_set = 0
+					set_security_level("[previous_level]")
 			if (href_list["safety"])
 				src.safety = !( src.safety )
+				src.icon_state = "nuclearbomb1"
 				if(safety)
 					src.timing = 0
 					bomb_set = 0
 			if (href_list["anchor"])
-				src.anchored = !( src.anchored )
+				if(!isinspace())
+					src.anchored = !( src.anchored )
+				else
+					usr << "<span class='warning'>There is nothing to anchor to!</span>"
 	src.add_fingerprint(usr)
 	for(var/mob/M in viewers(1, src))
 		if ((M.client && M.machine == src))
@@ -220,9 +213,32 @@ var/bomb_set
 				return
 	return
 
-/obj/item/weapon/disk/nuclear/Del()
-	if(blobstart.len > 0)
-		var/obj/D = new /obj/item/weapon/disk/nuclear(pick(blobstart))
-		message_admins("[src] has been destroyed. Spawning [D] at ([D.x], [D.y], [D.z]).")
-		log_game("[src] has been destroyed. Spawning [D] at ([D.x], [D.y], [D.z]).")
+
+//==========DAT FUKKEN DISK===============
+/obj/item/weapon/disk/nuclear
+	name = "nuclear authentication disk"
+	desc = "Better keep this safe."
+	icon_state = "nucleardisk"
+	item_state = "card-id"
+	w_class = 1.0
+
+/obj/item/weapon/disk/nuclear/New()
 	..()
+	processing_objects.Add(src)
+
+/obj/item/weapon/disk/nuclear/process()
+	var/turf/disk_loc = get_turf(src)
+	if(disk_loc.z > 2)
+		get(src, /mob) << "<span class='danger'>You can't help but feel that you just lost something back there...</span>"
+		Destroy()
+
+/obj/item/weapon/disk/nuclear/Destroy()
+	if(blobstart.len > 0)
+		var/obj/item/weapon/disk/nuclear/NEWDISK = new(pick(blobstart))
+		transfer_fingerprints_to(NEWDISK)
+		message_admins("[src] has been destroyed.  Moving it to ([NEWDISK.x], [NEWDISK.y], [NEWDISK.z]).")
+		log_game("[src] has been destroyed.  Moving it to ([NEWDISK.x], [NEWDISK.y], [NEWDISK.z]).")
+		del(src) //Needed to clear all references to it
+	else
+		ERROR("[src] was supposed to be destroyed, but we were unable to locate a blobstart landmark to spawn a new one.")
+	return 1 // Cancel destruction.

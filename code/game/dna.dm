@@ -20,11 +20,9 @@
 	var/struc_enzymes
 	var/uni_identity
 	var/blood_type
-	var/mutantrace = null  //The type of mutant race the player is if applicable (i.e. potato-man)
+	var/datum/species/species = new /datum/species/human() //The type of mutant race the player is if applicable (i.e. potato-man)
+	var/mutant_color = "FFF"		 // What color you are if you have certain speciess
 	var/real_name //Stores the real name of the person who originally got this dna datum. Used primarely for changelings,
-
-/datum/dna/New()
-	if(!blood_type)	blood_type = random_blood_type()
 
 /datum/dna/proc/generate_uni_identity(mob/living/carbon/character)
 	. = ""
@@ -33,9 +31,11 @@
 		L[DNA_GENDER_BLOCK] = construct_block((character.gender!=MALE)+1, 2)
 		if(istype(character, /mob/living/carbon/human))
 			var/mob/living/carbon/human/H = character
+			if(!H.dna.species)
+				H.dna.species = new /datum/species/human()
 			L[DNA_HAIR_STYLE_BLOCK] = construct_block(hair_styles_list.Find(H.hair_style), hair_styles_list.len)
 			L[DNA_HAIR_COLOR_BLOCK] = sanitize_hexcolor(H.hair_color)
-			L[DNA_FACIAL_HAIR_STYLE_BLOCK] = construct_block(hair_styles_list.Find(H.facial_hair_style), facial_hair_styles_list.len)
+			L[DNA_FACIAL_HAIR_STYLE_BLOCK] = construct_block(facial_hair_styles_list.Find(H.facial_hair_style), facial_hair_styles_list.len)
 			L[DNA_FACIAL_HAIR_COLOR_BLOCK] = sanitize_hexcolor(H.facial_hair_color)
 			L[DNA_SKIN_TONE_BLOCK] = construct_block(skin_tones.Find(H.skin_tone), skin_tones.len)
 			L[DNA_EYE_COLOR_BLOCK] = sanitize_hexcolor(H.eye_color)
@@ -65,11 +65,17 @@
 		. += repeat_string(DNA_UNIQUE_ENZYMES_LEN, "0")
 	return .
 
-/proc/hardset_dna(mob/living/carbon/owner, ui, se, real_name, mutantrace, blood_type)
+/proc/hardset_dna(mob/living/carbon/owner, ui, se, real_name, blood_type, datum/species/mrace, mcolor)
 	if(!istype(owner, /mob/living/carbon/monkey) && !istype(owner, /mob/living/carbon/human))
 		return
 	if(!owner.dna)
-		owner.dna = new /datum/dna()
+		create_dna(owner, mrace)
+
+	if(mrace)
+		owner.dna.species = new mrace()
+
+	if(mcolor)
+		owner.dna.mutant_color = mcolor
 
 	if(real_name)
 		owner.real_name = real_name
@@ -82,19 +88,14 @@
 		owner.dna.uni_identity = ui
 		updateappearance(owner)
 
-	var/update_mutantrace = (mutantrace != owner.dna.mutantrace)
-	owner.dna.mutantrace = mutantrace
-	if(update_mutantrace && istype(owner, /mob/living/carbon/human))
-		var/mob/living/carbon/human/H = owner
-		H.update_body()
-		H.update_hair()
-
 	if(se)
 		owner.dna.struc_enzymes = se
 		domutcheck(owner)
 
 	check_dna_integrity(owner)
-	return owner.dna
+
+	owner.regenerate_icons()
+	return
 
 /proc/check_dna_integrity(mob/living/carbon/character)
 	if(!(istype(character, /mob/living/carbon/human) || istype(character, /mob/living/carbon/monkey))) //Evict xenos from carbon 2012
@@ -116,7 +117,7 @@
 	if(!istype(character, /mob/living/carbon/monkey) && !istype(character, /mob/living/carbon/human))
 		return
 	if(!character.dna)
-		character.dna = new /datum/dna()
+		create_dna(character)
 	if(blood_type)
 		character.dna.blood_type = blood_type
 		character.dna.real_name = character.real_name
@@ -124,6 +125,10 @@
 	character.dna.struc_enzymes = character.dna.generate_struc_enzymes(character)
 	character.dna.unique_enzymes = character.dna.generate_unique_enzymes(character)
 	return character.dna
+
+/proc/create_dna(mob/living/carbon/C, datum/species/S) //don't use this unless you're about to use hardset_dna or ready_dna
+	C.dna = new /datum/dna()
+	if(S)	C.dna.species = new S()	// do not remove; this is here to prevent runtimes
 
 /////////////////////////// DNA DATUM
 
@@ -154,32 +159,35 @@
 /proc/randomize_radiation_accuracy(position_we_were_supposed_to_hit, radduration, number_of_blocks)
 	return Wrap(round(position_we_were_supposed_to_hit + gaussian(0, RADIATION_ACCURACY_MULTIPLIER/radduration), 1), 1, number_of_blocks+1)
 
-/proc/randmutb(mob/living/carbon/M)
-	if(!check_dna_integrity(M))	return
-	var/num
-	var/newdna
-	num = pick(bad_se_blocks)
-	newdna = setblock(M.dna.struc_enzymes, num, construct_block(2,2))
+/proc/randmut(mob/living/carbon/M, list/candidates, difficulty = 2)
+	if(!check_dna_integrity(M))
+		return
+	var/num = pick(candidates)
+	var/newdna = setblock(M.dna.struc_enzymes, num, construct_block(difficulty,difficulty))
 	M.dna.struc_enzymes = newdna
 	return
 
+/proc/randmutb(mob/living/carbon/M)
+	return randmut(M, bad_se_blocks)
+
 /proc/randmutg(mob/living/carbon/M)
-	if(!check_dna_integrity(M))	return
-	var/num
-	var/newdna
-	num = pick(good_se_blocks | op_se_blocks)
-	newdna = setblock(M.dna.struc_enzymes, num, construct_block(2,2))
-	M.dna.struc_enzymes = newdna
-	return
+	return randmut(M, good_se_blocks | op_se_blocks)
 
 /proc/randmuti(mob/living/carbon/M)
 	if(!check_dna_integrity(M))	return
-	var/num
-	var/newdna
-	num = rand(1, DNA_STRUC_ENZYMES_BLOCKS)
-	newdna = setblock(M.dna.uni_identity, num, random_string(DNA_BLOCK_SIZE, hex_characters))
+	var/num = rand(1, DNA_STRUC_ENZYMES_BLOCKS)
+	var/newdna = setblock(M.dna.uni_identity, num, random_string(DNA_BLOCK_SIZE, hex_characters))
 	M.dna.uni_identity = newdna
 	return
+
+/proc/clean_dna(mob/living/carbon/M)
+	if(!check_dna_integrity(M))
+		return
+	M.dna.struc_enzymes = M.dna.generate_struc_enzymes(M) // Give clean DNA.
+
+/proc/clean_randmut(mob/living/carbon/M, list/candidates, difficulty = 2)
+	clean_dna(M)
+	randmut(M, candidates, difficulty)
 
 /proc/scramble_dna(mob/living/carbon/M, ui=FALSE, se=FALSE, probability)
 	if(!check_dna_integrity(M))
@@ -240,54 +248,54 @@
 
 	if(blocks[NEARSIGHTEDBLOCK])
 		M.disabilities |= NEARSIGHTED
-		M << "\red Your eyes feel strange."
+		M << "<span class='danger'>Your eyes feel strange.</span>"
 	if(blocks[EPILEPSYBLOCK])
 		M.disabilities |= EPILEPSY
-		M << "\red You get a headache."
+		M << "<span class='danger'>You get a headache.</span>"
 	if(blocks[STRANGEBLOCK])
-		M << "\red You feel strange."
+		M << "<span class='danger'>You feel strange.</span>"
 		if(prob(95))
 			if(prob(50))	randmutb(M)
 			else			randmuti(M)
 		else				randmutg(M)
 	if(blocks[COUGHBLOCK])
 		M.disabilities |= COUGHING
-		M << "\red You start coughing."
+		M << "<span class='danger'>You start coughing.</span>"
 	if(blocks[CLUMSYBLOCK])
-		M << "\red You feel lightheaded."
+		M << "<span class='danger'>You feel lightheaded.</span>"
 		M.mutations |= CLUMSY
 	if(blocks[TOURETTESBLOCK])
 		M.disabilities |= TOURETTES
-		M << "\red You twitch."
+		M << "<span class='danger'>You twitch.</span>"
 	if(blocks[NERVOUSBLOCK])
 		M.disabilities |= NERVOUS
-		M << "\red You feel nervous."
+		M << "<span class='danger'>You feel nervous.</span>"
 	if(blocks[DEAFBLOCK])
 		M.sdisabilities |= DEAF
 		M.ear_deaf = 1
-		M << "\red You can't seem to hear anything..."
+		M << "<span class='danger'>You can't seem to hear anything.</span>"
 	if(blocks[BLINDBLOCK])
 		M.sdisabilities |= BLIND
-		M << "\red You can't seem to see anything."
+		M << "<span class='danger'>You can't seem to see anything.</span>"
 	if(blocks[HULKBLOCK])
 		if(inj || prob(10))
 			M.mutations |= HULK
-			M << "\blue Your muscles hurt."
+			M << "<span class='notice'>Your muscles hurt.</span>"
 	if(blocks[XRAYBLOCK])
 		if(inj || prob(30))
 			M.mutations |= XRAY
-			M << "\blue The walls suddenly disappear."
+			M << "<span class='notice'>The walls suddenly disappear.</span>"
 			M.sight |= SEE_MOBS|SEE_OBJS|SEE_TURFS
 			M.see_in_dark = 8
 			M.see_invisible = SEE_INVISIBLE_LEVEL_TWO
 	if(blocks[FIREBLOCK])
 		if(inj || prob(30))
 			M.mutations |= COLD_RESISTANCE
-			M << "\blue Your body feels warm."
+			M << "<span class='notice'>Your body feels warm.</span>"
 	if(blocks[TELEBLOCK])
 		if(inj || prob(25))
 			M.mutations |= TK
-			M << "\blue You feel smarter."
+			M << "<span class='notice'>You feel smarter.</span>"
 
 
 	/* If you want the new mutations to work, UNCOMMENT THIS.
@@ -309,7 +317,7 @@
 	else
 		if(istype(M, /mob/living/carbon/monkey))	// monkey > human,
 			var/mob/living/carbon/human/O = M.humanize(TR_KEEPITEMS | TR_KEEPIMPLANTS | TR_KEEPDAMAGE | TR_KEEPVIRUS)
-			if(connected) //inside dna thing
+			if(O && connected) //inside dna thing
 				var/obj/machinery/dna_scannernew/C = connected
 				O.loc = C
 				C.occupant = O
@@ -331,28 +339,43 @@
 	density = 1
 	var/locked = 0
 	var/open = 0
-	var/mob/occupant = null
 	anchored = 1
 	use_power = 1
 	idle_power_usage = 50
 	active_power_usage = 300
+	var/damage_coeff
+	var/scan_level
+	var/precision_coeff
 
 /obj/machinery/dna_scannernew/New()
 	..()
-	component_parts = newlist(
-		/obj/item/weapon/circuitboard/clonescanner,
-		/obj/item/weapon/stock_parts/scanning_module,
-		/obj/item/weapon/stock_parts/manipulator,
-		/obj/item/weapon/stock_parts/micro_laser,
-		/obj/item/weapon/stock_parts/console_screen,
-		/obj/item/weapon/cable_coil,
-		/obj/item/weapon/cable_coil
-		)
+	component_parts = list()
+	component_parts += new /obj/item/weapon/circuitboard/clonescanner(null)
+	component_parts += new /obj/item/weapon/stock_parts/scanning_module(null)
+	component_parts += new /obj/item/weapon/stock_parts/manipulator(null)
+	component_parts += new /obj/item/weapon/stock_parts/micro_laser(null)
+	component_parts += new /obj/item/weapon/stock_parts/console_screen(null)
+	component_parts += new /obj/item/stack/cable_coil(null, 1)
+	component_parts += new /obj/item/stack/cable_coil(null, 1)
 	RefreshParts()
 
-/obj/machinery/dna_scannernew/proc/toggle_open()
-	if(open)	return close()
-	else		return open()
+
+/obj/machinery/dna_scannernew/RefreshParts()
+	scan_level = 0
+	damage_coeff = 0
+	precision_coeff = 0
+	for(var/obj/item/weapon/stock_parts/scanning_module/P in component_parts)
+		scan_level += P.rating
+	for(var/obj/item/weapon/stock_parts/manipulator/P in component_parts)
+		precision_coeff = P.rating
+	for(var/obj/item/weapon/stock_parts/micro_laser/P in component_parts)
+		damage_coeff = P.rating
+
+/obj/machinery/dna_scannernew/proc/toggle_open(mob/user=usr)
+	if(!user)
+		return
+	if(open)	return close(user)
+	else		return open(user)
 
 /obj/machinery/dna_scannernew/container_resist()
 	var/mob/living/user = usr
@@ -360,11 +383,10 @@
 	if(open || !locked)	//Open and unlocked, no need to escape
 		open = 1
 		return
-	user.next_move = world.time + 100
+	user.changeNext_move(100)
 	user.last_special = world.time + 100
 	user << "<span class='notice'>You lean on the back of [src] and start pushing the door open. (this will take about [breakout_time] minutes.)</span>"
-	for(var/mob/O in viewers(src))
-		O << "<span class='warning'>You hear a metallic creaking from [src]!</span>"
+	user.visible_message("<span class='warning'>You hear a metallic creaking from [src]!</span>")
 
 	if(do_after(user,(breakout_time*60*10))) //minutes * 60seconds * 10deciseconds
 		if(!user || user.stat != CONSCIOUS || user.loc != src || open || !locked)
@@ -374,10 +396,13 @@
 		visible_message("<span class='danger'>[user] successfully broke out of [src]!</span>")
 		user << "<span class='notice'>You successfully break out of [src]!</span>"
 
-		open()
+		open(user)
 
-/obj/machinery/dna_scannernew/proc/close()
+/obj/machinery/dna_scannernew/proc/close(mob/user)
 	if(open)
+		if(panel_open)
+			user << "<span class='notice'>Close the maintenance panel first.</span>"
+			return 0
 		open = 0
 		density = 1
 		for(var/mob/living/carbon/C in loc)
@@ -402,15 +427,19 @@
 					for(var/mob/dead/observer/ghost in player_list)
 						if(ghost.mind == occupant.mind)
 							if(ghost.can_reenter_corpse)
-								ghost << "<b><font color = #330033><font size = 3>Your corpse has been placed into a cloning scanner. Return to your body if you want to be resurrected/cloned!</b> (Verbs -> Ghost -> Re-enter corpse)</font color>"
+								ghost << "<span class='ghostalert'>Your corpse has been placed into a cloning scanner. Return to your body if you want to be cloned!</span> (Verbs -> Ghost -> Re-enter corpse)"
+								ghost << sound('sound/effects/genetics.ogg')
 							break
 
 		return 1
 
-/obj/machinery/dna_scannernew/proc/open()
+/obj/machinery/dna_scannernew/proc/open(mob/user)
 	if(!open)
+		if(panel_open)
+			user << "<span class='notice'>Close the maintenance panel first.</span>"
+			return
 		if(locked)
-			usr << "<span class='notice'>The bolts are locked down, securing the door shut.</span>"
+			user << "<span class='notice'>The bolts are locked down, securing the door shut.</span>"
 			return
 		var/turf/T = get_turf(src)
 		if(T)
@@ -428,10 +457,24 @@
 /obj/machinery/dna_scannernew/relaymove(mob/user as mob)
 	if(user.stat)
 		return
-	open()
+	open(user)
 	return
 
 /obj/machinery/dna_scannernew/attackby(obj/item/weapon/grab/G, mob/user)
+
+	if(!occupant && default_deconstruction_screwdriver(user, "[initial(icon_state)]_open", "[initial(icon_state)]", G))
+		return
+
+	if(exchange_parts(user, G))
+		return
+
+	if(istype(G, /obj/item/weapon/crowbar))
+		if(panel_open)
+			for(var/obj/I in contents) // in case there is something in the scanner
+				I.loc = src.loc
+			default_deconstruction_crowbar(G)
+		return
+
 	if(!istype(G, /obj/item/weapon/grab) || !ismob(G.affecting))
 		return
 	if(!open)
@@ -440,11 +483,12 @@
 	var/mob/M = G.affecting
 	M.loc = loc
 	user.stop_pulling()
-	del(G)
+	qdel(G)
 
 /obj/machinery/dna_scannernew/attack_hand(mob/user)
-	if(..())	return
-	toggle_open()
+	if(..())
+		return
+	toggle_open(user)
 	add_fingerprint(user)
 
 
@@ -452,24 +496,15 @@
 /obj/machinery/dna_scannernew/ex_act(severity)
 	switch(severity)
 		if(1.0)
-			for(var/atom/movable/A in src)
-				A.loc = loc
-				A.ex_act(severity)
-			del(src)
+			qdel(src)
 			return
 		if(2.0)
 			if(prob(50))
-				for(var/atom/movable/A in src)
-					A.loc = loc
-					A.ex_act(severity)
-				del(src)
+				qdel(src)
 				return
 		if(3.0)
 			if(prob(25))
-				for(var/atom/movable/A in src)
-					A.loc = loc
-					A.ex_act(severity)
-				del(src)
+				qdel(src)
 				return
 		else
 	return
@@ -477,11 +512,10 @@
 
 /obj/machinery/dna_scannernew/blob_act()
 	if(prob(75))
-		for(var/atom/movable/A in contents)
-			A.loc = loc
-		del(src)
+		qdel(src)
 
 
+//DNA COMPUTER
 /obj/machinery/computer/scan_consolenew
 	name = "\improper DNA scanner access console"
 	desc = "Scan DNA."
@@ -509,7 +543,7 @@
 			user.drop_item()
 			I.loc = src
 			src.diskette = I
-			user << "You insert [I]."
+			user << "<span class='notice'>You insert [I].</span>"
 			src.updateUsrDialog()
 			return
 	else
@@ -549,7 +583,7 @@
 	if(connected)
 		if(connected.occupant)	//set occupant_status message
 			viable_occupant = connected.occupant
-			if(check_dna_integrity(viable_occupant) && !(NOCLONE in viable_occupant.mutations))	//occupent is viable for dna modification
+			if(check_dna_integrity(viable_occupant) && (!(NOCLONE in viable_occupant.mutations) || (connected.scan_level == 3)))	//occupent is viable for dna modification
 				occupant_status += "[viable_occupant.name] => "
 				switch(viable_occupant.stat)
 					if(CONSCIOUS)	occupant_status += "<span class='good'>Conscious</span>"
@@ -591,7 +625,10 @@
 	var/stddev = radstrength*RADIATION_STRENGTH_MULTIPLIER
 	status += "<div class='line'><div class='statusLabel'>Output Level:</div><div class='statusValue'>[radstrength]</div></div>"
 	status += "<div class='line'><div class='statusLabel'>&nbsp;&nbsp;\> Mutation:</div><div class='statusValue'>(-[stddev] to +[stddev] = 68%) (-[2*stddev] to +[2*stddev] = 95%)</div></div>"
-	stddev = RADIATION_ACCURACY_MULTIPLIER/radduration
+	if(connected)
+		stddev = RADIATION_ACCURACY_MULTIPLIER/(radduration + (connected.precision_coeff ** 2))
+	else
+		stddev = RADIATION_ACCURACY_MULTIPLIER/radduration
 	var/chance_to_hit
 	switch(stddev)	//hardcoded values from a z-table for a normal distribution
 		if(0 to 0.25)			chance_to_hit = ">95%"
@@ -749,7 +786,7 @@
 		if("togglelock")
 			if(connected)	connected.locked = !connected.locked
 		if("toggleopen")
-			if(connected)	connected.toggle_open()
+			if(connected)	connected.toggle_open(usr)
 		if("setduration")
 			if(!num)
 				num = round(input(usr, "Choose pulse duration:", "Input an Integer", null) as num|null)
@@ -795,9 +832,9 @@
 			if(num && viable_occupant)
 				num = Clamp(num, 1, NUMBER_OF_BUFFERS)
 				var/list/buffer_slot = buffer[num]
-				if(istype(buffer_slot))
-					viable_occupant.radiation += rand(15,40)
-					switch(href_list["text"])
+				if(istype(buffer_slot))                                                                                  //15 and 40 are just magic numbers that were here before so i didnt touch them, they are initial boundaries of damage
+					viable_occupant.radiation += rand(15/(connected.damage_coeff ** 2),40/(connected.damage_coeff ** 2)) //Each laser level reduces damage by lvl^2, so no effect on 1 lvl, 4 times less damage on 2 and 9 times less damage on 3
+					switch(href_list["text"])                                                                            //Numbers are this high because other way upgrading laser is just not worth the hassle, and i cant think of anything better to inmrove
 						if("se")
 							if(buffer_slot["SE"])
 								viable_occupant.dna.struc_enzymes = buffer_slot["SE"]
@@ -824,14 +861,17 @@
 							if(buffer_slot["SE"])
 								I = new /obj/item/weapon/dnainjector(loc)
 								I.fields = list("SE"=buffer_slot["SE"])
+								I.damage_coeff  = connected.damage_coeff
 						if("ui")
 							if(buffer_slot["UI"])
 								I = new /obj/item/weapon/dnainjector(loc)
 								I.fields = list("UI"=buffer_slot["UI"])
+								I.damage_coeff = connected.damage_coeff
 						else
 							if(buffer_slot["name"] && buffer_slot["UE"] && buffer_slot["blood_type"])
 								I = new /obj/item/weapon/dnainjector(loc)
 								I.fields = list("name"=buffer_slot["name"], "UE"=buffer_slot["UE"], "blood_type"=buffer_slot["blood_type"])
+								I.damage_coeff  = connected.damage_coeff
 					if(I)
 						injectorready = 0
 						spawn(INJECTOR_TIMEOUT)
@@ -866,13 +906,13 @@
 				current_screen = "mainmenu"
 
 				if(viable_occupant && connected && connected.occupant==viable_occupant)
-					viable_occupant.radiation += RADIATION_IRRADIATION_MULTIPLIER*radduration*radstrength
-					switch(href_list["task"])
+					viable_occupant.radiation += (RADIATION_IRRADIATION_MULTIPLIER*radduration*radstrength)/(connected.damage_coeff ** 2) //Read comment in "transferbuffer" section above for explanation
+					switch(href_list["task"])                                                                                             //Same thing as there but values are even lower, on best part they are about 0.0*, effectively no damage
 						if("pulseui")
 							var/len = length(viable_occupant.dna.uni_identity)
 							num = Wrap(num, 1, len+1)
-							num = randomize_radiation_accuracy(num, radduration, len)
-
+							num = randomize_radiation_accuracy(num, radduration + (connected.precision_coeff ** 2), len) //Each manipulator level above 1 makes randomization as accurate as selected time + manipulator lvl^2
+                                                                                                                         //Value is this high for the same reason as with laser - not worth the hassle of upgrading if the bonus is low
 							var/block = round((num-1)/DNA_BLOCK_SIZE)+1
 							var/subblock = num - block*DNA_BLOCK_SIZE
 							last_change = "UI #[block]-[subblock]; "
@@ -887,7 +927,7 @@
 						if("pulsese")
 							var/len = length(viable_occupant.dna.struc_enzymes)
 							num = Wrap(num, 1, len+1)
-							num = randomize_radiation_accuracy(num, radduration, len)
+							num = randomize_radiation_accuracy(num, radduration + (connected.precision_coeff ** 2), len)
 
 							var/block = round((num-1)/DNA_BLOCK_SIZE)+1
 							var/subblock = num - block*DNA_BLOCK_SIZE
@@ -943,3 +983,11 @@ proc/deconstruct_block(value, values, blocksize=DNA_BLOCK_SIZE)
 	if(value > values)
 		value = values
 	return value
+
+
+/datum/dna/proc/is_same_as(var/datum/dna/D)
+	if(uni_identity == D.uni_identity && struc_enzymes == D.struc_enzymes && real_name == D.real_name)
+		if(species == D.species && mutant_color == D.mutant_color && blood_type == D.blood_type)
+			return 1
+	return 0
+

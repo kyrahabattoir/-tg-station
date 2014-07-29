@@ -15,7 +15,6 @@
 	icon_state = "backpack"
 	item_state = "backpack"
 	w_class = 4.0
-	flags = FPRINT|TABLEPASS
 	slot_flags = SLOT_BACK	//ERROOOOO
 	max_w_class = 3
 	max_combined_w_class = 21
@@ -29,12 +28,12 @@
  */
 
 /obj/item/weapon/storage/backpack/holding
-	name = "Bag of Holding"
+	name = "bag of holding"
 	desc = "A backpack that opens into a localized pocket of Blue Space."
 	origin_tech = "bluespace=4"
 	icon_state = "holdingpack"
-	max_w_class = 4
-	max_combined_w_class = 28
+	max_w_class = 5
+	max_combined_w_class = 35
 
 	New()
 		..()
@@ -47,12 +46,12 @@
 		if(istype(W, /obj/item/weapon/storage/backpack/holding) && !W.crit_fail)
 			investigate_log("has become a singularity. Caused by [user.key]","singulo")
 			user << "\red The Bluespace interfaces of the two devices catastrophically malfunction!"
-			del(W)
+			qdel(W)
 			var/obj/machinery/singularity/singulo = new /obj/machinery/singularity (get_turf(src))
 			singulo.energy = 300 //should make it a bit bigger~
 			message_admins("[key_name_admin(user)] detonated a bag of holding")
 			log_game("[key_name(user)] detonated a bag of holding")
-			del(src)
+			qdel(src)
 			return
 		..()
 
@@ -63,7 +62,7 @@
 		else
 			user << "\red The Bluespace generator malfunctions!"
 			for (var/obj/O in src.contents) //it broke, delete what was in it
-				del(O)
+				qdel(O)
 			crit_fail = 1
 			icon_state = "brokenpack"
 
@@ -85,7 +84,7 @@
 	item_state = "backpack"
 
 /obj/item/weapon/storage/backpack/clown
-	name = "Giggles Von Honkerton"
+	name = "Giggles von Honkerton"
 	desc = "It's a backpack made by Honk! Co."
 	icon_state = "clownpack"
 	item_state = "clownpack"
@@ -181,3 +180,9 @@
 	desc = "An exclusive satchel for Nanotrasen officers."
 	icon_state = "satchel-cap"
 	item_state = "captainpack"
+
+/obj/item/weapon/storage/backpack/mime
+	name = "Parcel Parceaux"
+	desc = "A silent backpack made for those silent workers. Silence Co."
+	icon_state = "mimepack"
+	item_state = "mimepack"

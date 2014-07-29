@@ -35,11 +35,6 @@
 		return 1
 	return 0
 
-/proc/isslimeadult(A)
-	if(istype(A, /mob/living/carbon/slime/adult))
-		return 1
-	return 0
-
 /proc/isrobot(A)
 	if(istype(A, /mob/living/silicon/robot))
 		return 1
@@ -169,8 +164,15 @@ proc/isorgan(A)
 
 	return zone
 
+/proc/above_neck(zone)
+	var/list/zones = list("head", "mouth", "eyes")
+	if(zones.Find(zone))
+		return 1
+	else
+		return 0
 
 /proc/stars(n, pr)
+	n = html_decode(n)
 	if (pr == null)
 		pr = 25
 	if (pr <= 0)
@@ -189,7 +191,7 @@ proc/isorgan(A)
 		else
 			t = text("[]*", t)
 		p++
-	return t
+	return sanitize(t)
 
 
 /proc/stutter(n)
@@ -214,6 +216,23 @@ proc/isorgan(A)
 		t = text("[t][n_letter]")//since the above is ran through for each letter, the text just adds up back to the original word.
 		p++//for each letter p is increased to find where the next letter will be.
 	return copytext(sanitize(t),1,MAX_MESSAGE_LEN)
+
+/proc/derpspeech(message, stuttering)
+	message = replacetext(message, " am ", " ")
+	message = replacetext(message, " is ", " ")
+	message = replacetext(message, " are ", " ")
+	message = replacetext(message, "you", "u")
+	message = replacetext(message, "help", "halp")
+	message = replacetext(message, "grief", "grife")
+	message = replacetext(message, "space", "spess")
+	message = replacetext(message, "carp", "crap")
+	message = replacetext(message, "reason", "raisin")
+	if(prob(50))
+		message = uppertext(message)
+		message += "[stutter(pick("!", "!!", "!!!"))]"
+	if(!stuttering && prob(15))
+		message = stutter(message)
+	return message
 
 
 proc/Gibberish(t, p)//t is the inputted message, and any value higher than 70 for p will cause letters to be replaced instead of added
@@ -264,17 +283,20 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 
 
 /proc/shake_camera(mob/M, duration, strength=1)
-	if(!M || !M.client || M.shakecamera)
-		return
-	spawn(1)
+	spawn(0)
+		if(!M || !M.client || M.shakecamera)
+			return
 		var/oldeye=M.client.eye
 		var/x
 		M.shakecamera = 1
 		for(x=0; x<duration, x++)
-			M.client.eye = locate(dd_range(1,M.loc.x+rand(-strength,strength),world.maxx),dd_range(1,M.loc.y+rand(-strength,strength),world.maxy),M.loc.z)
-			sleep(1)
-		M.shakecamera = 0
-		M.client.eye=oldeye
+			if(M && M.client)
+				M.client.eye = locate(dd_range(1,M.loc.x+rand(-strength,strength),world.maxx),dd_range(1,M.loc.y+rand(-strength,strength),world.maxy),M.loc.z)
+				sleep(1)
+		if(M)
+			M.shakecamera = 0
+			if(M.client)
+				M.client.eye=oldeye
 
 
 /proc/findname(msg)
@@ -287,7 +309,7 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 
 
 /mob/proc/abiotic(full_body = 0)
-	if(l_hand && !l_hand.abstract || r_hand && !r_hand.abstract)
+	if(l_hand && !l_hand.flags&ABSTRACT || r_hand && !r_hand.flags&ABSTRACT)
 		return 1
 	return 0
 
@@ -386,10 +408,48 @@ proc/is_special_character(mob/M) // returns 1 for special characters and 2 for h
 				if(M.mind in ticker.mode.wizards)
 					return 2
 			if("monkey")
-				if(M.viruses && (locate(/datum/disease/jungle_fever) in M.viruses))
+				if(M.viruses && (locate(/datum/disease/transformation/jungle_fever) in M.viruses))
 					return 2
 		return 1
 	return 0
 
 /mob/proc/has_mutation(var/mutation)
 	return mutation in src.mutations ? 1 : 0
+
+/proc/get_both_hands(mob/living/carbon/M)
+	var/list/hands = list(M.l_hand, M.r_hand)
+	return hands
+
+/mob/proc/reagent_check(var/datum/reagent/R) // utilized in the species code
+	return 1
+
+/proc/notify_ghosts(var/message, var/ghost_sound = null) //Easy notification of ghosts.
+	for(var/mob/dead/observer/O in player_list)
+		if(O.client)
+			O << "<span class='ghostalert'>[message]<span>"
+			if(ghost_sound)
+				O << sound(ghost_sound)
+
+/proc/item_heal_robotic(var/mob/living/carbon/human/H, var/mob/user, var/brute, var/burn)
+	var/obj/item/organ/limb/affecting = H.get_organ(check_zone(user.zone_sel.selecting))
+
+	var/dam //changes repair text based on how much brute/burn was supplied
+
+	if(brute > burn)
+		dam = 1
+	else
+		dam = 0
+
+	if(affecting.status == ORGAN_ROBOTIC)
+		if(brute > 0 && affecting.brute_dam > 0 || burn > 0 && affecting.burn_dam > 0)
+			affecting.heal_damage(brute,burn,1)
+			H.update_damage_overlays(0)
+			H.updatehealth()
+			for(var/mob/O in viewers(user, null))
+				O.show_message(text("<span class='notice'>[user] has fixed some of the [dam ? "dents on" : "burnt wires in"] [H]'s [affecting.getDisplayName()]!</span>"), 1)
+			return
+		else
+			user << "<span class='notice'>[H]'s [affecting.getDisplayName()] is already in good condition</span>"
+			return
+	else
+		return

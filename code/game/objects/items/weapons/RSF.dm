@@ -13,7 +13,6 @@ RSF
 	anchored = 0.0
 	var/matter = 0
 	var/mode = 1
-	flags = TABLEPASS
 	w_class = 3.0
 
 /obj/item/weapon/rsf/New()
@@ -26,7 +25,7 @@ RSF
 		if ((matter + 10) > 30)
 			user << "The RSF cant hold any more matter."
 			return
-		del(W)
+		qdel(W)
 		matter += 10
 		playsound(src.loc, 'sound/machines/click.ogg', 10, 1)
 		user << "The RSF now holds [matter]/30 fabrication-units."

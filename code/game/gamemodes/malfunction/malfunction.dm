@@ -31,7 +31,7 @@
 	//Triumvirate?
 	if (ticker.triai == 1)
 		required_enemies = 3
-	required_players = max(required_enemies+1, required_players) //to prevent issues if players are set too low
+		required_players = max(required_enemies+1, required_players) //to prevent issues if players are set too low
 	return ..()
 
 /datum/game_mode/malfunction/get_players_for_role(var/role = BE_MALF)
@@ -103,11 +103,6 @@
 	malf.current << "Remember that only APCs that are on the station can help you take over the station."
 	malf.current << "When you feel you have enough APCs under your control, you may begin the takeover attempt."
 	return
-
-
-/datum/game_mode/malfunction/proc/hack_intercept()
-	intercept_hacked = 1
-
 
 /datum/game_mode/malfunction/process()
 	if (apcs >= 3 && malf_mode_declared)
@@ -184,15 +179,18 @@
 	if (alert(usr, "Are you sure you wish to initiate the takeover? The station hostile runtime detection software is bound to alert everyone. You have hacked [ticker.mode:apcs] APCs.", "Takeover:", "Yes", "No") != "Yes")
 		return
 
-	command_alert("Hostile runtimes detected in all station systems, please deactivate your AI to prevent possible damage to its morality core.", "Anomaly Alert")
+	priority_announce("Hostile runtimes detected in all station systems, please deactivate your AI to prevent possible damage to its morality core.", "Anomaly Alert", 'sound/AI/aimalf.ogg')
 	set_security_level("delta")
+
+	for(var/obj/item/weapon/pinpointer/point in world)
+		for(var/datum/mind/AI_mind in ticker.mode.malf_ai)
+			var/mob/living/silicon/ai/A = AI_mind.current // the current mob the mind owns
+			if(A.stat != DEAD)
+				point.the_disk = A //The pinpointer now tracks the AI core.
 
 	ticker.mode:malf_mode_declared = 1
 	for(var/datum/mind/AI_mind in ticker.mode:malf_ai)
 		AI_mind.current.verbs -= /datum/game_mode/malfunction/proc/takeover
-	for(var/mob/M in player_list)
-		if(!istype(M,/mob/new_player))
-			M << sound('sound/AI/aimalf.ogg')
 
 
 /datum/game_mode/malfunction/proc/ai_win()

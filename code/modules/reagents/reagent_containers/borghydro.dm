@@ -17,7 +17,6 @@ Borg Hypospray
 	amount_per_transfer_from_this = 5
 	volume = 30
 	possible_transfer_amounts = null
-	flags = FPRINT
 	var/mode = 1
 	var/charge_cost = 50
 	var/charge_tick = 0
@@ -42,7 +41,7 @@ Borg Hypospray
 	processing_objects.Add(src)
 
 
-/obj/item/weapon/reagent_containers/borghypo/Del()
+/obj/item/weapon/reagent_containers/borghypo/Destroy()
 	processing_objects.Remove(src)
 	..()
 
@@ -83,17 +82,16 @@ Borg Hypospray
 				R.cell.use(charge_cost) 					//Take power from borg...
 				RG.add_reagent(reagent_ids[mode], 5)		//And fill hypo with reagent.
 
-/obj/item/weapon/reagent_containers/borghypo/attack(mob/M as mob, mob/user as mob)
+/obj/item/weapon/reagent_containers/borghypo/attack(mob/living/M as mob, mob/user as mob)
 	var/datum/reagents/R = reagent_list[mode]
 	if(!R.total_volume)
 		user << "<span class='notice'>The injector is empty.</span>"
 		return
-	if (!( istype(M, /mob) ))
+	if (!( istype(M) ))
 		return
-	if (R.total_volume)
-		user << "<span class='notice'>You inject [M] with the injector.</span>"
+	if (R.total_volume && M.can_inject(user, 1))
 		M << "<span class='warning'>You feel a tiny prick!</span>"
-
+		user << "<span class='notice'>You inject [M] with the injector.</span>"
 		R.reaction(M, INGEST)
 		if(M.reagents)
 			var/trans = R.trans_to(M, amount_per_transfer_from_this)
@@ -137,7 +135,7 @@ Borg Shaker
 	charge_cost = 20 //Lots of reagents all regenerating at once, so the charge cost is lower. They also regenerate faster.
 	recharge_time = 3
 
-	reagent_ids = list("orangejuice", "limejuice", "tomatojuice", "cola", "tonic", "sodawater", "ice", "cream", "beer", "whiskey", "vodka", "rum", "gin", "tequilla", "vermouth", "wine", "kahlua", "cognac", "ale")
+	reagent_ids = list("beer", "orangejuice", "limejuice", "tomatojuice", "cola", "tonic", "sodawater", "ice", "cream", "whiskey", "vodka", "rum", "gin", "tequilla", "vermouth", "wine", "kahlua", "cognac", "ale")
 
 /obj/item/weapon/reagent_containers/borghypo/borgshaker/attack(mob/M as mob, mob/user as mob)
 	return //Can't inject stuff with a shaker, can we?
@@ -189,3 +187,15 @@ Borg Shaker
 
 	if(empty)
 		usr << "<span class='notice'>It is currently empty. Please allow some time for the synthesizer to produce more.</span>"
+
+/obj/item/weapon/reagent_containers/borghypo/borgshaker/hacked
+	..()
+	name = "cyborg shaker"
+	desc = "Will mix drinks that knock them dead."
+	icon = 'icons/obj/drinks.dmi'
+	icon_state = "threemileislandglass"
+	possible_transfer_amounts = list(5,10,20)
+	charge_cost = 20 //Lots of reagents all regenerating at once, so the charge cost is lower. They also regenerate faster.
+	recharge_time = 3
+
+	reagent_ids = list("beer2")

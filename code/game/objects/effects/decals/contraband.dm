@@ -1,7 +1,7 @@
 
 //########################## CONTRABAND ;3333333333333333333 -Agouri ###################################################
 
-#define NUM_OF_POSTER_DESIGNS 11
+#define NUM_OF_POSTER_DESIGNS 21
 
 /obj/item/weapon/contraband
 	name = "contraband item"
@@ -59,7 +59,7 @@
 			resulting_poster.loc = W //Looks like it's uncluttered enough. Place the poster
 			W.contents += resulting_poster
 
-			del(src)*/
+			qdel(src)*/
 
 
 
@@ -116,6 +116,36 @@ obj/structure/sign/poster/New(serial)
 		if(11)
 			name += " - RIP Badger"
 			desc += " This poster commemorates the day hundreds of badgers worldwide were sacrificed for the greater good."
+		if(12)
+			name += " - Ambrosia Vulgaris"
+			desc += " This poster is lookin' pretty trippy man."
+		if(13)
+			name += " - Donut Corp."
+			desc += " This poster is an advertisement for Donut Corp."
+		if(14)
+			name += " - EAT"
+			desc += " This poster is advising that you eat."
+		if(15)
+			name += " - Tools"
+			desc += " This poster is an advertisement for tools."
+		if(16)
+			name += " - Power"
+			desc += " A poster all about power."
+		if(17)
+			name += " - Power to the People"
+			desc += " Screw those EDF guys!"
+		if(18)
+			name += " - Communist state"
+			desc += " All hail the Communist party!"
+		if(19)
+			name += " - Lamarr"
+			desc += " This poster depicts Lamarr. Probably made by the research director."
+		if(20)
+			name += " - Borg Fancy"
+			desc += " Being fancy can be for any borg, Just need a suit."
+		if(21)
+			name += " - Borg Fancy v2"
+			desc += " Borg Fancy, Now only taking the most fancy."
 		else
 			name = "This shit just bugged. Report it to Agouri - polyxenitopalidou@gmail.com"
 			desc = "Why are you still here?"
@@ -126,7 +156,7 @@ obj/structure/sign/poster/attackby(obj/item/I, mob/user)
 		playsound(loc, 'sound/items/Wirecutter.ogg', 100, 1)
 		if(ruined)
 			user << "<span class='notice'>You remove the remnants of the poster.</span>"
-			del(src)
+			qdel(src)
 		else
 			user << "<span class='notice'>You carefully remove the poster from the wall.</span>"
 			roll_and_drop(user.loc)
@@ -180,7 +210,7 @@ obj/structure/sign/poster/attackby(obj/item/I, mob/user)
 	var/temp_loc = user.loc
 	flick("poster_being_set",D)
 	D.loc = src
-	del(P)	//delete it now to cut down on sanity checks afterwards. Agouri's code supports rerolling it anyway
+	qdel(P)	//delete it now to cut down on sanity checks afterwards. Agouri's code supports rerolling it anyway
 	playsound(D.loc, 'sound/items/poster_being_created.ogg', 100, 1)
 
 	sleep(17)

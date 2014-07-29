@@ -4,7 +4,6 @@
 	icon_state = "flashbang"
 	det_time = 20
 	item_state = "flashbang"
-	flags = FPRINT | TABLEPASS
 	slot_flags = SLOT_BELT
 	var/datum/effect/effect/system/bad_smoke_spread/smoke
 
@@ -12,6 +11,10 @@
 	..()
 	src.smoke = new /datum/effect/effect/system/bad_smoke_spread
 	src.smoke.attach(src)
+
+/obj/item/weapon/grenade/smokebomb/Destroy()
+	qdel(smoke)
+	..()
 
 /obj/item/weapon/grenade/smokebomb/prime()
 	update_mob()
@@ -31,4 +34,4 @@
 		B.health -= damage
 		B.update_icon()
 	sleep(80)
-	del(src)
+	qdel(src)

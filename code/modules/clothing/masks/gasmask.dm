@@ -2,7 +2,7 @@
 	name = "gas mask"
 	desc = "A face-covering mask that can be connected to an air supply."
 	icon_state = "gas_alt"
-	flags = FPRINT | TABLEPASS | MASKCOVERSMOUTH | MASKCOVERSEYES | BLOCK_GAS_SMOKE_EFFECT | MASKINTERNALS
+	flags = MASKCOVERSMOUTH | MASKCOVERSEYES | BLOCK_GAS_SMOKE_EFFECT | MASKINTERNALS
 	flags_inv = HIDEEARS|HIDEEYES|HIDEFACE
 	w_class = 3.0
 	item_state = "gas_alt"
@@ -44,18 +44,15 @@
 	name = "security gas mask"
 	desc = "A standard issue Security gas mask with integrated 'Compli-o-nator 3000' device, plays over a dozen pre-recorded compliance phrases designed to get scumbags to stand still whilst you taze them. Do not tamper with the device."
 	action_button_name = "HALT!"
-	icon_state = "hailer_white"
+	icon_state = "officermask"
 	var/cooldown = 0
 	var/aggressiveness = 2
 
-/obj/item/clothing/mask/gas/sechailer/blue
-	icon_state = "hailer_blue"
+/obj/item/clothing/mask/gas/sechailer/warden
+	icon_state = "wardenmask"
 
-/obj/item/clothing/mask/gas/sechailer/black
-	icon_state = "hailer_black"
-
-/obj/item/clothing/mask/gas/sechailer/red
-	icon_state = "hailer_red"
+/obj/item/clothing/mask/gas/sechailer/hos
+	icon_state = "hosmask"
 
 /obj/item/clothing/mask/gas/sechailer/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if(istype(W, /obj/item/weapon/screwdriver))
@@ -106,7 +103,7 @@
 
 		switch(phrase)	//sets the properties of the chosen phrase
 			if(1)				// good cop
-				phrase_text = "HALT! HALT! HALT! HALT!"
+				phrase_text = "HALT! HALT! HALT!"
 				phrase_sound = "halt"
 			if(2)
 				phrase_text = "Stop in the name of the Law."
@@ -202,33 +199,76 @@
 	item_state = "s-ninja_mask"
 	vchange = 1
 
+/obj/item/clothing/mask/gas/voice/space_ninja/speechModification(message)
+	if(voice == "Unknown")
+		if(copytext(message, 1, 2) != "*")
+			var/list/temp_message = text2list(message, " ")
+			var/list/pick_list = list()
+			for(var/i = 1, i <= temp_message.len, i++)
+				pick_list += i
+			for(var/i=1, i <= abs(temp_message.len/3), i++)
+				var/H = pick(pick_list)
+				if(findtext(temp_message[H], "*") || findtext(temp_message[H], ";") || findtext(temp_message[H], ":")) continue
+				temp_message[H] = ninjaspeak(temp_message[H])
+				pick_list -= H
+			message = list2text(temp_message, " ")
+			message = replacetext(message, "o", "¤")
+			message = replacetext(message, "p", "þ")
+			message = replacetext(message, "l", "£")
+			message = replacetext(message, "s", "§")
+			message = replacetext(message, "u", "µ")
+			message = replacetext(message, "b", "ß")
+	return message
+
+
 /obj/item/clothing/mask/gas/clown_hat
 	name = "clown wig and mask"
 	desc = "A true prankster's facial attire. A clown is incomplete without his wig and mask."
+	alloweat = 1
 	icon_state = "clown"
 	item_state = "clown_hat"
+
+obj/item/clothing/mask/gas/clown_hat/attack_self(mob/user)
+
+	var/mob/M = usr
+	var/list/options = list()
+	options["True Form"] = "clown"
+	options["The Feminist"] = "sexyclown"
+	options["The Madman"] = "joker"
+	options["The Rainbow Color"] ="rainbow"
+
+	var/choice = input(M,"To what form do you wish to Morph this mask?","Morph Mask") in options
+
+	if(src && choice && !M.stat && in_range(M,src))
+		icon_state = options[choice]
+		M << "Your Clown Mask has now morphed into [choice], all praise the Honk Mother!"
+		return 1
 
 /obj/item/clothing/mask/gas/sexyclown
 	name = "sexy-clown wig and mask"
 	desc = "A feminine clown mask for the dabbling crossdressers or female entertainers."
+	alloweat = 1
 	icon_state = "sexyclown"
 	item_state = "sexyclown"
 
 /obj/item/clothing/mask/gas/mime
 	name = "mime mask"
 	desc = "The traditional mime's mask. It has an eerie facial posture."
+	alloweat = 1
 	icon_state = "mime"
 	item_state = "mime"
 
 /obj/item/clothing/mask/gas/monkeymask
 	name = "monkey mask"
 	desc = "A mask used when acting as a monkey."
+	alloweat = 1
 	icon_state = "monkeymask"
 	item_state = "monkeymask"
 
 /obj/item/clothing/mask/gas/sexymime
 	name = "sexy mime mask"
 	desc = "A traditional female mime's mask."
+	alloweat = 1
 	icon_state = "sexymime"
 	item_state = "sexymime"
 
@@ -245,4 +285,5 @@
 /obj/item/clothing/mask/gas/owl_mask
 	name = "owl mask"
 	desc = "Twoooo!"
+	alloweat = 1
 	icon_state = "owl"

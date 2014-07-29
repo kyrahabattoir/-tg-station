@@ -85,9 +85,10 @@ var/list/possible_changeling_IDs = list("Alpha","Beta","Gamma","Delta","Epsilon"
 	return
 
 /datum/game_mode/changeling/make_antag_chance(var/mob/living/carbon/human/character) //Assigns changeling to latejoiners
-	if(changelings.len >= round(joined_player_list.len / config.changeling_scaling_coeff) + 1) //Caps number of latejoin antagonists
+	var/changelingcap = round(joined_player_list.len / config.changeling_scaling_coeff)
+	if(changelings.len >= changelingcap) //Caps number of latejoin antagonists
 		return
-	if (prob(100/config.changeling_scaling_coeff))
+	if(changelings.len <= (changelingcap - 2) || prob(100 / config.changeling_scaling_coeff))
 		if(character.client.prefs.be_special & BE_CHANGELING)
 			if(!jobban_isbanned(character.client, "changeling") && !jobban_isbanned(character.client, "Syndicate"))
 				if(!(character.job in ticker.mode.restricted_jobs))
@@ -102,7 +103,7 @@ var/list/possible_changeling_IDs = list("Alpha","Beta","Gamma","Delta","Epsilon"
 
 	var/datum/objective/absorb/absorb_objective = new
 	absorb_objective.owner = changeling
-	absorb_objective.gen_amount_goal(5, 7)
+	absorb_objective.gen_amount_goal(6, 8)
 	changeling.objectives += absorb_objective
 
 	var/datum/objective/assassinate/kill_objective = new
@@ -131,7 +132,7 @@ var/list/possible_changeling_IDs = list("Alpha","Beta","Gamma","Delta","Epsilon"
 
 /datum/game_mode/proc/greet_changeling(var/datum/mind/changeling, var/you_are=1)
 	if (you_are)
-		changeling.current << "<b>\red You are a changeling!</b>"
+		changeling.current << "<b>\red You are a changeling! You have absorbed and taken the form of a human.</b>"
 	changeling.current << "<b>\red Use say \":g message\" to communicate with your fellow changelings.</b>"
 	changeling.current << "<b>You must complete the following tasks:</b>"
 
@@ -219,10 +220,11 @@ var/list/possible_changeling_IDs = list("Alpha","Beta","Gamma","Delta","Epsilon"
 /datum/changeling //stores changeling powers, changeling recharge thingie, changeling absorbed DNA and changeling ID (for changeling hivemind)
 	var/list/absorbed_dna = list()
 	var/dna_max = 4 //How many extra DNA strands the changeling can store for transformation.
-	var/absorbedcount = 0
+	var/absorbedcount = 1 //We would require at least 1 sample of compatible DNA to have taken on the form of a human.
 	var/chem_charges = 20
 	var/chem_storage = 50
 	var/chem_recharge_rate = 0.5
+	var/chem_recharge_slowdown = 0
 	var/sting_range = 2
 	var/changelingID = "Changeling"
 	var/geneticdamage = 0
@@ -231,6 +233,8 @@ var/list/possible_changeling_IDs = list("Alpha","Beta","Gamma","Delta","Epsilon"
 	var/purchasedpowers = list()
 	var/mimicing = ""
 	var/canrespec = 0
+	var/datum/dna/chosen_dna
+	var/obj/effect/proc_holder/changeling/sting/chosen_sting
 
 /datum/changeling/New(var/gender=FEMALE)
 	..()
@@ -247,52 +251,33 @@ var/list/possible_changeling_IDs = list("Alpha","Beta","Gamma","Delta","Epsilon"
 
 
 /datum/changeling/proc/regenerate()
-	chem_charges = min(max(0, chem_charges+chem_recharge_rate), chem_storage)
+	chem_charges = min(max(0, chem_charges + chem_recharge_rate - chem_recharge_slowdown), chem_storage)
 	geneticdamage = max(0, geneticdamage-1)
 
 
-/datum/changeling/proc/GetDNA(var/dna_owner)
-	var/datum/dna/chosen_dna
+/datum/changeling/proc/get_dna(var/dna_owner)
 	for(var/datum/dna/DNA in absorbed_dna)
 		if(dna_owner == DNA.real_name)
-			chosen_dna = DNA
-			break
-	return chosen_dna
+			return DNA
 
-
-//Checks if the target DNA is valid and absorbable.
-/datum/changeling/proc/can_absorb_dna(mob/living/carbon/T, mob/living/carbon/U)
-	if(absorbed_dna[1] == U.dna)//If our current DNA is the stalest, we gotta ditch it.
-		U << "<span class='warning'>We have reached our capacity to store genetic information! We must transform before absorbing more.</span>"
-		return 0
-
-	if(T)
-		if(NOCLONE in T.mutations || HUSK in T.mutations)
-			U << "<span class='warning'>DNA of [T] is ruined beyond usability!</span>"
-			return 0
-
-		if(!ishuman(T))//Absorbing monkeys is entirely possible, but it can cause issues with transforming. That's what lesser form is for anyway!
-			U << "<span class='warning'>We could gain no benefit from absorbing a lesser creature.</span>"
-			return 0
-
-		if(T.dna in absorbed_dna)
-			U << "<span class='warning'>We already have that DNA in storage.</span>"
-			return 0
-
-		if(!check_dna_integrity(T))
-			U << "<span class='warning'>[T] is not compatible with our biology.</span>"
-			return 0
-
+/datum/changeling/proc/can_absorb_dna(var/mob/living/carbon/user, var/mob/living/carbon/target)
+	if(absorbed_dna[1] == user.dna)//If our current DNA is the stalest, we gotta ditch it.
+		user << "<span class='warning'>We have reached our capacity to store genetic information! We must transform before absorbing more.</span>"
+		return
+	if(!target)
+		return
+	if(NOCLONE in target.mutations || HUSK in target.mutations)
+		user << "<span class='warning'>DNA of [target] is ruined beyond usability!</span>"
+		return
+	if(!ishuman(target))//Absorbing monkeys is entirely possible, but it can cause issues with transforming. That's what lesser form is for anyway!
+		user << "<span class='warning'>We could gain no benefit from absorbing a lesser creature.</span>"
+		return
+	var/datum/dna/tDna = target.dna
+	for(var/datum/dna/D in absorbed_dna)
+		if(tDna.is_same_as(D))
+			user << "<span class='warning'>We already have that DNA in storage.</span>"
+			return
+	if(!check_dna_integrity(target))
+		user << "<span class='warning'>[target] is not compatible with our biology.</span>"
+		return
 	return 1
-
-
-//Absorbs the target DNA.
-/datum/changeling/proc/absorb_dna(mob/living/carbon/T)
-	shuffle_dna()
-	T.dna.real_name = T.real_name //Set this again, just to be sure that it's properly set.
-	absorbed_dna |= T.dna //And add the target DNA to our absorbed list.
-	absorbedcount++ //all that done, let's increment the objective counter.
-
-/datum/changeling/proc/shuffle_dna()//boots out the stalest DNA.
-	if(absorbed_dna.len)
-		absorbed_dna.Cut(1,2)

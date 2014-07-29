@@ -24,37 +24,25 @@
 	speed = -1
 	stop_automated_movement = 1
 	status_flags = 0
-	faction = "cult"
+	faction = list("cult")
 	status_flags = CANPUSH
 
 
-	Life()
-		..()
-		if(stat == 2)
-			new /obj/item/weapon/ectoplasm (src.loc)
-			for(var/mob/M in viewers(src, null))
-				if((M.client && !( M.blinded )))
-					M.show_message("\red [src] lets out a contented sigh as their form unwinds. ")
-					ghostize()
-			del src
-			return
-
-
-	attackby(var/obj/item/O as obj, var/mob/user as mob)  //Marker -Agouri
-		if(istype(O, /obj/item/device/soulstone))
-			O.transfer_soul("SHADE", src, user)
-		else
-			if(O.force)
-				var/damage = O.force
-				if (O.damtype == HALLOSS)
-					damage = 0
-				health -= damage
-				for(var/mob/M in viewers(src, null))
-					if ((M.client && !( M.blinded )))
-						M.show_message("\red \b [src] has been attacked with [O] by [user]. ")
-			else
-				usr << "\red This weapon is ineffective, it does no damage."
-				for(var/mob/M in viewers(src, null))
-					if ((M.client && !( M.blinded )))
-						M.show_message("\red [user] gently taps [src] with [O]. ")
+/mob/living/simple_animal/shade/Life()
+	..()
+	if(stat == 2)
+		new /obj/item/weapon/ectoplasm (src.loc)
+		for(var/mob/M in viewers(src, null))
+			M.visible_message("<span class='warning'>[src] lets out a contented sigh as their form unwinds.</span>")
+		ghostize()
+		qdel(src)
 		return
+
+
+/mob/living/simple_animal/shade/attackby(var/obj/item/O as obj, var/mob/user as mob)  //Marker -Agouri
+	if(istype(O, /obj/item/device/soulstone))
+		var/obj/item/device/soulstone/SS = O
+		SS.transfer_soul("SHADE", src, user)
+	else
+		..()
+	return

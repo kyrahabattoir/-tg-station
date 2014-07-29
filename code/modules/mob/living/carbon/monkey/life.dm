@@ -11,8 +11,8 @@
 
 /mob/living/carbon/monkey/Life()
 	set invisibility = 0
-	set background = 1
-	if (monkeyizing)	return
+	set background = BACKGROUND_ENABLED
+	if (notransform)	return
 	..()
 
 	var/datum/gas_mixture/environment // Added to prevent null location errors-- TLE
@@ -67,7 +67,7 @@
 		G.process()
 
 	if(!client && stat == CONSCIOUS)
-		if(prob(33) && canmove && isturf(loc))
+		if(prob(33) && canmove && isturf(loc) && !pulledby && !grabbed_by.len)
 			step(src, pick(cardinal))
 		if(prob(1))
 			emote(pick("scratch","jump","roll","tail"))
@@ -455,7 +455,7 @@
 				AdjustStunned(-1)
 
 			if(weakened)
-				weakened = max(weakened-1,0)	//before you get mad Rockdtben: I done this so update_canmove isn't called multiple times
+				weakened = max(weakened-1,0)
 
 			if(stuttering)
 				stuttering = max(stuttering-1, 0)
@@ -465,6 +465,8 @@
 
 			if(druggy)
 				druggy = max(druggy-1, 0)
+
+			CheckStamina()
 		return 1
 
 
@@ -482,6 +484,8 @@
 			sight &= ~SEE_OBJS
 			see_in_dark = 2
 			see_invisible = SEE_INVISIBLE_LIVING
+			if(see_override)
+				see_invisible = see_override
 
 		if (healths)
 			if (stat != 2)
@@ -507,8 +511,11 @@
 		if(pressure)
 			pressure.icon_state = "pressure[pressure_alert]"
 
-		if(pullin)	pullin.icon_state = "pull[pulling ? 1 : 0]"
-
+		if(pullin)
+			if(pulling)
+				pullin.icon_state = "pull"
+			else
+				pullin.icon_state = "pull0"
 
 		if (toxin)	toxin.icon_state = "tox[toxins_alert ? 1 : 0]"
 		if (oxygen) oxygen.icon_state = "oxy[oxygen_alert ? 1 : 0]"
@@ -574,6 +581,9 @@
 	proc/handle_changeling()
 		if(mind && mind.changeling)
 			mind.changeling.regenerate()
+			hud_used.lingchemdisplay.invisibility = 0
+			hud_used.lingchemdisplay.maptext = "<div align='center' valign='middle' style='position:relative; top:0px; left:6px'> <font color='#dd66dd'>[src.mind.changeling.chem_charges]</font></div>"
+
 
 ///FIRE CODE
 	handle_fire()

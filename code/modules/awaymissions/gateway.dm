@@ -118,6 +118,7 @@ obj/machinery/gateway/centerstation/process()
 	if(!ready)		return
 	if(!active)		return
 	if(!awaygate)	return
+
 	if(awaygate.calibrated)
 		M.loc = get_step(awaygate.loc, SOUTH)
 		M.dir = SOUTH

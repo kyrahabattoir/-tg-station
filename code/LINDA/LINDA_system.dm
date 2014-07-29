@@ -16,7 +16,7 @@ datum/controller/air_system
 
 
 /datum/controller/air_system/proc/setup()
-	set background = 1
+	set background = BACKGROUND_ENABLED
 	world << "\red \b Processing Geometry..."
 	sleep(1)
 
@@ -32,15 +32,35 @@ datum/controller/air_system
 	if(kill_air)
 		return 1
 
-	for(var/i=0,i<speed,i++)
-		current_cycle++
-
-		process_active_turfs()
-		process_excited_groups()
-		process_high_pressure_delta()
-		process_hotspots()
-		process_super_conductivity()
+	if(speed > 1)
+		for(var/i=0,i<speed,i++)
+			spawn((10/speed)*i)
+				process_air()
+	else
+		process_air()
 	return 1
+
+/datum/controller/air_system/proc/process_air()
+	current_cycle++
+	var/timer = world.timeofday
+	process_active_turfs()
+	master_controller.air_turfs = (world.timeofday - timer) / 10
+
+	timer = world.timeofday
+	process_excited_groups()
+	master_controller.air_groups = (world.timeofday - timer) / 10
+
+	timer = world.timeofday
+	process_high_pressure_delta()
+	master_controller.air_highpressure = (world.timeofday - timer) / 10
+
+	timer = world.timeofday
+	process_hotspots()
+	master_controller.air_hotspots = (world.timeofday - timer) / 10
+
+	timer = world.timeofday
+	process_super_conductivity()
+	master_controller.air_superconductivity = (world.timeofday - timer) / 10
 
 /datum/controller/air_system/proc/process_hotspots()
 	for(var/obj/effect/hotspot/H in hotspots)
@@ -104,19 +124,12 @@ datum/controller/air_system
 
 /datum/controller/air_system/proc/process_excited_groups()
 	for(var/datum/excited_group/EG in excited_groups)
-		if(EG.breakdown)
-			EG.breakdown_cooldown ++
-		else
-			EG.breakdown_cooldown = 0
-
-		if(EG.breakdown_cooldown > 10)
-			if(EG.self_compare())
-				EG.dismantle()
+		EG.breakdown_cooldown ++
 		if(EG.breakdown_cooldown == 10)
-			if(!EG.self_compare())
-				EG.reset_cooldowns()
 			EG.self_breakdown()
-		EG.breakdown = 1
+			return
+		if(EG.breakdown_cooldown > 20)
+			EG.dismantle()
 
 /turf/proc/CanAtmosPass(var/turf/T)
 	if(!istype(T))	return 0
@@ -200,14 +213,21 @@ turf/CanPass(atom/movable/mover, turf/target, height=1.5,air_group=0)
 			T.atmos_adjacent_turfs &= ~counterdir
 
 /atom/movable/proc/air_update_turf(var/command = 0)
-	if(istype(loc,/turf))
-		for(var/turf/T in locs) // used by double wide doors and other nonexistant multitile structures
-			if(command)
-				T.CalculateAdjacentTurfs()
-			if(air_master)
-				air_master.add_to_active(T,command)
+	if(!istype(loc,/turf) && command)
+		return
+	for(var/turf/T in locs) // used by double wide doors and other nonexistant multitile structures
+		T.air_update_turf(command)
 
+/turf/proc/air_update_turf(var/command = 0)
+	if(command)
+		CalculateAdjacentTurfs()
+	if(air_master)
+		air_master.add_to_active(src,command)
 
+/atom/movable/proc/move_update_air(var/turf/T)
+    if(istype(T,/turf))
+        T.air_update_turf(1)
+    air_update_turf(1)
 
 /atom/movable/proc/atmos_spawn_air(var/text, var/amount) //because a lot of people loves to copy paste awful code lets just make a easy proc to spawn your plasma fires
 	var/turf/simulated/T = get_turf(src)
@@ -216,7 +236,7 @@ turf/CanPass(atom/movable/mover, turf/target, height=1.5,air_group=0)
 	T.atmos_spawn_air(text, amount)
 
 var/const/SPAWN_HEAT = 1
-
+var/const/SPAWN_20C = 2
 var/const/SPAWN_TOXINS = 4
 var/const/SPAWN_OXYGEN = 8
 var/const/SPAWN_CO2 = 16
@@ -231,6 +251,9 @@ var/const/SPAWN_AIR = 256
 		return
 
 	var/datum/gas_mixture/G = new
+
+	if(flag & SPAWN_20C)
+		G.temperature = T20C
 
 	if(flag & SPAWN_HEAT)
 		G.temperature += 1000

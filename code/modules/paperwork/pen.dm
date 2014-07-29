@@ -15,12 +15,11 @@
 	icon = 'icons/obj/bureaucracy.dmi'
 	icon_state = "pen"
 	item_state = "pen"
-	flags = FPRINT | TABLEPASS
 	slot_flags = SLOT_BELT | SLOT_EARS
 	throwforce = 0
 	w_class = 1.0
-	throw_speed = 7
-	throw_range = 15
+	throw_speed = 3
+	throw_range = 7
 	m_amt = 10
 	pressure_resistance = 2
 	var/colour = "black"	//what colour the ink is!
@@ -42,60 +41,35 @@
 	colour = "white"
 
 
-/obj/item/weapon/pen/attack(mob/M, mob/user)
-	if(!ismob(M))
+/obj/item/weapon/pen/attack(mob/living/M, mob/user)
+	if(!istype(M))
 		return
 
-	user << "<span class='warning'>You stab [M] with the pen.</span>"
-	M << "\red You feel a tiny prick!"
+	if(M.can_inject(user, 1))
+		user << "<span class='warning'>You stab [M] with the pen.</span>"
+		M << "\red You feel a tiny prick!"
+		. = 1
 
-	M.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has been stabbed with [name]  by [user.name] ([user.ckey])</font>")
-	user.attack_log += text("\[[time_stamp()]\] <font color='red'>Used the [name] to stab [M.name] ([M.ckey])</font>")
-	log_attack("<font color='red'>[user.name] ([user.ckey]) Used the [name] to stab [M.name] ([M.ckey])</font>")
-
+	add_logs(user, M, "stabbed", object="[name]")
 
 /*
- * Sleepy Pens
+ * Sleepypens
  */
-/obj/item/weapon/pen/sleepypen
-	desc = "It's a black ink pen with a sharp point and a carefully engraved \"Waffle Co.\""
+/obj/item/weapon/pen/sleepy
 	origin_tech = "materials=2;syndicate=5"
 
 
-/obj/item/weapon/pen/sleepypen/New()
-	create_reagents(30)
-	reagents.add_reagent("chloralhydrate", 22)	//Used to be 100 sleep toxin	//30 Chloral seems to be fatal, reducing it to 22.
-	..()
-
-
-/obj/item/weapon/pen/sleepypen/attack(mob/M, mob/user)
+/obj/item/weapon/pen/sleepy/attack(mob/living/M, mob/user)
 	if(!istype(M))	return
 
-	..()
-	if(reagents.total_volume)
-		if(M.reagents)
-			reagents.trans_to(M, 30) //used to be 150
+	if(..())
+		if(reagents.total_volume)
+			if(M.reagents)
+				reagents.trans_to(M, 50)
 
 
-/*
- * Parapens
- */
- /obj/item/weapon/pen/paralysis
-	origin_tech = "materials=2;syndicate=5"
-
-
-/obj/item/weapon/pen/paralysis/attack(mob/M, mob/user)
-	if(!istype(M))	return
-
-	..()
-	if(reagents.total_volume)
-		if(M.reagents)
-			reagents.trans_to(M, 50)
-
-
-/obj/item/weapon/pen/paralysis/New()
-	create_reagents(50)
-	reagents.add_reagent("zombiepowder", 10)
-	reagents.add_reagent("impedrezene", 25)
-	reagents.add_reagent("cryptobiolin", 15)
+/obj/item/weapon/pen/sleepy/New()
+	create_reagents(60)
+	reagents.add_reagent("stoxin", 30)
+	reagents.add_reagent("mutetoxin", 30)
 	..()

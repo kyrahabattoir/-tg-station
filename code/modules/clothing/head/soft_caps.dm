@@ -2,7 +2,6 @@
 	name = "cargo cap"
 	desc = "It's a baseball hat in a tasteless yellow colour."
 	icon_state = "cargosoft"
-	flags = FPRINT|TABLEPASS|HEADCOVERSEYES
 	item_state = "helmet"
 	item_color = "cargo"
 	var/flipped = 0
@@ -74,6 +73,12 @@
 	icon_state = "purplesoft"
 	item_color = "purple"
 
+/obj/item/clothing/head/soft/black
+	name = "black cap"
+	desc = "It's a baseball hat in a tasteless black colour."
+	icon_state = "blacksoft"
+	item_color = "black"
+
 /obj/item/clothing/head/soft/rainbow
 	name = "rainbow cap"
 	desc = "It's a baseball hat in a bright rainbow of colors."
@@ -82,6 +87,6 @@
 
 /obj/item/clothing/head/soft/sec
 	name = "security cap"
-	desc = "It's baseball hat in tasteful red colour."
+	desc = "It's a robust baseball hat in tasteful red colour."
 	icon_state = "secsoft"
 	item_color = "sec"

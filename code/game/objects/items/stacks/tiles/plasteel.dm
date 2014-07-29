@@ -1,21 +1,22 @@
 /obj/item/stack/tile/plasteel
-	name = "floor tiles"
+	name = "floor tile"
 	singular_name = "floor tile"
 	desc = "Those could work as a pretty decent throwing weapon"
 	icon_state = "tile"
 	w_class = 3.0
 	force = 6.0
 	m_amt = 937.5
-	throwforce = 15.0
-	throw_speed = 5
-	throw_range = 20
-	flags = FPRINT | TABLEPASS | CONDUCT
+	throwforce = 10.0
+	throw_speed = 3
+	throw_range = 7
+	flags = CONDUCT
 	max_amount = 60
 
 /obj/item/stack/tile/plasteel/cyborg
 	desc = "The ground you walk on" //Not the usual floor tile desc as that refers to throwing, Cyborgs can't do that - RR
 	m_amt = 0 // All other Borg versions of items have no Metal or Glass - RR
-	max_amount = 50
+	is_cyborg = 1
+	cost = 125
 
 /obj/item/stack/tile/plasteel/New(var/loc, var/amount=null)
 	..()
@@ -28,7 +29,7 @@
 	if (istype(W, /obj/item/weapon/weldingtool))
 		var/obj/item/weapon/weldingtool/WT = W
 
-		if(amount < 4)
+		if(get_amount() < 4)
 			user << "\red You need at least four tiles to do this."
 			return
 

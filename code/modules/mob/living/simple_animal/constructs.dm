@@ -9,7 +9,8 @@
 	response_disarm = "flails at"
 	response_harm   = "punches"
 	icon_dead = "shade_dead"
-	speed = -1
+	icon = 'icons/mob/mob.dmi'
+	speed = 0
 	a_intent = "harm"
 	stop_automated_movement = 1
 	status_flags = CANPUSH
@@ -23,24 +24,23 @@
 	min_n2 = 0
 	max_n2 = 0
 	minbodytemp = 0
-	faction = "cult"
+	faction = list("cult")
 	var/list/construct_spells = list()
+	var/playstyle_string = "<B>You are a generic construct! Your job is to not exist.</B>"
 
 /mob/living/simple_animal/construct/New()
 	..()
 	name = text("[initial(name)] ([rand(1, 1000)])")
 	real_name = name
 	for(var/spell in construct_spells)
-		spell_list += new spell(src)
+		mob_spell_list += new spell(src)
 
 /mob/living/simple_animal/construct/Die()
 	..()
 	new /obj/item/weapon/ectoplasm (src.loc)
-	for(var/mob/M in viewers(src, null))
-		if((M.client && !( M.blinded )))
-			M.show_message("\red [src] collapses in a shattered heap. ")
+	visible_message("<span class='danger'>[src] collapses in a shattered heap.</span>")
 	ghostize()
-	del src
+	qdel(src)
 	return
 
 /mob/living/simple_animal/construct/examine()
@@ -91,33 +91,25 @@
 	if(istype(M, /mob/living/simple_animal/construct/builder))
 		health += 5
 		M.emote("mends some of \the <EM>[src]'s</EM> wounds.")
-	else
+	else if(src != M)
 		if(M.melee_damage_upper <= 0)
 			M.emote("[M.friendly] \the <EM>[src]</EM>")
 		else
 			if(M.attack_sound)
 				playsound(loc, M.attack_sound, 50, 1, 1)
-			for(var/mob/O in viewers(src, null))
-				O.show_message("<span class='attack'>\The <EM>[M]</EM> [M.attacktext] \the <EM>[src]</EM>!</span>", 1)
-			M.attack_log += text("\[[time_stamp()]\] <font color='red'>attacked [src.name] ([src.ckey])</font>")
-			src.attack_log += text("\[[time_stamp()]\] <font color='orange'>was attacked by [M.name] ([M.ckey])</font>")
+			visible_message("<span class='danger'>\The <EM>[M]</EM> [M.attacktext] \the <EM>[src]</EM>!</span>", \
+					"<span class='userdanger'>\The <EM>[M]</EM> [M.attacktext] \the <EM>[src]</EM>!</span>")
+			add_logs(M, src, "attacked", admin=0)
 			var/damage = rand(M.melee_damage_lower, M.melee_damage_upper)
 			adjustBruteLoss(damage)
 
-/mob/living/simple_animal/construct/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(O.force)
-		var/damage = O.force
-		if (O.damtype == HALLOSS)
-			damage = 0
-		adjustBruteLoss(damage)
-		for(var/mob/M in viewers(src, null))
-			if ((M.client && !( M.blinded )))
-				M.show_message("\red \b [src] has been attacked with [O] by [user]. ")
-	else
-		usr << "\red This weapon is ineffective, it does no damage."
-		for(var/mob/M in viewers(src, null))
-			if ((M.client && !( M.blinded )))
-				M.show_message("\red [user] gently taps [src] with [O]. ")
+/mob/living/simple_animal/construct/bullet_act(var/obj/item/projectile/Proj)
+	if(!Proj)
+		return
+	if(Proj.damage_type == BURN || Proj.damage_type == BRUTE)
+		adjustBruteLoss(Proj.damage)
+	Proj.on_hit(src, 0)
+	return 0
 
 
 
@@ -128,8 +120,7 @@
 /mob/living/simple_animal/construct/armoured
 	name = "Juggernaut"
 	real_name = "Juggernaut"
-	desc = "A possessed suit of armour driven by the will of the restless dead"
-	icon = 'icons/mob/mob.dmi'
+	desc = "A possessed suit of armour driven by the will of the restless dead."
 	icon_state = "behemoth"
 	icon_living = "behemoth"
 	maxHealth = 250
@@ -140,37 +131,20 @@
 	melee_damage_upper = 30
 	attacktext = "smashes their armoured gauntlet into"
 	speed = 3
-	wall_smash = 1
+	environment_smash = 2
 	attack_sound = 'sound/weapons/punch3.ogg'
 	status_flags = 0
+	force_threshold = 11
 	construct_spells = list(/obj/effect/proc_holder/spell/aoe_turf/conjure/lesserforcewall)
-
-/mob/living/simple_animal/construct/armoured/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(O.force)
-		if(O.force >= 11)
-			var/damage = O.force
-			if (O.damtype == HALLOSS)
-				damage = 0
-			adjustBruteLoss(damage)
-			for(var/mob/M in viewers(src, null))
-				if ((M.client && !( M.blinded )))
-					M.show_message("\red \b [src] has been attacked with [O] by [user]. ")
-		else
-			for(var/mob/M in viewers(src, null))
-				if ((M.client && !( M.blinded )))
-					M.show_message("\red \b [O] bounces harmlessly off of [src]. ")
-	else
-		usr << "\red This weapon is ineffective, it does no damage."
-		for(var/mob/M in viewers(src, null))
-			if ((M.client && !( M.blinded )))
-				M.show_message("\red [user] gently taps [src] with [O]. ")
-
+	playstyle_string = "<B>You are a Juggernaut. Though slow, your shell can withstand extreme punishment, \
+						create shield walls and even deflect energy weapons, and rip apart enemies and walls alike.</B>"
 
 /mob/living/simple_animal/construct/armoured/bullet_act(var/obj/item/projectile/P)
 	if(istype(P, /obj/item/projectile/energy) || istype(P, /obj/item/projectile/beam))
 		var/reflectchance = 80 - round(P.damage/3)
 		if(prob(reflectchance))
-			adjustBruteLoss(P.damage * 0.5)
+			if(P.damage_type == BURN || P.damage_type == BRUTE)
+				adjustBruteLoss(P.damage * 0.5)
 			visible_message("<span class='danger'>The [P.name] gets reflected by [src]'s shell!</span>", \
 							"<span class='userdanger'>The [P.name] gets reflected by [src]'s shell!</span>")
 
@@ -202,7 +176,6 @@
 	name = "Wraith"
 	real_name = "Wraith"
 	desc = "A wicked bladed shell contraption piloted by a bound spirit"
-	icon = 'icons/mob/mob.dmi'
 	icon_state = "floating"
 	icon_living = "floating"
 	maxHealth = 75
@@ -210,22 +183,20 @@
 	melee_damage_lower = 25
 	melee_damage_upper = 25
 	attacktext = "slashes"
-	speed = -1
+	speed = 0
 	see_in_dark = 7
 	attack_sound = 'sound/weapons/bladeslice.ogg'
 	construct_spells = list(/obj/effect/proc_holder/spell/targeted/ethereal_jaunt/shift)
+	playstyle_string = "<B>You are a Wraith. Though relatively fragile, you are fast, deadly, and even able to phase through walls.</B>"
 
 
 
 /////////////////////////////Artificer/////////////////////////
 
-
-
 /mob/living/simple_animal/construct/builder
 	name = "Artificer"
 	real_name = "Artificer"
 	desc = "A bulbous construct dedicated to building and maintaining The Cult of Nar-Sie's armies"
-	icon = 'icons/mob/mob.dmi'
 	icon_state = "artificer"
 	icon_living = "artificer"
 	maxHealth = 50
@@ -236,87 +207,38 @@
 	melee_damage_upper = 5
 	attacktext = "rams"
 	speed = 0
-	wall_smash = 1
+	environment_smash = 2
 	attack_sound = 'sound/weapons/punch2.ogg'
 	construct_spells = list(/obj/effect/proc_holder/spell/aoe_turf/conjure/construct/lesser,
 							/obj/effect/proc_holder/spell/aoe_turf/conjure/wall,
 							/obj/effect/proc_holder/spell/aoe_turf/conjure/floor,
 							/obj/effect/proc_holder/spell/aoe_turf/conjure/soulstone,
 							/obj/effect/proc_holder/spell/targeted/projectile/magic_missile/lesser)
+	playstyle_string = "<B>You are an Artificer. You are incredibly weak and fragile, but you are able to construct fortifications, \
+						use magic missile, repair allied constructs (by clicking on them), \
+						</B><I>and most important of all create new constructs</I><B> \
+						(Use your Artificer spell to summon a new construct shell and Summon Soulstone to create a new soulstone).</B>"
 
+/////////////////////////////Harvester/////////////////////////
 
-/////////////////////////////Behemoth/////////////////////////
+/mob/living/simple_animal/construct/harvester
+	name = "Harvester"
+	real_name = "Harvester"
+	desc = "A harbinger of Nar-Sie's enlightenment. It'll be all over soon."
+	icon_state = "harvester"
+	icon_living = "harvester"
+	maxHealth = 60
+	health = 60
+	melee_damage_lower = 1
+	melee_damage_upper = 5
+	attacktext = "prods"
+	speed = 0
+	environment_smash = 1
+	see_in_dark = 7
+	attack_sound = 'sound/weapons/tap.ogg'
+	construct_spells = list(/obj/effect/proc_holder/spell/targeted/smoke/disable)
+	playstyle_string = "<B>You are a Harvester. You are not strong, but your powers of domination will assist you in your role: \
+						Bring those who still cling to this world of illusion back to the Geometer so they may know Truth.</B>"
 
-
-/mob/living/simple_animal/construct/behemoth
-	name = "Behemoth"
-	real_name = "Behemoth"
-	desc = "The pinnacle of occult technology, Behemoths are the ultimate weapon in the Cult of Nar-Sie's arsenal."
-	icon = 'icons/mob/mob.dmi'
-	icon_state = "behemoth"
-	icon_living = "behemoth"
-	maxHealth = 750
-	health = 750
-	speak_emote = list("rumbles")
-	response_harm   = "harmlessly punches"
-	harm_intent_damage = 0
-	melee_damage_lower = 50
-	melee_damage_upper = 50
-	attacktext = "brutally crushes"
-	speed = 5
-	wall_smash = 1
-	attack_sound = 'sound/weapons/punch4.ogg'
-	var/energy = 0
-	var/max_energy = 1000
-
-/mob/living/simple_animal/construct/behemoth/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(O.force)
-		if(O.force >= 11)
-			var/damage = O.force
-			if (O.damtype == HALLOSS)
-				damage = 0
-			adjustBruteLoss(damage)
-			for(var/mob/M in viewers(src, null))
-				if ((M.client && !( M.blinded )))
-					M.show_message("\red \b [src] has been attacked with [O] by [user]. ")
-		else
-			for(var/mob/M in viewers(src, null))
-				if ((M.client && !( M.blinded )))
-					M.show_message("\red \b [O] bounces harmlessly off of [src]. ")
-	else
-		usr << "\red This weapon is ineffective, it does no damage."
-		for(var/mob/M in viewers(src, null))
-			if ((M.client && !( M.blinded )))
-				M.show_message("\red [user] gently taps [src] with [O]. ")
-
-
-
-////////////////Powers//////////////////
-
-
-/*
-/client/proc/summon_cultist()
-	set category = "Behemoth"
-	set name = "Summon Cultist (300)"
-	set desc = "Teleport a cultist to your location"
-	if (istype(usr,/mob/living/simple_animal/constructbehemoth))
-
-		if(usr.energy<300)
-			usr << "\red You do not have enough power stored!"
-			return
-
-		if(usr.stat)
-			return
-
-		usr.energy -= 300
-	var/list/mob/living/cultists = new
-	for(var/datum/mind/H in ticker.mode.cult)
-		if (istype(H.current,/mob/living))
-			cultists+=H.current
-			var/mob/cultist = input("Choose the one who you want to summon", "Followers of Geometer") as null|anything in (cultists - usr)
-			if(!cultist)
-				return
-			if (cultist == usr) //just to be sure.
-				return
-			cultist.loc = usr.loc
-			usr.visible_message("/red [cultist] appears in a flash of red light as [usr] glows with power")*/
+/mob/living/simple_animal/construct/harvester/Process_Spacemove(var/check_drift = 0)
+	return 1

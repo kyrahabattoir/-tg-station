@@ -119,7 +119,7 @@
 	if(istype(D, /obj/item/weapon/card/emag) && !emagged)
 		playsound(src.loc, 'sound/effects/sparks4.ogg', 75, 1)
 		emagged = 1
-		user << "\blue You vastly increase projector power and override the safety and security protocols."
+		user << "<span class='warning'>You vastly increase projector power and override the safety and security protocols.</span>"
 		user << "Warning.  Automatic shutoff and derezing protocols have been corrupted.  Please call Nanotrasen maintenance and do not use the simulator."
 		log_game("[key_name(usr)] emagged the Holodeck Control Console")
 		src.updateUsrDialog()
@@ -136,11 +136,7 @@
 	//		loadProgram(target)
 
 //This could all be done better, but it works for now.
-/obj/machinery/computer/HolodeckControl/Del()
-	emergencyShutdown()
-	..()
-
-/obj/machinery/computer/HolodeckControl/meteorhit(var/obj/O as obj)
+/obj/machinery/computer/HolodeckControl/Destroy()
 	emergencyShutdown()
 	..()
 
@@ -200,13 +196,12 @@
 	if(isobj(obj))
 		var/mob/M = obj.loc
 		if(ismob(M))
-			M.u_equip(obj)
-			M.update_icons()	//so their overlays update
+			M.unEquip(obj, 1) //Holoweapons should always drop.
 
 	if(!silent)
 		var/obj/oldobj = obj
 		visible_message("The [oldobj.name] fades away!")
-	del(obj)
+	qdel(obj)
 
 /obj/machinery/computer/HolodeckControl/proc/checkInteg(var/area/A)
 	for(var/turf/T in A)
@@ -226,7 +221,7 @@
 		if(world.time < (last_change + 15))//To prevent super-spam clicking, reduced process size and annoyance -Sieve
 			return
 		for(var/mob/M in range(3,src))
-			M.show_message("\b ERROR. Recalibrating projetion apparatus.")
+			M.show_message("\b ERROR. Recalibrating projection apparatus.")
 			last_change = world.time
 			return
 
@@ -237,10 +232,10 @@
 		derez(item)
 
 	for(var/obj/effect/decal/cleanable/blood/B in linkedholodeck)
-		del(B)
+		qdel(B)
 
 	for(var/mob/living/simple_animal/hostile/carp/C in linkedholodeck)
-		del(C)
+		qdel(C)
 
 	holographic_items = A.copy_contents_to(linkedholodeck , 1)
 
@@ -252,15 +247,16 @@
 		for(var/obj/effect/landmark/L in linkedholodeck)
 			if(L.name=="Atmospheric Test Start")
 				spawn(20)
-					var/turf/T = get_turf(L)
-					var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
-					s.set_up(2, 1, T)
-					s.start()
-					if(T)
-						T.temperature = 5000
-						T.hotspot_expose(50000,50000,1)
+					if(istype(target,/area/holodeck/source_burntest))
+						var/turf/T = get_turf(L)
+						var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
+						s.set_up(2, 1, T)
+						s.start()
+						if(T)
+							T.temperature = 5000
+							T.hotspot_expose(50000,50000,1)
 			if(L.name=="Holocarp Spawn")
-				new /mob/living/simple_animal/hostile/carp(L.loc)
+				new /mob/living/simple_animal/hostile/carp/holocarp(L.loc)
 
 
 /obj/machinery/computer/HolodeckControl/proc/emergencyShutdown()
@@ -329,12 +325,12 @@
 	if (istype(W, /obj/item/weapon/grab) && get_dist(src,user)<2)
 		var/obj/item/weapon/grab/G = W
 		if(G.state < GRAB_AGGRESSIVE)
-			user << "\red You need a better grip to do that!"
+			user << "<span class='danger'> You need a better grip to do that!</span>"
 			return
 		G.affecting.loc = src.loc
 		G.affecting.Weaken(5)
-		visible_message("\red [G.assailant] puts [G.affecting] on the table.")
-		del(W)
+		visible_message("<span class='danger'> [G.assailant] puts [G.affecting] on the table.</span>")
+		qdel(W)
 		return
 
 	if (istype(W, /obj/item/weapon/wrench))
@@ -356,21 +352,20 @@
 	flags = ON_BORDER
 
 
-/obj/structure/holowindow/Del()
-	..()
-
 /obj/item/weapon/holo
-	damtype = HALLOSS
+	damtype = STAMINA
 
 /obj/item/weapon/holo/esword
-	desc = "May the force be within you. Sorta"
+	name = "holographic energy sword"
+	desc = "May the force be with you. Sorta"
 	icon_state = "sword0"
 	force = 3.0
-	throw_speed = 1
+	throw_speed = 2
 	throw_range = 5
 	throwforce = 0
 	w_class = 2.0
-	flags = FPRINT | TABLEPASS | NOSHIELD
+	hitsound = "swing_hit"
+	flags = NOSHIELD
 	var/active = 0
 
 /obj/item/weapon/holo/esword/green
@@ -398,15 +393,16 @@
 		force = 30
 		icon_state = "sword[item_color]"
 		w_class = 4
-		playsound(user, 'sound/weapons/saberon.ogg', 50, 1)
-		user << "\blue [src] is now active."
+		hitsound = 'sound/weapons/blade1.ogg'
+		playsound(user, 'sound/weapons/saberon.ogg', 20, 1)
+		user << "<span class='warning'>[src] is now active.</span>"
 	else
 		force = 3
 		icon_state = "sword0"
 		w_class = 2
-		playsound(user, 'sound/weapons/saberoff.ogg', 50, 1)
-		user << "\blue [src] can now be concealed."
-	add_fingerprint(user)
+		hitsound = "swing_hit"
+		playsound(user, 'sound/weapons/saberoff.ogg', 20, 1)
+		user << "<span class='warning'>[src] can now be concealed.</span>"
 	return
 
 //BASKETBALL OBJECTS
@@ -426,13 +422,14 @@
 	desc = "Used for playing the most violent and degrading of childhood games."
 
 /obj/item/weapon/beach_ball/holoball/dodgeball/throw_impact(atom/hit_atom)
+	..()
 	if((ishuman(hit_atom)))
 		var/mob/living/carbon/M = hit_atom
 		playsound(src, 'sound/items/dodgeball.ogg', 50, 1)
-		M.apply_damage(10, HALLOSS)
+		M.apply_damage(10, STAMINA)
 		if(prob(5))
 			M.Weaken(3)
-			visible_message("\red [M] is knocked right off \his feet!", 3)
+			visible_message("<span class='danger'>[M] is knocked right off \his feet!</span>", 3)
 
 /obj/structure/holohoop
 	name = "basketball hoop"
@@ -447,16 +444,16 @@
 	if (istype(W, /obj/item/weapon/grab) && get_dist(src,user)<2)
 		var/obj/item/weapon/grab/G = W
 		if(G.state < GRAB_AGGRESSIVE)
-			user << "\red You need a better grip to do that!"
+			user << "<span class='danger'>You need a better grip to do that!</span>"
 			return
 		G.affecting.loc = src.loc
 		G.affecting.Weaken(5)
-		visible_message("\red [G.assailant] dunks [G.affecting] into the [src]!", 3)
-		del(W)
+		visible_message("<span class='danger'>[G.assailant] dunks [G.affecting] into the [src]!</span>", 3)
+		qdel(W)
 		return
 	else if (istype(W, /obj/item) && get_dist(src,user)<2)
 		user.drop_item(src)
-		visible_message("\blue [user] dunks [W] into the [src]!", 3)
+		visible_message("<span class='warning'> [user] dunks [W] into the [src]!</span>", 3)
 		return
 
 /obj/structure/holohoop/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)
@@ -466,9 +463,9 @@
 			return
 		if(prob(50))
 			I.loc = src.loc
-			visible_message("\blue Swish! \the [I] lands in \the [src].", 3)
+			visible_message("<span class='warning'> Swish! \the [I] lands in \the [src].</span>", 3)
 		else
-			visible_message("\red \the [I] bounces off of \the [src]'s rim!", 3)
+			visible_message("<span class='danger'> \the [I] bounces off of \the [src]'s rim!</span>", 3)
 		return 0
 	else
 		return ..(mover, target, height, air_group)
@@ -511,7 +508,7 @@
 
 	currentarea = get_area(src.loc)
 	if(!currentarea)
-		del(src)
+		qdel(src)
 
 	if(eventstarted)
 		usr << "The event has already begun!"
@@ -542,7 +539,7 @@
 	eventstarted = 1
 
 	for(var/obj/structure/holowindow/W in currentarea)
-		del(W)
+		qdel(W)
 
 	for(var/mob/M in currentarea)
 		M << "FIGHT!"

@@ -20,8 +20,11 @@
 	melee_damage_upper = 5
 	attacktext = "bites"
 	pass_flags = PASSTABLE
-	faction = "carp"
+	faction = list("hostile")
 	attack_sound = 'sound/weapons/bite.ogg'
+	environment_smash = 0
+	ventcrawler = 2
+
 
 	//Space bats need no air to fly in.
 	min_oxy = 0

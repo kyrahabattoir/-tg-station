@@ -12,7 +12,7 @@
 		evil_tree.icon_living = evil_tree.icon_state
 		evil_tree.icon_dead = evil_tree.icon_state
 		evil_tree.icon_gib = evil_tree.icon_state
-		del(xmas)
+		qdel(xmas) //b-but I don't want to delete xmas...
 
 //this is an example of a possible round-start event
 /datum/round_event_control/presents
@@ -31,9 +31,11 @@
 				new /obj/item/weapon/a_gift(T)
 	for(var/mob/living/simple_animal/corgi/Ian/Ian in mob_list)
 		Ian.place_on_head(new /obj/item/clothing/head/helmet/space/santahat(Ian))
+	for(var/obj/machinery/computer/security/telescreen/entertainment/Monitor in machines)
+		Monitor.icon_state = "entertainment_xmas"
 
 /datum/round_event/presents/announce()
-	command_alert("Ho Ho Ho, Merry Xmas!", "Unknown Transmission")
+	priority_announce("Ho Ho Ho, Merry Xmas!", "Unknown Transmission")
 
 
 /obj/item/weapon/toy/xmas_cracker
@@ -42,9 +44,6 @@
 	icon_state = "cracker"
 	desc = "Directions for use: Requires two people, one to pull each end."
 	var/cracked = 0
-
-/obj/item/weapon/toy/xmas_cracker/New()
-	..()
 
 /obj/item/weapon/toy/xmas_cracker/attack(mob/target, mob/user)
 	if( !cracked && istype(target,/mob/living/carbon/human) && (target.stat == CONSCIOUS) && !target.get_active_hand() )
@@ -78,5 +77,4 @@
 	icon_state = "xmashat"
 	desc = "A crappy paper hat that you are REQUIRED to wear."
 	flags_inv = 0
-	flags = FPRINT|TABLEPASS
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)

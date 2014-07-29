@@ -11,7 +11,7 @@
 	fire_dam_coeff = 0.7
 	brute_dam_coeff = 0.5
 //	weight = 1.0E7
-	req_one_access = list(access_security, access_forensics_lockers)
+	req_access = list(access_security)
 	var/mob/living/carbon/target
 	var/oldtarget_name
 	var/threatlevel = 0
@@ -19,7 +19,9 @@
 	var/last_found //There's a delay
 	var/frustration = 0
 //	var/emagged = 0 //Emagged Secbots view everyone as a criminal
-	var/idcheck = 0 //If false, all station IDs are authorized for weapons.
+	var/declare_arrests = 1 //When making an arrest, should it notify everyone wearing sechuds?
+	var/idcheck = 0 //If true, arrest people with no IDs
+	var/weaponscheck = 0 //If true, arrest people for weapons if they don't have access
 	var/check_records = 1 //Does it check security records?
 	var/arrest_type = 0 //If true, don't handcuff
 
@@ -37,6 +39,11 @@
 	var/beacon_freq = 1445		// navigation beacon frequency
 	var/control_freq = 1447		// bot control frequency
 
+	//List of weapons that secbots will not arrest for
+	var/safe_weapons = list(\
+		/obj/item/weapon/gun/energy/laser/bluetag,\
+		/obj/item/weapon/gun/energy/laser/redtag,\
+		/obj/item/weapon/gun/energy/laser/practice)
 
 	var/turf/patrol_target	// this is turf to navigate to (location of beacon)
 	var/new_destination		// pending new destination (waiting for beacon response)
@@ -55,11 +62,17 @@
 	name = "Officer Beep O'sky"
 	desc = "It's Officer Beep O'sky! Powered by a potato and a shot of whiskey."
 	idcheck = 0
+	weaponscheck = 0
 	auto_patrol = 1
 
+/obj/machinery/bot/secbot/pingsky
+	name = "Officer Pingsky"
+	desc = "It's Officer Pingsky! Delegated to satellite guard duty for harbouring anti-human sentiment."
+	declare_arrests = 0
+
 /obj/item/weapon/secbot_assembly
-	name = "helmet/signaler assembly"
-	desc = "Some sort of bizarre assembly."
+	name = "incomplete securitron assembly"
+	desc = "Some sort of bizarre assembly made from a proximity sensor, helmet, and signaler."
 	icon = 'icons/obj/aibots.dmi'
 	icon_state = "helmet_signaler"
 	item_state = "helmet"
@@ -68,17 +81,16 @@
 
 
 
-/obj/machinery/bot/secbot
-	New()
-		..()
-		src.icon_state = "secbot[src.on]"
-		spawn(3)
-			src.botcard = new /obj/item/weapon/card/id(src)
-			var/datum/job/detective/J = new/datum/job/detective
-			src.botcard.access = J.get_access()
-			if(radio_controller)
-				radio_controller.add_object(src, control_freq, filter = RADIO_SECBOT)
-				radio_controller.add_object(src, beacon_freq, filter = RADIO_NAVBEACONS)
+/obj/machinery/bot/secbot/New()
+	..()
+	src.icon_state = "secbot[src.on]"
+	spawn(3)
+		src.botcard = new /obj/item/weapon/card/id(src)
+		var/datum/job/detective/J = new /datum/job/detective
+		src.botcard.access = J.get_access()
+		if(radio_controller)
+			radio_controller.add_object(src, control_freq, filter = RADIO_SECBOT)
+			radio_controller.add_object(src, beacon_freq, filter = RADIO_NAVBEACONS)
 
 
 /obj/machinery/bot/secbot/turn_on()
@@ -105,30 +117,34 @@
 
 /obj/machinery/bot/secbot/interact(mob/user as mob)
 	var/dat
-
+	dat += hack(user)
 	dat += text({"
-<TT><B>Automatic Security Unit v1.3</B></TT><BR><BR>
 Status: []<BR>
 Behaviour controls are [src.locked ? "locked" : "unlocked"]<BR>
-Maintenance panel panel is [src.open ? "opened" : "closed"]"},
+Maintenance panel panel is [src.open ? "opened" : "closed"]<BR>"},
 
 "<A href='?src=\ref[src];power=1'>[src.on ? "On" : "Off"]</A>" )
 
 	if(!src.locked || issilicon(user))
 		dat += text({"<BR>
-Check for Weapon Authorization: []<BR>
-Check Security Records: []<BR>
+Arrest for No ID: []<BR>
+Arrest for Unauthorized Weapons: []<BR>
+Arrest for Warrant: []<BR>
+<BR>
 Operating Mode: []<BR>
+Report Arrests[]<BR>
 Auto Patrol: []"},
 
 "<A href='?src=\ref[src];operation=idcheck'>[src.idcheck ? "Yes" : "No"]</A>",
+"<A href='?src=\ref[src];operation=weaponscheck'>[src.weaponscheck ? "Yes" : "No"]</A>",
 "<A href='?src=\ref[src];operation=ignorerec'>[src.check_records ? "Yes" : "No"]</A>",
 "<A href='?src=\ref[src];operation=switchmode'>[src.arrest_type ? "Detain" : "Arrest"]</A>",
+"<A href='?src=\ref[src];operation=declarearrests'>[src.declare_arrests ? "Yes" : "No"]</A>",
 "<A href='?src=\ref[src];operation=patrol'>[auto_patrol ? "On" : "Off"]</A>" )
 
-
-	user << browse("<HEAD><TITLE>Securitron v1.3 controls</TITLE></HEAD>[dat]", "window=autosec")
-	onclose(user, "autosec")
+	var/datum/browser/popup = new(user, "autosec", "Securitron v1.5 controls")
+	popup.set_content(dat)
+	popup.open()
 	return
 
 /obj/machinery/bot/secbot/Topic(href, href_list)
@@ -136,7 +152,7 @@ Auto Patrol: []"},
 		return
 	usr.set_machine(src)
 	if((href_list["power"]) && (src.allowed(usr)))
-		if(src.on)
+		if (src.on && !src.emagged)
 			turn_off()
 		else
 			turn_on()
@@ -145,6 +161,9 @@ Auto Patrol: []"},
 	switch(href_list["operation"])
 		if("idcheck")
 			src.idcheck = !src.idcheck
+			src.updateUsrDialog()
+		if("weaponscheck")
+			src.weaponscheck = !src.weaponscheck
 			src.updateUsrDialog()
 		if("ignorerec")
 			src.check_records = !src.check_records
@@ -156,6 +175,21 @@ Auto Patrol: []"},
 			auto_patrol = !auto_patrol
 			mode = SECBOT_IDLE
 			updateUsrDialog()
+		if("declarearrests")
+			src.declare_arrests = !src.declare_arrests
+			src.updateUsrDialog()
+		if("hack")
+			if(!src.emagged)
+				src.emagged = 2
+				src.hacked = 1
+				usr << "<span class='warning'>You overload [src]'s target identification system.</span>"
+			else if(!src.hacked)
+				usr << "<span class='userdanger'>[src] refuses to accept your authority!</span>"
+			else
+				src.emagged = 0
+				src.hacked = 0
+				usr << "<span class='notice'>You reboot [src] and restore the target identification.</span>"
+			src.updateUsrDialog()
 
 /obj/machinery/bot/secbot/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if(istype(W, /obj/item/weapon/card/id)||istype(W, /obj/item/device/pda))
@@ -171,9 +205,14 @@ Auto Patrol: []"},
 				user << "\red Access denied."
 	else
 		..()
-		if(!istype(W, /obj/item/weapon/screwdriver) && (W.force) && (!src.target))
-			src.target = user
-			src.mode = SECBOT_HUNT
+		if(istype(W, /obj/item/weapon/weldingtool) && user.a_intent != "harm") // Any intent but harm will heal, so we shouldn't get angry.
+			return
+		if(!istype(W, /obj/item/weapon/screwdriver) && (W.force) && (!src.target) ) // Added check for welding tool to fix #2432. Welding tool behavior is handled in superclass.
+			threatlevel = user.assess_threat(src)
+			threatlevel += 6
+			if(threatlevel > 0)
+				src.target = user
+				src.mode = SECBOT_HUNT
 
 /obj/machinery/bot/secbot/Emag(mob/user as mob)
 	..()
@@ -186,13 +225,14 @@ Auto Patrol: []"},
 		if(user) src.oldtarget_name = user.name
 		src.last_found = world.time
 		src.anchored = 0
+		src.declare_arrests = 0
 		src.emagged = 2
 		src.on = 1
 		src.icon_state = "secbot[src.on]"
 		mode = SECBOT_IDLE
 
 /obj/machinery/bot/secbot/process()
-	set background = 1
+	set background = BACKGROUND_ENABLED
 
 	if(!src.on)
 		return
@@ -215,11 +255,11 @@ Auto Patrol: []"},
 				src.target = null
 				src.last_found = world.time
 				src.frustration = 0
-				src.mode = 0
+				src.mode = SECBOT_IDLE
 				walk_to(src,0)
 
 			if(target)		// make sure target exists
-				if(get_dist(src, src.target) <= 1)		// if right next to perp
+				if(src.Adjacent(target) && isturf(src.target.loc))				// if right next to perp
 					playsound(src.loc, 'sound/weapons/Egloves.ogg', 50, 1, -1)
 					src.icon_state = "secbot-c"
 					spawn(2)
@@ -227,18 +267,23 @@ Auto Patrol: []"},
 					var/mob/living/carbon/M = src.target
 					var/maxstuns = 4
 					if(istype(M, /mob/living/carbon/human))
-						if(M.stuttering < 10 && (!(HULK in M.mutations)))
-							M.stuttering = 10
-						M.Stun(10)
-						M.Weaken(10)
+						if(M.stuttering < 5 && (!(HULK in M.mutations)))
+							M.stuttering = 5
+						M.Stun(5)
+						M.Weaken(5)
 					else
-						M.Weaken(10)
-						M.stuttering = 10
-						M.Stun(10)
+						M.Weaken(5)
+						M.stuttering = 5
+						M.Stun(5)
+
+					if(declare_arrests)
+						declare_arrest()
+					target.visible_message("<span class='danger'>[src.target] has been stunned by [src]!</span>",\
+											"<span class='userdanger'>[src.target] has been stunned by [src]!</span>")
+
 					maxstuns--
 					if(maxstuns <= 0)
 						target = null
-					visible_message("\red <B>[src.target] has been stunned by [src]!</B>")
 
 					mode = SECBOT_PREP_ARREST
 					src.anchored = 1
@@ -261,11 +306,12 @@ Auto Patrol: []"},
 				mode = SECBOT_HUNT
 				return
 
-			if(istype(src.target,/mob/living/carbon))
+			if(iscarbon(target) && target.canBeHandcuffed())
 				if(!src.target.handcuffed && !src.arrest_type)
 					playsound(src.loc, 'sound/weapons/handcuffs.ogg', 30, 1, -2)
 					mode = SECBOT_ARREST
-					visible_message("\red <B>[src] is trying to put handcuffs on [src.target]!</B>")
+					target.visible_message("<span class='danger'>[src] is trying to put handcuffs on [src.target]!</span>",\
+											"<span class='userdanger'>[src] is trying to put handcuffs on [src.target]!</span>")
 
 					spawn(60)
 						if(get_dist(src, src.target) <= 1)
@@ -339,7 +385,6 @@ Auto Patrol: []"},
 
 
 // perform a single patrol step
-
 /obj/machinery/bot/secbot/proc/patrol_step()
 
 	if(loc == patrol_target)		// reached target
@@ -569,10 +614,7 @@ Auto Patrol: []"},
 		if((C.name == src.oldtarget_name) && (world.time < src.last_found + 100))
 			continue
 
-		if(istype(C, /mob/living/carbon/human))
-			src.threatlevel = src.assess_perp(C)
-		else if((src.idcheck) && (istype(C, /mob/living/carbon/monkey)))
-			src.threatlevel = 4
+		src.threatlevel = C.assess_threat(src)
 
 		if(!src.threatlevel)
 			continue
@@ -590,51 +632,11 @@ Auto Patrol: []"},
 		else
 			continue
 
-
-//If the security records say to arrest them, arrest them
-//Or if they have weapons and aren't security, arrest them.
-/obj/machinery/bot/secbot/proc/assess_perp(mob/living/carbon/human/perp as mob)
-	var/threatcount = 0
-
-	if(src.emagged == 2) return 10 //Everyone is a criminal!
-
-	if(src.idcheck && !src.allowed(perp))
-
-		if(istype(perp.l_hand, /obj/item/weapon/gun) || istype(perp.l_hand, /obj/item/weapon/melee))
-			if(!istype(perp.l_hand, /obj/item/weapon/gun/energy/laser/bluetag) \
-			&& !istype(perp.l_hand, /obj/item/weapon/gun/energy/laser/redtag) \
-			&& !istype(perp.l_hand, /obj/item/weapon/gun/energy/laser/practice))
-				threatcount += 4
-
-		if(istype(perp.r_hand, /obj/item/weapon/gun) || istype(perp.r_hand, /obj/item/weapon/melee))
-			if(!istype(perp.r_hand, /obj/item/weapon/gun/energy/laser/bluetag) \
-			&& !istype(perp.r_hand, /obj/item/weapon/gun/energy/laser/redtag) \
-			&& !istype(perp.r_hand, /obj/item/weapon/gun/energy/laser/practice))
-				threatcount += 4
-
-		if(istype(perp:belt, /obj/item/weapon/gun) || istype(perp:belt, /obj/item/weapon/melee))
-			if(!istype(perp:belt, /obj/item/weapon/gun/energy/laser/bluetag) \
-			&& !istype(perp:belt, /obj/item/weapon/gun/energy/laser/redtag) \
-			&& !istype(perp:belt, /obj/item/weapon/gun/energy/laser/practice))
-				threatcount += 2
-
-		if(istype(perp:wear_suit, /obj/item/clothing/suit/wizrobe))
-			threatcount += 2
-
-		if(perp.dna && perp.dna.mutantrace && perp.dna.mutantrace != "none")
-			threatcount += 2
-
-		//Agent cards lower threatlevel.
-		if(perp.wear_id && istype(perp:wear_id.GetID(), /obj/item/weapon/card/id/syndicate))
-			threatcount -= 2
-
-	if(check_records)	//check if they are set to *Arrest* on records
-		var/perpname = perp.get_face_name(perp.get_id_name())
-		var/datum/data/record/R = find_record("name", perpname, data_core.security)
-		if(R && (R.fields["criminal"] == "*Arrest*"))
-			threatcount += 4
-
-	return threatcount
+/obj/machinery/bot/secbot/proc/check_for_weapons(var/obj/item/slot_item)
+	if(istype(slot_item, /obj/item/weapon/gun) || istype(slot_item, /obj/item/weapon/melee))
+		if(!(slot_item.type in safe_weapons))
+			return 1
+	return 0
 
 /obj/machinery/bot/secbot/Bump(M as mob|obj) //Leave no door unopened!
 	if((istype(M, /obj/machinery/door)) && (!isnull(src.botcard)))
@@ -655,12 +657,6 @@ Auto Patrol: []"},
 			M:loc = T
 */
 
-/obj/machinery/bot/secbot/proc/speak(var/message)
-	for(var/mob/O in hearers(src, null))
-		O.show_message("<span class='game say'><span class='name'>[src]</span> beeps, \"[message]\"",2)
-	return
-
-
 /obj/machinery/bot/secbot/explode()
 
 	walk_to(src,0)
@@ -669,7 +665,7 @@ Auto Patrol: []"},
 
 	var/obj/item/weapon/secbot_assembly/Sa = new /obj/item/weapon/secbot_assembly(Tsec)
 	Sa.build_step = 1
-	Sa.overlays += image('icons/obj/aibots.dmi', "hs_hole")
+	Sa.overlays += "hs_hole"
 	Sa.created_name = src.name
 	new /obj/item/device/assembly/prox_sensor(Tsec)
 	new /obj/item/weapon/melee/baton(Tsec)
@@ -682,7 +678,7 @@ Auto Patrol: []"},
 	s.start()
 
 	new /obj/effect/decal/cleanable/oil(src.loc)
-	del(src)
+	qdel(src)
 
 /obj/machinery/bot/secbot/attack_alien(var/mob/living/carbon/alien/user as mob)
 	..()
@@ -702,54 +698,88 @@ Auto Patrol: []"},
 		return
 
 	if(S.secured)
-		del(S)
+		qdel(S)
 		var/obj/item/weapon/secbot_assembly/A = new /obj/item/weapon/secbot_assembly
 		user.put_in_hands(A)
-		user << "You add the signaler to the helmet."
-		user.drop_from_inventory(src)
-		del(src)
+		user << "<span class='notice'>You add the signaler to the helmet.</span>"
+		user.unEquip(src, 1)
+		qdel(src)
 	else
 		return
 
-/obj/item/weapon/secbot_assembly/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/item/weapon/secbot_assembly/attackby(obj/item/I, mob/user)
 	..()
-	if((istype(W, /obj/item/weapon/weldingtool)) && (!src.build_step))
-		var/obj/item/weapon/weldingtool/WT = W
-		if(WT.remove_fuel(0,user))
-			src.build_step++
-			src.overlays += image('icons/obj/aibots.dmi', "hs_hole")
-			user << "You weld a hole in [src]!"
+	if(istype(I, /obj/item/weapon/weldingtool))
+		if(!build_step)
+			var/obj/item/weapon/weldingtool/WT = I
+			if(WT.remove_fuel(0, user))
+				build_step++
+				overlays += "hs_hole"
+				user << "<span class='notice'>You weld a hole in [src]!</span>"
+		else if(build_step == 1)
+			var/obj/item/weapon/weldingtool/WT = I
+			if(WT.remove_fuel(0, user))
+				build_step--
+				overlays -= "hs_hole"
+				user << "<span class='notice'>You weld the hole in [src] shut!</span>"
 
-	else if(isprox(W) && (src.build_step == 1))
+	else if(isprox(I) && (build_step == 1))
 		user.drop_item()
-		src.build_step++
-		user << "You add the prox sensor to [src]!"
-		src.overlays += image('icons/obj/aibots.dmi', "hs_eye")
-		src.name = "helmet/signaler/prox sensor assembly"
-		del(W)
+		build_step++
+		user << "<span class='notice'>You add the prox sensor to [src]!</span>"
+		overlays += "hs_eye"
+		name = "helmet/signaler/prox sensor assembly"
+		qdel(I)
 
-	else if(((istype(W, /obj/item/robot_parts/l_arm)) || (istype(W, /obj/item/robot_parts/r_arm))) && (src.build_step == 2))
+	else if(((istype(I, /obj/item/robot_parts/l_arm)) || (istype(I, /obj/item/robot_parts/r_arm))) && (build_step == 2))
 		user.drop_item()
-		src.build_step++
-		user << "You add the robot arm to [src]!"
-		src.name = "helmet/signaler/prox sensor/robot arm assembly"
-		src.overlays += image('icons/obj/aibots.dmi', "hs_arm")
-		del(W)
+		build_step++
+		user << "<span class='notice'>You add the robot arm to [src]!</span>"
+		name = "helmet/signaler/prox sensor/robot arm assembly"
+		overlays += "hs_arm"
+		qdel(I)
 
-	else if((istype(W, /obj/item/weapon/melee/baton)) && (src.build_step >= 3))
+	else if((istype(I, /obj/item/weapon/melee/baton)) && (build_step >= 3))
 		user.drop_item()
-		src.build_step++
-		user << "You complete the Securitron! Beep boop."
+		build_step++
+		user << "<span class='notice'>You complete the Securitron! Beep boop.</span>"
 		var/obj/machinery/bot/secbot/S = new /obj/machinery/bot/secbot
 		S.loc = get_turf(src)
-		S.name = src.created_name
-		del(W)
-		del(src)
+		S.name = created_name
+		qdel(I)
+		qdel(src)
 
-	else if(istype(W, /obj/item/weapon/pen))
-		var/t = copytext(stripped_input(user, "Enter new robot name", src.name, src.created_name),1,MAX_NAME_LEN)
+	else if(istype(I, /obj/item/weapon/pen))
+		var/t = copytext(stripped_input(user, "Enter new robot name", name, created_name),1,MAX_NAME_LEN)
 		if(!t)
 			return
-		if(!in_range(src, usr) && src.loc != usr)
+		if(!in_range(src, usr) && loc != usr)
 			return
-		src.created_name = t
+		created_name = t
+
+	else if(istype(I, /obj/item/weapon/screwdriver))
+		if(!build_step)
+			new /obj/item/device/assembly/signaler(get_turf(src))
+			new /obj/item/clothing/head/helmet(get_turf(src))
+			user << "<span class='notice'>You disconnect the signaler from the helmet.</span>"
+			qdel(src)
+
+		else if(build_step == 2)
+			overlays -= "hs_eye"
+			new /obj/item/device/assembly/prox_sensor(get_turf(src))
+			user << "<span class='notice'>You detach the proximity sensor from [src].</span>"
+			build_step--
+
+		else if(build_step == 3)
+			overlays -= "hs_arm"
+			new /obj/item/robot_parts/l_arm(get_turf(src))
+			user << "<span class='notice'>You remove the robot arm from [src].</span>"
+			build_step--
+
+/obj/machinery/bot/secbot/proc/declare_arrest()
+	var/area/location = get_area(src)
+	var/area/myturf = get_turf(src)
+	for(var/mob/living/carbon/human/human in mob_list)
+		var/turf/humanturf = get_turf(human)
+		if((humanturf.z == myturf.z) && istype(human.glasses, /obj/item/clothing/glasses/hud/security))
+			human.show_message("<span class='info'>\icon[human.glasses] [src.name] is [arrest_type ? "detaining" : "arresting"] level [threatlevel] scumbag <b>[target]</b> in <b>[location]</b></span>", 1)

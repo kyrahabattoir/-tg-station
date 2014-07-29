@@ -10,7 +10,7 @@
 /obj/item/clothing/ears
 	name = "ears"
 	w_class = 1.0
-	throwforce = 2
+	throwforce = 0
 	slot_flags = SLOT_EARS
 
 /obj/item/clothing/ears/earmuffs
@@ -28,9 +28,14 @@
 	flags = GLASSESCOVERSEYES
 	slot_flags = SLOT_EYES
 	var/vision_flags = 0
-	var/darkness_view = 0//Base human is 2
-	var/invisa_view = 0
+	var/darkness_view = 2//Base human is 2
+	var/invis_view = SEE_INVISIBLE_LIVING
 	var/emagged = 0
+	var/hud = null
+	var/list/icon/current = list() //the current hud icons
+
+/obj/item/clothing/glasses/proc/process_hud(var/mob/M)
+	return
 
 /*
 SEE_SELF  // can see self, no matter what
@@ -71,6 +76,12 @@ BLIND     // can't see anything
 	icon = 'icons/obj/clothing/masks.dmi'
 	body_parts_covered = HEAD
 	slot_flags = SLOT_MASK
+	var/alloweat = 0
+
+
+//Override this to modify speech like luchador masks.
+/obj/item/clothing/mask/proc/speechModification(message)
+	return message
 
 //Shoes
 /obj/item/clothing/shoes
@@ -86,12 +97,14 @@ BLIND     // can't see anything
 	permeability_coefficient = 0.50
 	slowdown = SHOES_SLOWDOWN
 
+/obj/item/proc/negates_gravity()
+	return 0
+
 //Suit
 /obj/item/clothing/suit
 	icon = 'icons/obj/clothing/suits.dmi'
 	name = "suit"
 	var/fire_resist = T0C+100
-	flags = FPRINT | TABLEPASS | ONESIZEFITSALL
 	allowed = list(/obj/item/weapon/tank/emergency_oxygen)
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
 	slot_flags = SLOT_OCLOTHING
@@ -104,7 +117,7 @@ BLIND     // can't see anything
 	name = "space helmet"
 	icon_state = "space"
 	desc = "A special helmet designed for work in a hazardous, low-pressure environment."
-	flags = FPRINT | TABLEPASS | HEADCOVERSEYES | BLOCKHAIR | HEADCOVERSMOUTH | STOPSPRESSUREDMAGE
+	flags = HEADCOVERSEYES | BLOCKHAIR | HEADCOVERSMOUTH | STOPSPRESSUREDMAGE | THICKMATERIAL
 	item_state = "space"
 	permeability_coefficient = 0.01
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 100, rad = 50)
@@ -123,10 +136,10 @@ BLIND     // can't see anything
 	w_class = 4//bulky item
 	gas_transfer_coefficient = 0.01
 	permeability_coefficient = 0.02
-	flags = FPRINT | TABLEPASS | STOPSPRESSUREDMAGE
+	flags = STOPSPRESSUREDMAGE | THICKMATERIAL
 	body_parts_covered = CHEST|GROIN|LEGS|FEET|ARMS|HANDS
 	allowed = list(/obj/item/device/flashlight,/obj/item/weapon/tank/emergency_oxygen)
-	slowdown = 3
+	slowdown = 2
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 100, rad = 50)
 	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
 	cold_protection = CHEST | GROIN | LEGS | FEET | ARMS | HANDS
@@ -141,7 +154,6 @@ BLIND     // can't see anything
 	name = "under"
 	body_parts_covered = CHEST|GROIN|LEGS|ARMS
 	permeability_coefficient = 0.90
-	flags = FPRINT | TABLEPASS
 	slot_flags = SLOT_ICLOTHING
 	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
 	var/fitted = 1// For use in alternate clothing styles for women, if clothes vary from a jumpsuit in shape, set this to 0
@@ -155,15 +167,28 @@ BLIND     // can't see anything
 	var/obj/item/clothing/tie/hastie = null
 
 /obj/item/clothing/under/attackby(obj/item/I, mob/user)
+	attachTie(I, user)
+	..()
+
+/obj/item/clothing/under/proc/attachTie(obj/item/I, mob/user)
 	if(istype(I, /obj/item/clothing/tie))
 		if(hastie)
-			user << "<span class='warning'>[src] already has an accessory.</span>"
+			if(user)
+				user << "<span class='warning'>[src] already has an accessory.</span>"
 			return
 		else
-			user.drop_item()
+			if(user)
+				user.drop_item()
 			hastie = I
 			I.loc = src
-			user << "<span class='notice'>You attach [I] to [src].</span>"
+			if(user)
+				user << "<span class='notice'>You attach [I] to [src].</span>"
+			I.transform *= 0.5	//halve the size so it doesn't overpower the under
+			I.pixel_x += 8
+			I.pixel_y -= 8
+			I.layer = FLOAT_LAYER
+			overlays += I
+
 
 			if(istype(loc, /mob/living/carbon/human))
 				var/mob/living/carbon/human/H = loc
@@ -171,7 +196,6 @@ BLIND     // can't see anything
 
 			return
 
-	..()
 
 /obj/item/clothing/under/examine()
 	set src in view()
@@ -186,7 +210,7 @@ BLIND     // can't see anything
 		if(3)
 			usr << "Its vital tracker and tracking beacon appear to be enabled."
 	if(hastie)
-		usr << "\A [hastie] is clipped to it."
+		usr << "\A [hastie] is attached to it."
 
 atom/proc/generate_uniform(index,t_color)
 	var/icon/female_uniform_icon	= icon("icon"='icons/mob/uniform.dmi', "icon_state"="[t_color]_s")
@@ -230,6 +254,11 @@ atom/proc/generate_uniform(index,t_color)
 	if(usr.stat) return
 
 	if(hastie)
+		hastie.transform *= 2
+		hastie.pixel_x -= 8
+		hastie.pixel_y += 8
+		hastie.layer = initial(hastie.layer)
+		overlays = null
 		usr.put_in_hands(hastie)
 		hastie = null
 
@@ -248,7 +277,7 @@ atom/proc/generate_uniform(index,t_color)
 			flags |= (visor_flags)
 			flags_inv |= (visor_flags_inv)
 			icon_state = initial(icon_state)
-			usr << "You flip the [src] down to protect your eyes."
+			usr << "You pull the [src] down."
 			flash_protect = initial(flash_protect)
 			tint = initial(tint)
 		else
@@ -256,7 +285,7 @@ atom/proc/generate_uniform(index,t_color)
 			flags &= ~(visor_flags)
 			flags_inv &= ~(visor_flags_inv)
 			icon_state = "[initial(icon_state)]up"
-			usr << "You push the [src] up out of your face."
+			usr << "You push the [src] up."
 			flash_protect = 0
 			tint = 0
 

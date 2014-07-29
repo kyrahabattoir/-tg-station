@@ -1,5 +1,5 @@
 /obj/item/device/radio/beacon
-	name = "Tracking Beacon"
+	name = "tracking beacon"
 	desc = "A beacon used by a teleporter."
 	icon_state = "beacon"
 	item_state = "signaler"
@@ -30,4 +30,4 @@
 /obj/item/device/radio/beacon/bacon //Probably a better way of doing this, I'm lazy.
 	proc/digest_delay()
 		spawn(600)
-			del(src)*/ //Bacon beacons are no more rip in peace
+			qdel(src)*/ //Bacon beacons are no more rip in peace

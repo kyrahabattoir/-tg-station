@@ -7,9 +7,9 @@
 
 /mob/living/carbon/alien/larva/Life()
 	set invisibility = 0
-	set background = 1
+	set background = BACKGROUND_ENABLED
 
-	if (monkeyizing)
+	if (notransform)
 		return
 
 	..()
@@ -278,7 +278,7 @@
 				AdjustStunned(-1)
 
 			if(weakened)
-				weakened = max(weakened-1,0)	//before you get mad Rockdtben: I done this so update_canmove isn't called multiple times
+				weakened = max(weakened-1,0)
 
 			if(stuttering)
 				stuttering = max(stuttering-1, 0)
@@ -305,6 +305,8 @@
 			sight &= ~SEE_OBJS
 			see_in_dark = 4
 			see_invisible = SEE_INVISIBLE_LEVEL_TWO
+			if(see_override)
+				see_invisible = see_override
 
 		if (healths)
 			if (stat != 2)
@@ -324,8 +326,11 @@
 			else
 				healths.icon_state = "health6"
 
-		if(pullin)	pullin.icon_state = "pull[pulling ? 1 : 0]"
-
+		if(pullin)
+			if(pulling)
+				pullin.icon_state = "pull"
+			else
+				pullin.icon_state = "pull0"
 
 		if (toxin)	toxin.icon_state = "tox[toxins_alert ? 1 : 0]"
 		if (oxygen) oxygen.icon_state = "oxy[oxygen_alert ? 1 : 0]"
@@ -375,7 +380,7 @@
 					if(M.stat == 2)
 						M.death(1)
 						stomach_contents.Remove(M)
-						del(M)
+						qdel(M)
 						continue
 					if(air_master.current_cycle%3==1)
 						if(!(M.status_flags & GODMODE))

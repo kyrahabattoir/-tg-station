@@ -47,7 +47,7 @@
 	icon_state = "lightreplacer0"
 	item_state = "electronic"
 
-	flags = FPRINT | CONDUCT
+	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	origin_tech = "magnets=3;materials=2"
 
@@ -78,18 +78,15 @@
 
 	if(istype(W, /obj/item/stack/sheet/glass))
 		var/obj/item/stack/sheet/glass/G = W
-		if(G.amount - decrement >= 0 && uses < max_uses)
-			var/remaining = max(G.amount - decrement, 0)
-			if(!remaining && !(G.amount - decrement) == 0)
-				user << "There isn't enough glass."
-				return
-			G.amount = remaining
-			if(!G.amount)
-				user.drop_item()
-				del(G)
-			AddUses(increment)
-			user << "You insert a piece of glass into the [src.name]. You have [uses] lights remaining."
+		if(uses >= max_uses)
+			user << "span class='warning'>[src.name] is full."
 			return
+		else if(G.use(decrement))
+			AddUses(increment)
+			user << "<span class='notice'>You insert a piece of glass into the [src.name]. You have [uses] lights remaining.</span>"
+			return
+		else
+			user << "<span class='warning'>You need one sheet of glass to replace lights.</span>"
 
 	if(istype(W, /obj/item/weapon/light))
 		var/obj/item/weapon/light/L = W
@@ -98,7 +95,7 @@
 				AddUses(1)
 				user << "You insert the [L.name] into the [src.name]. You have [uses] lights remaining."
 				user.drop_item()
-				del(L)
+				qdel(L)
 				return
 		else
 			user << "You need a working light."
@@ -164,7 +161,7 @@
 			target.brightness = L2.brightness
 			target.on = target.has_power()
 			target.update()
-			del(L2)
+			qdel(L2)
 
 			if(target.on && target.rigged)
 				target.explode()
@@ -181,7 +178,7 @@
 	emagged = !emagged
 	playsound(src.loc, "sparks", 100, 1)
 	if(emagged)
-		name = "Shortcircuited [initial(name)]"
+		name = "shortcircuited [initial(name)]"
 	else
 		name = initial(name)
 	update_icon()
@@ -195,6 +192,16 @@
 		return 1
 	else
 		return 0
+
+/obj/item/device/lightreplacer/cyborg
+
+/obj/item/device/lightreplacer/proc/janicart_insert(mob/user, obj/structure/janitorialcart/J)
+	J.put_in_cart(src, user)
+	J.myreplacer = src
+	J.update_icon()
+
+/obj/item/device/lightreplacer/cyborg/janicart_insert(mob/user, obj/structure/janitorialcart/J)
+	return
 
 #undef LIGHT_OK
 #undef LIGHT_EMPTY

@@ -9,7 +9,6 @@
 	throw_speed = 2
 	throw_range = 5
 	w_class = 3.0
-	flags = TABLEPASS
 	var/created_name = "Floorbot"
 
 /obj/item/weapon/toolbox_tiles_sensor
@@ -22,7 +21,6 @@
 	throw_speed = 2
 	throw_range = 5
 	w_class = 3.0
-	flags = TABLEPASS
 	var/created_name = "Floorbot"
 
 //Floorbot
@@ -77,6 +75,7 @@
 
 /obj/machinery/bot/floorbot/interact(mob/user as mob)
 	var/dat
+	dat += hack(user)
 	dat += "<TT><B>Automatic Station Floor Repairer v1.0</B></TT><BR><BR>"
 	dat += "Status: <A href='?src=\ref[src];operation=start'>[src.on ? "On" : "Off"]</A><BR>"
 	dat += "Maintenance panel panel is [src.open ? "opened" : "closed"]<BR>"
@@ -103,11 +102,14 @@
 		var/obj/item/stack/tile/plasteel/T = W
 		if(src.amount >= 50)
 			return
-		var/loaded = min(50-src.amount, T.amount)
+		var/loaded = min(50 - src.amount, T.get_amount())
 		T.use(loaded)
 		src.amount += loaded
-		user << "<span class='notice'>You load [loaded] tiles into the floorbot. He now contains [src.amount] tiles.</span>"
-		src.updateicon()
+		if (loaded > 0)
+			user << "<span class='notice'>You load [loaded] tiles into the floorbot. He now contains [src.amount] tiles.</span>"
+			src.updateicon()
+		else
+			user << "<span class='warning'>You need at least one floor tile to put into the floorbot.</span>"
 	else if(istype(W, /obj/item/weapon/card/id)||istype(W, /obj/item/device/pda))
 		if(src.allowed(usr) && !open && !emagged)
 			src.locked = !src.locked
@@ -135,7 +137,7 @@
 	src.add_fingerprint(usr)
 	switch(href_list["operation"])
 		if("start")
-			if (src.on)
+			if (src.on && !src.emagged)
 				turn_off()
 			else
 				turn_on()
@@ -147,6 +149,18 @@
 			src.updateUsrDialog()
 		if("make")
 			src.maketiles = !src.maketiles
+			src.updateUsrDialog()
+		if("hack")
+			if(!src.emagged)
+				src.emagged = 2
+				src.hacked = 1
+				usr << "<span class='warning'>You corrupt [src]'s construction protocols.</span>"
+			else if(!src.hacked)
+				usr << "<span class='userdanger'>[src] is not responding to reset commands!</span>"
+			else
+				src.emagged = 0
+				src.hacked = 0
+				usr << "<span class='notice'>You detect errors in [src] and reset its programming.</span>"
 			src.updateUsrDialog()
 		if("bridgemode")
 			switch(src.targetdirection)
@@ -165,7 +179,7 @@
 			src.updateUsrDialog()
 
 /obj/machinery/bot/floorbot/process()
-	set background = 1
+	set background = BACKGROUND_ENABLED
 
 	if(!src.on)
 		return
@@ -196,7 +210,7 @@
 		if(targetdirection != null)
 			/*
 			for (var/turf/space/D in view(7,src))
-				if(!(D in floorbottargets) && D != src.oldtarget)			// Added for bridging mode -- TLE
+				if(!(D in floorbottargets) && D != src.oldtarget)			// Added for bridging mode
 					if(get_dir(src, D) == targetdirection)
 						src.oldtarget = D
 						src.target = D
@@ -333,7 +347,7 @@
 			T.amount -= i
 		else
 			src.amount += T.amount
-			del(T)
+			qdel(T)
 		src.updateicon()
 		src.target = null
 		src.repairing = 0
@@ -353,7 +367,7 @@
 		var/obj/item/stack/tile/plasteel/T = new /obj/item/stack/tile/plasteel
 		T.amount = 4
 		T.loc = M.loc
-		del(M)
+		qdel(M)
 		src.target = null
 		src.repairing = 0
 
@@ -389,7 +403,7 @@
 	var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
 	s.set_up(3, 1, src)
 	s.start()
-	del(src)
+	qdel(src)
 	return
 
 
@@ -398,27 +412,30 @@
 		..()
 		return
 	if(src.contents.len >= 1)
-		user << "<span class='notice'>They wont fit in as there is already stuff inside.</span>"
+		user << "<span class='alert'>They won't fit in, as there is already stuff inside.</span>"
 		return
-	if(user.s_active)
-		user.s_active.close(user)
-	del(T)
-	var/obj/item/weapon/toolbox_tiles/B = new /obj/item/weapon/toolbox_tiles
-	user.put_in_hands(B)
-	user << "<span class='notice'>You add the tiles into the empty toolbox. They protrude from the top.</span>"
-	user.drop_from_inventory(src)
-	del(src)
+	if(T.use(10))
+		if(user.s_active)
+			user.s_active.close(user)
+		var/obj/item/weapon/toolbox_tiles/B = new /obj/item/weapon/toolbox_tiles
+		user.put_in_hands(B)
+		user << "<span class='notice'>You add the tiles into the empty toolbox. They protrude from the top.</span>"
+		user.unEquip(src, 1)
+		qdel(src)
+	else
+		user << "<span class='alert'>You need 10 floor tiles to start building a floorbot.</span>"
+		return
 
 /obj/item/weapon/toolbox_tiles/attackby(var/obj/item/W, mob/user as mob)
 	..()
 	if(isprox(W))
-		del(W)
+		qdel(W)
 		var/obj/item/weapon/toolbox_tiles_sensor/B = new /obj/item/weapon/toolbox_tiles_sensor()
 		B.created_name = src.created_name
 		user.put_in_hands(B)
 		user << "<span class='notice'>You add the sensor to the toolbox and tiles!</span>"
-		user.drop_from_inventory(src)
-		del(src)
+		user.unEquip(src, 1)
+		qdel(src)
 
 	else if (istype(W, /obj/item/weapon/pen))
 		var/t = copytext(stripped_input(user, "Enter new robot name", src.name, src.created_name),1,MAX_NAME_LEN)
@@ -432,13 +449,13 @@
 /obj/item/weapon/toolbox_tiles_sensor/attackby(var/obj/item/W, mob/user as mob)
 	..()
 	if(istype(W, /obj/item/robot_parts/l_arm) || istype(W, /obj/item/robot_parts/r_arm))
-		del(W)
+		qdel(W)
 		var/turf/T = get_turf(user.loc)
 		var/obj/machinery/bot/floorbot/A = new /obj/machinery/bot/floorbot(T)
 		A.name = src.created_name
 		user << "<span class='notice'>You add the robot arm to the odd looking toolbox assembly! Boop beep!</span>"
-		user.drop_from_inventory(src)
-		del(src)
+		user.unEquip(src, 1)
+		qdel(src)
 	else if (istype(W, /obj/item/weapon/pen))
 		var/t = stripped_input(user, "Enter new robot name", src.name, src.created_name)
 

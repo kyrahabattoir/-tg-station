@@ -43,12 +43,12 @@
 				playsound(loc, 'sound/items/Crowbar.ogg', 100, 1)
 				if(do_after(user, 20))
 					user << "<span class='notice'>You pry the frame apart.</span>"
-					new /obj/item/stack/sheet/wood(loc, 4)
-					del(src)
+					new /obj/item/stack/sheet/mineral/wood(loc, 4)
+					qdel(src)
 
 		if(1)
-			if(istype(I, /obj/item/stack/sheet/wood))
-				var/obj/item/stack/sheet/wood/W = I
+			if(istype(I, /obj/item/stack/sheet/mineral/wood))
+				var/obj/item/stack/sheet/mineral/wood/W = I
 				W.use(2)
 				user << "<span class='notice'>You add a shelf.</span>"
 				state = 2
@@ -60,9 +60,16 @@
 				state = 0
 
 		if(2)
-			if(istype(I, /obj/item/weapon/book))
+			if(istype(I, /obj/item/weapon/book) || istype(I, /obj/item/weapon/spellbook))
 				user.drop_item()
 				I.loc = src
+				update_icon()
+			else if(istype(I, /obj/item/weapon/storage/bag/books))
+				var/obj/item/weapon/storage/bag/books/B = I
+				for(var/obj/item/T in B.contents)
+					if(istype(T, /obj/item/weapon/book) || istype(T, /obj/item/weapon/spellbook))
+						B.remove_from_storage(T, src)
+				user << "<span class='notice'>You empty \the [I] into \the [src].</span>"
 				update_icon()
 			else if(istype(I, /obj/item/weapon/pen))
 				var/newname = stripped_input(usr, "What would you like to title this bookshelf?")
@@ -76,7 +83,7 @@
 				else
 					playsound(loc, 'sound/items/Crowbar.ogg', 100, 1)
 					user << "<span class='notice'>You pry the shelf out.</span>"
-					new /obj/item/stack/sheet/wood(loc, 1)
+					new /obj/item/stack/sheet/mineral/wood(loc, 1)
 					state = 1
 					icon_state = "bookempty"
 			else
@@ -85,7 +92,7 @@
 
 /obj/structure/bookcase/attack_hand(mob/user)
 	if(contents.len)
-		var/obj/item/weapon/book/choice = input("Which book would you like to remove from the shelf?") in contents as obj|null
+		var/obj/item/weapon/book/choice = input("Which book would you like to remove from the shelf?") as null|obj in contents
 		if(choice)
 			if(!usr.canmove || usr.stat || usr.restrained() || !in_range(loc, usr))
 				return
@@ -101,20 +108,20 @@
 	switch(severity)
 		if(1.0)
 			for(var/obj/item/weapon/book/b in contents)
-				del(b)
-			del(src)
+				qdel(b)
+			qdel(src)
 		if(2.0)
 			for(var/obj/item/weapon/book/b in contents)
 				if(prob(50))
 					b.loc = (get_turf(src))
 				else
-					del(b)
-			del(src)
+					qdel(b)
+			qdel(src)
 		if(3.0)
 			if(prob(50))
 				for(var/obj/item/weapon/book/b in contents)
 					b.loc = (get_turf(src))
-				del(src)
+				qdel(src)
 
 
 /obj/structure/bookcase/update_icon()
@@ -138,10 +145,10 @@
 
 	New()
 		..()
-		new /obj/item/weapon/book/manual/engineering_construction(src)
+		new /obj/item/weapon/book/manual/wiki/engineering_construction(src)
 		new /obj/item/weapon/book/manual/engineering_particle_accelerator(src)
-		new /obj/item/weapon/book/manual/engineering_hacking(src)
-		new /obj/item/weapon/book/manual/engineering_guide(src)
+		new /obj/item/weapon/book/manual/wiki/engineering_hacking(src)
+		new /obj/item/weapon/book/manual/wiki/engineering_guide(src)
 		new /obj/item/weapon/book/manual/engineering_singularity_safety(src)
 		new /obj/item/weapon/book/manual/robotics_cyborgs(src)
 		update_icon()
@@ -166,33 +173,21 @@
 	throw_speed = 1
 	throw_range = 5
 	w_class = 3		 //upped to three because books are, y'know, pretty big. (and you could hide them inside eachother recursively forever)
-	flags = FPRINT | TABLEPASS
 	attack_verb = list("bashed", "whacked", "educated")
 	var/dat				//Actual page content
 	var/due_date = 0	//Game time in 1/10th seconds
 	var/author			//Who wrote the thing, can be changed by pen or PC. It is not automatically assigned
 	var/unique = 0		//0 - Normal book, 1 - Should not be treated as normal book, unable to be copied, unable to be modified
 	var/title			//The real name of the book.
-	var/carved = 0		//Has the book been hollowed out for use as a secret storage item?
-	var/obj/item/store	//What's in the book?
+	var/window_size = null // Specific window size for the book, i.e: "1920x1080", Size x Width
 
 
 /obj/item/weapon/book/attack_self(mob/user)
-	if(carved)
-		if(store)
-			user << "<span class='notice'>[store] falls out of [title]!</span>"
-			store.loc = get_turf(loc)
-			store = null
-			return
-		else
-			user << "<span class='notice'>The pages of [title] have been cut out!</span>"
-			return
-
 	if(is_blind(user))
 		return
 
 	if(dat)
-		user << browse("<TT><I>Penned by [author].</I></TT> <BR>" + "[dat]", "window=book")
+		user << browse("<TT><I>Penned by [author].</I></TT> <BR>" + "[dat]", "window=book[window_size != null ? ";size=[window_size]" : ""]")
 		user.visible_message("[user] opens a book titled \"[title]\" and begins reading intently.")
 		onclose(user, "book")
 	else
@@ -200,21 +195,6 @@
 
 
 /obj/item/weapon/book/attackby(obj/item/I, mob/user)
-	if(carved)
-		if(!store)
-			if(I.w_class < 3)
-				user.drop_item()
-				I.loc = src
-				store = I
-				user << "<span class='notice'>You put [I] in [title].</span>"
-				return
-			else
-				user << "<span class='notice'>[I] won't fit in [title].</span>"
-				return
-		else
-			user << "<span class='notice'>There's already something in [title]!</span>"
-			return
-
 	if(istype(I, /obj/item/weapon/pen))
 		if(is_blind(user))
 			return
@@ -279,13 +259,21 @@
 					user << "[I]'s screen flashes: 'Book stored in buffer. Title added to general inventory.'"
 
 	else if(istype(I, /obj/item/weapon/kitchenknife) || istype(I, /obj/item/weapon/wirecutters))
-		if(carved)
-			return
 		user << "<span class='notice'>You begin to carve out [title].</span>"
 		if(do_after(user, 30))
 			user << "<span class='notice'>You carve out the pages from [title]! You didn't want to read it anyway.</span>"
-			carved = 1
-			return
+			var/obj/item/weapon/storage/book/B = new
+			B.name = src.name
+			B.title = src.title
+			if(user.l_hand == src || user.r_hand == src)
+				qdel(src)
+				user.put_in_hands(B)
+				return
+			else
+				B.loc = src.loc
+				qdel(src)
+				return
+		return
 	else
 		..()
 
@@ -297,10 +285,9 @@
 	name = "barcode scanner"
 	icon = 'icons/obj/library.dmi'
 	icon_state ="scanner"
-	throw_speed = 1
+	throw_speed = 3
 	throw_range = 5
 	w_class = 1.0
-	flags = FPRINT | TABLEPASS
 	var/obj/machinery/librarycomp/computer	//Associated computer - Modes 1 to 3 use this
 	var/obj/item/weapon/book/book			//Currently scanned book
 	var/mode = 0							//0 - Scan only, 1 - Scan and Set Buffer, 2 - Scan and Attempt to Check In, 3 - Scan and Attempt to Add to Inventory

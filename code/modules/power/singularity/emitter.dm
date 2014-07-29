@@ -37,12 +37,12 @@
 	..()
 	if(state == 2 && anchored)
 		connect_to_network()
-		src.directwired = 1
 
-/obj/machinery/power/emitter/Del()
-	message_admins("Emitter deleted at ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
-	log_game("Emitter deleted at ([x],[y],[z])")
-	investigate_log("<font color='red'>deleted</font> at ([x],[y],[z])","singulo")
+/obj/machinery/power/emitter/Destroy()
+	if(ticker && ticker.current_state == GAME_STATE_PLAYING)
+		message_admins("Emitter deleted at ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
+		log_game("Emitter deleted at ([x],[y],[z])")
+		investigate_log("<font color='red'>deleted</font> at ([x],[y],[z])","singulo")
 	..()
 
 /obj/machinery/power/emitter/update_icon()
@@ -87,8 +87,6 @@
 			src.use_power = 1	*/
 	return 1
 
-/obj/machinery/field/containment/meteorhit()
-	return 0
 
 /obj/machinery/power/emitter/process()
 	if(stat & (BROKEN))
@@ -186,7 +184,6 @@
 						state = 2
 						user << "You weld the [src] to the floor."
 						connect_to_network()
-						src.directwired = 1
 				else
 					user << "\red You need more welding fuel to complete this task."
 			if(2)
@@ -200,7 +197,6 @@
 						state = 1
 						user << "You cut the [src] free from the floor."
 						disconnect_from_network()
-						src.directwired = 0
 				else
 					user << "\red You need more welding fuel to complete this task."
 		return

@@ -3,10 +3,11 @@
 	desc = "This injects the person with DNA."
 	icon = 'icons/obj/items.dmi'
 	icon_state = "dnainjector"
-	throw_speed = 1
+	throw_speed = 3
 	throw_range = 5
 	w_class = 1.0
 
+	var/damage_coeff  = 1
 	var/list/fields
 
 /obj/item/weapon/dnainjector/attack_paw(mob/user)
@@ -18,7 +19,7 @@
 		if(M.stat == DEAD)	//prevents dead people from having their DNA changed
 			user << "<span class='notice'>You can't modify [M]'s DNA while \he's dead.</span>"
 			return
-		M.radiation += rand(20, 50)
+		M.radiation += rand(20/(damage_coeff  ** 2),50/(damage_coeff  ** 2))
 		if(fields)
 			var/log_msg = "[key_name(user)] injected [key_name(M)] with the [name]"
 			if(fields["name"] && fields["UE"] && fields["blood_type"])
@@ -44,10 +45,7 @@
 	if(!ishuman(user))
 		user << "<span class='notice'>You don't have the dexterity to do this!</span>"
 		return
-
-	target.attack_log += "\[[time_stamp()]\] <font color='orange'>[user.name] ([user.ckey]) attempted to inject with [name]</font>"
-	user.attack_log += "\[[time_stamp()]\] <font color='red'>Used the [name] to attempt to inject [target.name] ([target.ckey])</font>"
-	log_attack("<font color='red'>[user.name] ([user.ckey]) used the [name] to attempt to inject [target.name] ([target.ckey])</font>")
+	add_logs(user, target, "attempted to inject", object="[name]")
 
 	if(target != user)
 		target.visible_message("<span class='danger'>[user] is trying to inject [target] with [src]!</span>", "<span class='userdanger'>[user] is trying to inject [target] with [src]!</span>")
@@ -58,9 +56,7 @@
 	else
 		user << "<span class='notice'>You inject yourself with [src].</span>"
 
-	target.attack_log += "\[[time_stamp()]\] <font color='orange'>Has been injected with [name] by [user.name] ([user.ckey])</font>"
-	user.attack_log += "\[[time_stamp()]\] <font color='red'>Used the [name] to inject [target.name] ([target.ckey])</font>"
-	log_attack("<font color='red'>[user.name] ([user.ckey]) used the [name] to inject [target.name] ([target.ckey])</font>")
+	add_logs(user, target, "injected", object="[name]")
 
 	user.drop_item()
 	inject(target, user)	//Now we actually do the heavy lifting.

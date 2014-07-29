@@ -24,7 +24,7 @@
 
 		if(!ticker || ticker.current_state <= GAME_STATE_PREGAME)
 			if(!ready)	output += "<p><a href='byond://?src=\ref[src];ready=1'>Declare Ready</A></p>"
-			else	output += "<p><b>You are ready</b> <a href='byond://?src=\ref[src];ready=2'>Cancel</A></p>"
+			else	output += "<p><b>You are ready</b> <a href='byond://?src=\ref[src];ready=0'>Cancel</A></p>"
 
 		else
 			output += "<p><a href='byond://?src=\ref[src];late_join=1'>Join Game!</A></p>"
@@ -94,7 +94,7 @@
 			return 1
 
 		if(href_list["ready"])
-			ready = !ready
+			ready = text2num(href_list["ready"])
 
 		if(href_list["refresh"])
 			src << browse(null, "window=playersetup") //closes the player setup window
@@ -120,7 +120,7 @@
 				observer.name = observer.real_name
 				observer.key = key
 
-				del(src)
+				qdel(src)
 				return 1
 
 		if(href_list["late_join"])
@@ -267,7 +267,7 @@
 
 		if(config.allow_latejoin_antagonists && emergency_shuttle.timeleft() > 300) //Don't make them antags if the station is evacuating
 			ticker.mode.make_antag_chance(character)
-		del(src)
+		qdel(src)
 
 	proc/AnnounceArrival(var/mob/living/carbon/human/character, var/rank)
 		if (ticker.current_state == GAME_STATE_PLAYING)
@@ -329,6 +329,8 @@
 
 		var/mob/living/carbon/human/new_character = new(loc)
 		new_character.lastarea = get_area(loc)
+
+		create_dna(new_character)
 
 		if(config.force_random_names || appearance_isbanned(src))
 			client.prefs.random_character()

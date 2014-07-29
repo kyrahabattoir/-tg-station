@@ -25,16 +25,18 @@
 	new /obj/item/clothing/under/sl_suit(src)
 	new /obj/item/clothing/under/rank/bartender(src)
 	new /obj/item/clothing/under/rank/bartender(src)
-	new /obj/item/clothing/suit/wcoat(src)
-	new /obj/item/clothing/suit/wcoat(src)
-	new /obj/item/clothing/shoes/black(src)
-	new /obj/item/clothing/shoes/black(src)
+	new /obj/item/clothing/tie/waistcoat(src)
+	new /obj/item/clothing/tie/waistcoat(src)
+	new /obj/item/clothing/head/soft/black(src)
+	new /obj/item/clothing/head/soft/black(src)
+	new /obj/item/clothing/shoes/sneakers/black(src)
+	new /obj/item/clothing/shoes/sneakers/black(src)
 
 /*
  * Chef
  */
 /obj/structure/closet/chefcloset
-	name = "chef's closet"
+	name = "\proper chef's closet"
 	desc = "It's a storage unit for foodservice garments."
 	icon_state = "black"
 	icon_closed = "black"
@@ -46,6 +48,10 @@
 	new /obj/item/clothing/under/waiter(src)
 	new /obj/item/device/radio/headset/headset_srv(src)
 	new /obj/item/device/radio/headset/headset_srv(src)
+	new /obj/item/clothing/tie/waistcoat(src)
+	new /obj/item/clothing/tie/waistcoat(src)
+	new /obj/item/clothing/head/soft/black(src)
+	new /obj/item/clothing/head/soft/black(src)
 	new /obj/item/weapon/storage/box/mousetraps(src)
 	new /obj/item/weapon/storage/box/mousetraps(src)
 	new /obj/item/clothing/under/rank/chef(src)
@@ -75,6 +81,8 @@
 	new /obj/item/device/lightreplacer(src)
 	new /obj/item/weapon/storage/bag/trash(src)
 	new /obj/item/clothing/shoes/galoshes(src)
+	new /obj/item/weapon/watertank/janitor(src)
+	new /obj/item/weapon/storage/belt/janitor(src)
 
 /*
  * Lawyer
@@ -93,5 +101,7 @@
 	new /obj/item/clothing/suit/lawyer/bluejacket(src)
 	new /obj/item/clothing/under/lawyer/purpsuit(src)
 	new /obj/item/clothing/suit/lawyer/purpjacket(src)
-	new /obj/item/clothing/shoes/brown(src)
-	new /obj/item/clothing/shoes/black(src)
+	new /obj/item/clothing/under/lawyer/blacksuit(src)
+	new /obj/item/clothing/suit/lawyer/blackjacket(src)
+	new /obj/item/clothing/shoes/laceup(src)
+	new /obj/item/clothing/shoes/laceup(src)

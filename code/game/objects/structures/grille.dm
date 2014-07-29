@@ -5,25 +5,18 @@
 	icon_state = "grille"
 	density = 1
 	anchored = 1
-	flags = FPRINT | CONDUCT
+	flags = CONDUCT
 	pressure_resistance = 5*ONE_ATMOSPHERE
 	layer = 2.9
 	explosion_resistance = 5
 	var/health = 10
 	var/destroyed = 0
 
-/obj/structure/grille/Del()
-	loc = null //garbage collect
-
 /obj/structure/grille/ex_act(severity)
-	del(src)
+	qdel(src)
 
 /obj/structure/grille/blob_act()
-	del(src)
-
-/obj/structure/grille/meteorhit(var/obj/M)
-	del(src)
-
+	qdel(src)
 
 /obj/structure/grille/Bumped(atom/user)
 	if(ismob(user)) shock(user, 70)
@@ -33,9 +26,10 @@
 	attack_hand(user)
 
 /obj/structure/grille/attack_hand(mob/user as mob)
+	user.changeNext_move(8)
 	playsound(loc, 'sound/effects/grillehit.ogg', 80, 1)
-	user.visible_message("<span class='warning'>[user] kicks [src].</span>", \
-						 "<span class='warning'>You kick [src].</span>", \
+	user.visible_message("<span class='warning'>[user] hits [src].</span>", \
+						 "<span class='warning'>You hit [src].</span>", \
 						 "You hear twisting metal.")
 
 	if(shock(user, 70))
@@ -48,7 +42,7 @@
 
 /obj/structure/grille/attack_alien(mob/user as mob)
 	if(istype(user, /mob/living/carbon/alien/larva))	return
-
+	user.changeNext_move(8)
 	playsound(loc, 'sound/effects/grillehit.ogg', 80, 1)
 	user.visible_message("<span class='warning'>[user] mangles [src].</span>", \
 						 "<span class='warning'>You mangle [src].</span>", \
@@ -59,8 +53,9 @@
 		healthcheck()
 		return
 
-/obj/structure/grille/attack_slime(mob/user as mob)
-	if(!istype(user, /mob/living/carbon/slime/adult))	return
+/obj/structure/grille/attack_slime(mob/living/carbon/slime/user as mob)
+	user.changeNext_move(8)
+	if(!user.is_adult)	return
 
 	playsound(loc, 'sound/effects/grillehit.ogg', 80, 1)
 	user.visible_message("<span class='warning'>[user] smashes against [src].</span>", \
@@ -72,6 +67,7 @@
 	return
 
 /obj/structure/grille/attack_animal(var/mob/living/simple_animal/M as mob)
+	M.changeNext_move(8)
 	if(M.melee_damage_upper == 0)	return
 
 	playsound(loc, 'sound/effects/grillehit.ogg', 80, 1)
@@ -89,38 +85,45 @@
 	if(istype(mover) && mover.checkpass(PASSGRILLE))
 		return 1
 	else
-		if(istype(mover, /obj/item/projectile))
+		if(istype(mover, /obj/item/projectile) && density)
 			return prob(30)
 		else
 			return !density
 
 /obj/structure/grille/bullet_act(var/obj/item/projectile/Proj)
-	if(!Proj)	return
+	if(!Proj)
+		return
 	..()
-	src.health -= Proj.damage*0.2
-	healthcheck()
+	if((Proj.damage_type == BRUTE || Proj.damage_type == BURN))
+		src.health -= Proj.damage*0.2
+		healthcheck()
 	return
 
 /obj/structure/grille/attackby(obj/item/weapon/W as obj, mob/user as mob)
+	user.changeNext_move(8)
+	add_fingerprint(user)
 	if(istype(W, /obj/item/weapon/wirecutters))
 		if(!shock(user, 100))
 			playsound(loc, 'sound/items/Wirecutter.ogg', 100, 1)
-			if(destroyed)
-				new /obj/item/stack/rods(loc)
-			else
-				new /obj/item/stack/rods(loc)
-				new /obj/item/stack/rods(loc)
-			del(src)
+			var/obj/item/stack/rods/newrods = new(loc)
+			transfer_fingerprints_to(newrods)
+			if(!destroyed)
+				newrods.amount = 2
+			qdel(src)
 	else if((istype(W, /obj/item/weapon/screwdriver)) && (istype(loc, /turf/simulated) || anchored))
 		if(!shock(user, 90))
 			playsound(loc, 'sound/items/Screwdriver.ogg', 100, 1)
 			anchored = !anchored
-			user.visible_message("<span class='notice'>[user] [anchored ? "fastens" : "unfastens"] the grille.</span>", \
-								 "<span class='notice'>You have [anchored ? "fastened the grille to" : "unfastened the grill from"] the floor.</span>")
+			user.visible_message("<span class='notice'>[user] [anchored ? "fastens" : "unfastens"] the [src].</span>", \
+								 "<span class='notice'>You have [anchored ? "fastened the [src] to" : "unfastened the [src] from"] the floor.</span>")
 			return
 
 //window placing begin
-	else if( istype(W,/obj/item/stack/sheet/rglass) || istype(W,/obj/item/stack/sheet/glass) )
+	else if(istype(W, /obj/item/stack/sheet/rglass) || istype(W, /obj/item/stack/sheet/glass))
+		var/obj/item/stack/ST = W
+		if (ST.get_amount() < 1)
+			user << "<span class='warning'>You need at least one sheet of glass for that.</span>"
+			return
 		var/dir_to_set = 1
 		if(loc == user.loc)
 			dir_to_set = user.dir
@@ -151,7 +154,7 @@
 					user << "<span class='notice'>There is already a window facing this way there.</span>"
 					return
 			var/obj/structure/window/WD
-			if(istype(W,/obj/item/stack/sheet/rglass))
+			if(istype(W, /obj/item/stack/sheet/rglass))
 				WD = new/obj/structure/window(loc,1) //reinforced window
 			else
 				WD = new/obj/structure/window(loc,0) //normal window
@@ -159,7 +162,6 @@
 			WD.ini_dir = dir_to_set
 			WD.anchored = 0
 			WD.state = 0
-			var/obj/item/stack/ST = W
 			ST.use(1)
 			user << "<span class='notice'>You place the [WD] on [src].</span>"
 		return
@@ -182,16 +184,17 @@
 
 /obj/structure/grille/proc/healthcheck()
 	if(health <= 0)
+		var/obj/item/stack/rods/newrods = new(loc)
+		transfer_fingerprints_to(newrods)
+
 		if(!destroyed)
 			icon_state = "brokengrille"
 			density = 0
 			destroyed = 1
-			new /obj/item/stack/rods(loc)
 
 		else
 			if(health <= -6)
-				new /obj/item/stack/rods(loc)
-				del(src)
+				qdel(src)
 				return
 	return
 

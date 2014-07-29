@@ -58,10 +58,11 @@ Works together with spawning an observer, noted above.
 
 /mob/proc/ghostize(var/can_reenter_corpse = 1)
 	if(key)
-		var/mob/dead/observer/ghost = new(src)	//Transfer safety to observer spawning proc.
-		ghost.can_reenter_corpse = can_reenter_corpse
-		ghost.key = key
-		return ghost
+		if(!cmptext(copytext(key,1,2),"@")) //aghost
+			var/mob/dead/observer/ghost = new(src)	//Transfer safety to observer spawning proc.
+			ghost.can_reenter_corpse = can_reenter_corpse
+			ghost.key = key
+			return ghost
 
 /*
 This is the proc mobs get to turn into a ghost. Forked from ghostize due to compatibility issues.
@@ -179,27 +180,30 @@ This is the proc mobs get to turn into a ghost. Forked from ghostize due to comp
 	set name = "Follow" // "Haunt"
 	set desc = "Follow and haunt a mob."
 
-	if(istype(usr, /mob/dead/observer))
-		var/list/mobs = getmobs()
-		var/input = input("Please, select a mob!", "Haunt", null, null) as null|anything in mobs
-		var/mob/target = mobs[input]
-		if(target && target != usr)
-			following = target
-			spawn(0)
-				var/turf/pos = get_turf(src)
-				while(src.loc == pos)
+	var/list/mobs = getmobs()
+	var/input = input("Please, select a mob!", "Haunt", null, null) as null|anything in mobs
+	var/mob/target = mobs[input]
+	ManualFollow(target)
 
-					var/turf/T = get_turf(target)
-					if(!T)
-						break
-					if(following != target)
-						break
-					if(!client)
-						break
-					src.loc = T
-					pos = src.loc
-					sleep(15)
-				following = null
+// This is the ghost's follow verb with an argument
+/mob/dead/observer/proc/ManualFollow(var/atom/movable/target)
+	if(target && target != src)
+		if(following && following == target)
+			return
+		following = target
+		src << "\blue Now following [target]"
+		spawn(0)
+			var/turf/pos = get_turf(src)
+			while(loc == pos && target && following == target && client)
+				var/turf/T = get_turf(target)
+				if(!T)
+					break
+				// To stop the ghost flickering.
+				if(loc != T)
+					loc = T
+				pos = loc
+				sleep(15)
+			if (target == following) following = null
 
 
 /mob/dead/observer/verb/jumptomob() //Moves the ghost instead of just changing the ghosts's eye -Nodrak

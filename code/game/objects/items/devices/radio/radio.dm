@@ -16,6 +16,7 @@ var/GLOBAL_RADIO_TYPE = 1 // radio type to use
 	var/canhear_range = 3 // the range which mobs can hear this radio from
 	var/obj/item/device/radio/patch_link = null
 	var/datum/wires/radio/wires = null
+	var/prison_radio = 0
 	var/b_stat = 0
 	var/broadcasting = 0
 	var/listening = 1
@@ -26,10 +27,10 @@ var/GLOBAL_RADIO_TYPE = 1 // radio type to use
 	var/maxf = 1499
 	var/emped = 0	//Highjacked to track the number of consecutive EMPs on the radio, allowing consecutive EMP's to stack properly.
 //			"Example" = FREQ_LISTENING|FREQ_BROADCASTING
-	flags = FPRINT | CONDUCT | TABLEPASS
+	flags = CONDUCT
 	slot_flags = SLOT_BELT
-	throw_speed = 2
-	throw_range = 9
+	throw_speed = 3
+	throw_range = 7
 	w_class = 2
 	g_amt = 25
 	m_amt = 75
@@ -49,6 +50,8 @@ var/GLOBAL_RADIO_TYPE = 1 // radio type to use
 
 /obj/item/device/radio/New()
 	wires = new(src)
+	if(prison_radio)
+		wires.CutWireIndex(WIRE_TRANSMIT)
 	secure_radio_connections = new
 	..()
 	if(radio_controller)
@@ -282,7 +285,8 @@ var/GLOBAL_RADIO_TYPE = 1 // radio type to use
 
 		// --- Cyborg ---
 		else if (isrobot(M))
-			jobname = "Cyborg"
+			var/mob/living/silicon/robot/B = M
+			jobname = "[B.designation] Cyborg"
 
 		// --- Personal AI (pAI) ---
 		else if (istype(M, /mob/living/silicon/pai))
@@ -445,7 +449,7 @@ var/GLOBAL_RADIO_TYPE = 1 // radio type to use
 		var/list/receive = list()
 
 		//for (var/obj/item/device/radio/R in radio_connection.devices)
-		for (var/obj/item/device/radio/R in connection.devices["[RADIO_CHAT]"]) // Modified for security headset code -- TLE
+		for (var/obj/item/device/radio/R in connection.devices["[RADIO_CHAT]"])
 			//if(R.accept_rad(src, message))
 			receive |= R.send_hear(display_freq, 0)
 
@@ -478,40 +482,53 @@ var/GLOBAL_RADIO_TYPE = 1 // radio type to use
 					freq_text = "#unkn"
 				if(COMM_FREQ)
 					freq_text = "Command"
-				if(1351)
+				if(SCI_FREQ)
 					freq_text = "Science"
-				if(1355)
+				if(MED_FREQ)
 					freq_text = "Medical"
-				if(1357)
+				if(ENG_FREQ)
 					freq_text = "Engineering"
 				if(SEC_FREQ)
 					freq_text = "Security"
-				if(1349)
+				if(SERV_FREQ)
 					freq_text = "Service"
-				if(1347)
+				if(SUPP_FREQ)
 					freq_text = "Supply"
+				if(AIPRIV_FREQ)
+					freq_text = "AI Private"
 			//There's probably a way to use the list var of channels in code\game\communications.dm to make the dept channels non-hardcoded, but I wasn't in an experimentive mood. --NEO
 
 			if(!freq_text)
 				freq_text = format_frequency(display_freq)
 
-			var/part_b = "</span><b> \[[freq_text]\]</b> <span class='message'>" // Tweaked for security headsets -- TLE
+			var/part_b = "</span><b> \[[freq_text]\]</b> <span class='message'>"
 			var/part_c = "</span></span>"
 
 			if (display_freq==SYND_FREQ)
 				part_a = "<span class='syndradio'><span class='name'>"
 			else if (display_freq==COMM_FREQ)
 				part_a = "<span class='comradio'><span class='name'>"
+			else if (display_freq==SCI_FREQ)
+				part_a = "<span class='sciradio'><span class='name'>"
+			else if (display_freq==MED_FREQ)
+				part_a = "<span class='medradio'><span class='name'>"
+			else if (display_freq==ENG_FREQ)
+				part_a = "<span class='engradio'><span class='name'>"
 			else if (display_freq==SEC_FREQ)
 				part_a = "<span class='secradio'><span class='name'>"
-			else if (display_freq in DEPT_FREQS)
-				part_a = "<span class='deptradio'><span class='name'>"
-
+			else if (display_freq==SERV_FREQ)
+				part_a = "<span class='servradio'><span class='name'>"
+			else if (display_freq==SUPP_FREQ)
+				part_a = "<span class='suppradio'><span class='name'>"
+			else if (display_freq==DSQUAD_FREQ)
+				part_a = "<span class='dsquadradio'><span class='name'>"
+			else if (display_freq==AIPRIV_FREQ)
+				part_a = "<span class='aiprivradio'><span class='name'>"
 			var/quotedmsg = M.say_quote(message)
 
 			//This following recording is intended for research and feedback in the use of department radio channels.
 
-			var/part_blackbox_b = "</span><b> \[[freq_text]\]</b> <span class='message'>" // Tweaked for security headsets -- TLE
+			var/part_blackbox_b = "</span><b> \[[freq_text]\]</b> <span class='message'>"
 			var/blackbox_msg = "[part_a][M.name][part_blackbox_b][quotedmsg][part_c]"
 			//var/blackbox_admin_msg = "[part_a][M.name] (Real name: [M.real_name])[part_blackbox_b][quotedmsg][part_c]"
 			if(istype(blackbox))
@@ -693,6 +710,13 @@ var/GLOBAL_RADIO_TYPE = 1 // radio type to use
 
 /obj/item/device/radio/borg
 	var/obj/item/device/encryptionkey/keyslot = null//Borg radios can handle a single encryption key
+
+/obj/item/device/radio/borg/syndicate
+	syndie = 1
+	keyslot = new /obj/item/device/encryptionkey/syndicate
+/obj/item/device/radio/borg/syndicate/New()
+	..()
+	set_frequency(SYND_FREQ)
 
 /obj/item/device/radio/borg/attackby(obj/item/weapon/W as obj, mob/user as mob)
 //	..()

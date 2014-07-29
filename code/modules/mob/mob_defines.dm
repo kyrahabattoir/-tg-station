@@ -36,7 +36,6 @@
 	var/lastattacker = null
 	var/lastattacked = null
 	var/attack_log = list( )
-	var/already_placed = 0
 	var/obj/machinery/machine = null
 	var/other_mobs = null
 	var/memory = ""
@@ -44,7 +43,7 @@
 	var/disabilities = 0	//Carbon
 	var/atom/movable/pulling = null
 	var/next_move = null
-	var/monkeyizing = null	//Carbon
+	var/notransform = null	//Carbon
 	var/hand = null
 	var/eye_blind = null	//Carbon
 	var/eye_blurry = null	//Carbon
@@ -57,8 +56,6 @@
 	var/ajourn = 0
 	var/druggy = 0			//Carbon
 	var/confused = 0		//Carbon
-	var/antitoxs = null
-	var/plasma = null
 	var/sleeping = 0		//Carbon
 	var/resting = 0			//Carbon
 	var/lying = 0
@@ -77,10 +74,7 @@
 	var/bodytemperature = 310.055	//98.7 F
 	var/drowsyness = 0//Carbon
 	var/dizziness = 0//Carbon
-	var/is_dizzy = 0
-	var/is_jittery = 0
 	var/jitteriness = 0//Carbon
-	var/charges = 0
 	var/nutrition = 400//Carbon
 
 	var/overeatduration = 0		// How long this guy is overeating //Carbon
@@ -88,10 +82,8 @@
 	var/stunned = 0
 	var/weakened = 0
 	var/losebreath = 0//Carbon
-	var/intent = null//Living
 	var/shakecamera = 0
 	var/a_intent = "help"//Living
-	var/m_int = null//Living
 	var/m_intent = "run"//Living
 	var/lastKnownIP = null
 	var/obj/structure/stool/bed/buckled = null//Living
@@ -100,6 +92,7 @@
 	var/obj/item/weapon/storage/s_active = null//Carbon
 
 	var/seer = 0 //for cult//Carbon, probably Human
+	var/see_override = 0 //0 for no override, sets see_invisible = see_override in mob life process
 
 	var/datum/hud/hud_used = null
 
@@ -131,14 +124,14 @@
 	var/voice_message = null // When you are not understood by others (replaced with just screeches, hisses, chimpers etc.)
 	var/say_message = null // When you are understood by others. Currently only used by aliens and monkeys in their say_quote procs
 
-	var/faction = "neutral" //Used for checking whether hostile simple animals will attack you, possibly more stuff later
+	var/list/faction = list("neutral") //A list of factions that this mob is currently in, for hostile mob targetting, amongst other things
 	var/move_on_shuttle = 1 // Can move on the shuttle.
 
 //The last mob/living/carbon to push/drag/grab this mob (mostly used by slimes friend recognition)
 	var/mob/living/carbon/LAssailant = null
 
-//Wizard mode, but can be used in other modes thanks to the brand new "Give Spell" badmin button
-	var/list/spell_list = list()
+
+	var/list/mob_spell_list = list() //construct spells and mime spells. Spells that do not transfer from one mob to another and can not be lost in mindswap.
 
 //Changlings, but can be used in other modes
 //	var/obj/effect/proc_holder/changpower/list/power_list = list()
@@ -168,7 +161,7 @@
 	var/obj/control_object //Used by admins to possess objects. All mobs should have this var
 
 	//Whether or not mobs can understand other mobtypes. These stay in /mob so that ghosts can hear everything.
-	var/universal_speak = 0 // Set to 1 to enable the mob to speak to everyone -- TLE
+	var/universal_speak = 0 // Set to 1 to enable the mob to speak to everyone
 	var/robot_talk_understand = 0
 	var/alien_talk_understand = 0
 

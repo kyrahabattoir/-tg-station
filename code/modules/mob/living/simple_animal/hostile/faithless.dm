@@ -9,7 +9,7 @@
 	response_help = "passes through"
 	response_disarm = "shoves"
 	response_harm = "hits"
-	speed = -1
+	speed = 0
 	maxHealth = 80
 	health = 80
 
@@ -29,7 +29,7 @@
 	max_n2 = 0
 	minbodytemp = 0
 
-	faction = "faithless"
+	faction = list("faithless")
 
 /mob/living/simple_animal/hostile/faithless/Process_Spacemove(var/check_drift = 0)
 	return 1

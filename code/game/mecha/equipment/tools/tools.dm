@@ -1,5 +1,6 @@
 /obj/item/mecha_parts/mecha_equipment/tool/hydraulic_clamp
 	name = "hydraulic clamp"
+	desc = "Equipment for engineering exosuits. Lifts objects and loads them into cargo."
 	icon_state = "mecha_clamp"
 	equip_cooldown = 15
 	energy_drain = 10
@@ -16,6 +17,13 @@
 		..()
 		cargo_holder = M
 		return
+
+	detach(atom/moveto = null)
+		..()
+		if(can_attach(chassis))
+			cargo_holder = chassis
+		else
+			cargo_holder = null
 
 	action(atom/target)
 		if(!action_checks(target)) return
@@ -35,7 +43,7 @@
 							cargo_holder.cargo += O
 							O.loc = chassis
 							O.anchored = 0
-							occupant_message("<font color='blue'>[target] succesfully loaded.</font>")
+							occupant_message("<font color='blue'>[target] successfully loaded.</font>")
 							log_message("Loaded [O]. Cargo compartment capacity: [cargo_holder.cargo_capacity - cargo_holder.cargo.len]")
 						else
 							occupant_message("<font color='red'>You must hold still while handling objects.</font>")
@@ -54,9 +62,7 @@
 				M.updatehealth()
 				occupant_message("\red You squeeze [target] with [src.name]. Something cracks.")
 				chassis.visible_message("\red [chassis] squeezes [target].")
-				chassis.occupant.attack_log += "\[[time_stamp()]\]<font color='red'> Attacked [M.name] ([M.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])</font>"
-				M.attack_log += "\[[time_stamp()]\]<font color='orange'> Attacked by [chassis.occupant.name] ([chassis.occupant.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])</font>"
-				log_attack("<font color='red'>[chassis.occupant.name] ([chassis.occupant.ckey]) attacked [M.name] ([M.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(src.damtype)])</font>" )
+				add_logs(chassis.occupant, M, "attacked", object="[name]", addition="(INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])")
 			else
 				step_away(M,chassis)
 				occupant_message("You push [target] out of the way.")
@@ -67,8 +73,8 @@
 		return 1
 
 /obj/item/mecha_parts/mecha_equipment/tool/drill
-	name = "drill"
-	desc = "This is the drill that'll pierce the heavens! (Can be attached to: Combat and Engineering Exosuits)"
+	name = "exosuit drill"
+	desc = "Equipment for engineering and combat exosuits. This is the drill that'll pierce the heavens!"
 	icon_state = "mecha_drill"
 	equip_cooldown = 30
 	energy_drain = 10
@@ -113,12 +119,10 @@
 									ore.Move(ore_box)
 				else if(target.loc == C)
 					log_message("Drilled through [target]")
-					if(ismob(target))
-						var/mob/M = target
-						chassis.occupant.attack_log += "\[[time_stamp()]\]<font color='red'> Attacked [M.name] ([M.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])</font>"
-						M.attack_log += "\[[time_stamp()]\]<font color='orange'> Attacked by [chassis.occupant.name] ([chassis.occupant.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])</font>"
-						log_attack("<font color='red'>[chassis.occupant.name] ([chassis.occupant.ckey]) attacked [M.name] ([M.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(src.damtype)])</font>" )
-					target.ex_act(2)
+					if(isliving(target))
+						drill_mob(target, chassis.occupant)
+					else
+						target.ex_act(2)
 		return 1
 
 	can_attach(obj/mecha/M as obj)
@@ -127,9 +131,23 @@
 				return 1
 		return 0
 
+/obj/item/mecha_parts/mecha_equipment/tool/drill/proc/drill_mob(mob/living/target, mob/user, var/drill_damage=80)
+	target.visible_message("<span class='danger'>[chassis] drills [target] with the [src].</span>\
+						<span class='userdanger'>[chassis] drills [target] with the [src].</span>")
+	add_logs(user, target, "attacked", object="[name]", addition="(INTENT: [uppertext(user.a_intent)]) (DAMTYPE: [uppertext(damtype)])")
+	if(ishuman(target))
+		var/mob/living/carbon/human/H = target
+		var/obj/item/organ/limb/affecting = H.get_organ("chest")
+		affecting.take_damage(drill_damage)
+		H.update_damage_overlays(0)
+	else
+		target.take_organ_damage(drill_damage)
+	target.Paralyse(10)
+	target.updatehealth()
+
 /obj/item/mecha_parts/mecha_equipment/tool/drill/diamonddrill
-	name = "diamond drill"
-	desc = "This is an upgraded version of the drill that'll pierce the heavens! (Can be attached to: Combat and Engineering Exosuits)"
+	name = "diamond-tipped exosuit drill"
+	desc = "Equipment for engineering and combat exosuits. This is an upgraded version of the drill that'll pierce the heavens!"
 	icon_state = "mecha_diamond_drill"
 	origin_tech = "materials=4;engineering=3"
 	construction_cost = list("metal"=10000,"diamond"=6500)
@@ -175,12 +193,10 @@
 								ore.Move(ore_box)
 				else if(target.loc == C)
 					log_message("Drilled through [target]")
-					if(ismob(target))
-						var/mob/M = target
-						chassis.occupant.attack_log += "\[[time_stamp()]\]<font color='red'> Attacked [M.name] ([M.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])</font>"
-						M.attack_log += "\[[time_stamp()]\]<font color='orange'> Attacked by [chassis.occupant.name] ([chassis.occupant.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])</font>"
-						log_attack("<font color='red'>[chassis.occupant.name] ([chassis.occupant.ckey]) attacked [M.name] ([M.ckey]) with [name] (INTENT: [uppertext(chassis.occupant.a_intent)]) (DAMTYE: [uppertext(src.damtype)])</font>" )
-					target.ex_act(2)
+					if(isliving(target))
+						drill_mob(target, chassis.occupant, 120)
+					else
+						target.ex_act(2)
 		return 1
 
 	can_attach(obj/mecha/M as obj)
@@ -190,8 +206,8 @@
 		return 0
 
 /obj/item/mecha_parts/mecha_equipment/tool/extinguisher
-	name = "extinguisher"
-	desc = "Exosuit-mounted extinguisher (Can be attached to: Engineering exosuits)"
+	name = "exosuit extinguisher"
+	desc = "Equipment for engineering exosuits. A rapid-firing high capacity fire extinguisher."
 	icon_state = "mecha_exting"
 	equip_cooldown = 5
 	energy_drain = 0
@@ -262,14 +278,14 @@
 
 /obj/item/mecha_parts/mecha_equipment/tool/rcd
 	name = "mounted RCD"
-	desc = "An exosuit-mounted Rapid Construction Device. (Can be attached to: Any exosuit)"
+	desc = "An exosuit-mounted Rapid Construction Device."
 	icon_state = "mecha_rcd"
 	origin_tech = "materials=4;bluespace=3;magnets=4;powerstorage=4"
 	equip_cooldown = 10
 	energy_drain = 250
 	range = MELEE|RANGED
 	construction_time = 1200
-	construction_cost = list("metal"=30000,"plasma"=25000,"silver"=20000,"gold"=20000)
+	construction_cost = list("metal"=30000,"gold"=20000,"plasma"=25000,"silver"=20000)
 	var/mode = 0 //0 - deconstruct, 1 - wall or floor, 2 - airlock.
 	var/disabled = 0 //malf
 
@@ -309,7 +325,7 @@
 					if(do_after_cooldown(target))
 						if(disabled) return
 						chassis.spark_system.start()
-						del(target)
+						qdel(target)
 						playsound(target, 'sound/items/Deconstruct.ogg', 50, 1)
 						chassis.use_power(energy_drain)
 			if(1)
@@ -366,7 +382,7 @@
 
 
 /obj/item/mecha_parts/mecha_equipment/teleporter
-	name = "teleporter"
+	name = "mounted teleporter"
 	desc = "An exosuit module that allows exosuits to teleport to any position in view."
 	icon_state = "mecha_teleport"
 	origin_tech = "bluespace=10"
@@ -386,7 +402,7 @@
 
 
 /obj/item/mecha_parts/mecha_equipment/wormhole_generator
-	name = "wormhole generator"
+	name = "mounted wormhole generator"
 	desc = "An exosuit module that allows generating of small quasi-stable wormholes."
 	icon_state = "mecha_wholegen"
 	origin_tech = "bluespace=3"
@@ -426,7 +442,6 @@
 		P.target = target_turf
 		P.creator = null
 		P.icon = 'icons/obj/objects.dmi'
-		P.failchance = 0
 		P.icon_state = "anom"
 		P.name = "wormhole"
 		var/turf/T = get_turf(target)
@@ -435,11 +450,11 @@
 		do_after_cooldown()
 		src = null
 		spawn(rand(150,300))
-			del(P)
+			qdel(P)
 		return
 
 /obj/item/mecha_parts/mecha_equipment/gravcatapult
-	name = "gravitational catapult"
+	name = "mounted gravitational catapult"
 	desc = "An exosuit mounted Gravitational Catapult."
 	icon_state = "mecha_teleport"
 	origin_tech = "bluespace=2;magnets=3"
@@ -491,7 +506,6 @@
 				set_ready_state(0)
 				chassis.use_power(energy_drain)
 				var/turf/T = get_turf(target)
-				message_admins("[key_name(chassis.occupant, chassis.occupant.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[chassis.occupant]'>?</A>) used a Gravitational Catapult in ([T.x],[T.y],[T.z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[T.x];Y=[T.y];Z=[T.z]'>JMP</a>)",0,1)
 				log_game("[chassis.occupant.ckey]([chassis.occupant]) used a Gravitational Catapult in ([T.x],[T.y],[T.z])")
 				do_after_cooldown()
 		return
@@ -631,14 +645,14 @@
 
 
 /obj/item/mecha_parts/mecha_equipment/repair_droid
-	name = "repair droid"
-	desc = "Automated repair droid. Scans exosuit for damage and repairs it. Can fix almost all types of external or internal damage."
+	name = "exosuit repair droid"
+	desc = "An automated repair droid for exosuits. Scans for damage and repairs it. Can fix almost all types of external or internal damage."
 	icon_state = "repair_droid"
 	origin_tech = "magnets=3;programming=3"
 	equip_cooldown = 20
 	energy_drain = 100
 	range = 0
-	construction_cost = list("metal"=10000,"gold"=1000,"silver"=2000,"glass"=5000)
+	construction_cost = list("metal"=10000,"glass"=5000,"gold"=1000,"silver"=2000)
 	var/health_boost = 2
 	var/datum/global_iterator/pr_repair_droid
 	var/icon/droid_overlay
@@ -649,6 +663,11 @@
 		pr_repair_droid = new /datum/global_iterator/mecha_repair_droid(list(src),0)
 		pr_repair_droid.set_delay(equip_cooldown)
 		return
+
+	Destroy()
+		qdel(pr_repair_droid)
+		pr_repair_droid = null
+		..()
 
 	attach(obj/mecha/M as obj)
 		..()
@@ -721,14 +740,14 @@
 
 
 /obj/item/mecha_parts/mecha_equipment/tesla_energy_relay
-	name = "energy relay"
-	desc = "Wirelessly drains energy from any available power channel in area. The performance index is quite low."
+	name = "exosuit energy relay"
+	desc = "An exosuit module that wirelessly drains energy from any available power channel in area. The performance index is quite low."
 	icon_state = "tesla"
 	origin_tech = "magnets=4;syndicate=2"
 	equip_cooldown = 10
 	energy_drain = 0
 	range = 0
-	construction_cost = list("metal"=10000,"gold"=2000,"silver"=3000,"glass"=2000)
+	construction_cost = list("metal"=10000,"glass"=2000,"gold"=2000,"silver"=3000)
 	var/datum/global_iterator/pr_energy_relay
 	var/coeff = 100
 	var/list/use_channels = list(EQUIP,ENVIRON,LIGHT)
@@ -738,6 +757,11 @@
 		pr_energy_relay = new /datum/global_iterator/mecha_energy_relay(list(src),0)
 		pr_energy_relay.set_delay(equip_cooldown)
 		return
+
+	Destroy()
+		qdel(pr_energy_relay)
+		pr_energy_relay = null
+		..()
 
 	detach()
 		pr_energy_relay.stop()
@@ -833,14 +857,14 @@
 
 
 /obj/item/mecha_parts/mecha_equipment/generator
-	name = "plasma converter"
-	desc = "Generates power using solid plasma as fuel. Pollutes the environment."
+	name = "exosuit plasma converter"
+	desc = "An exosuit module that generates power using solid plasma as fuel. Pollutes the environment."
 	icon_state = "tesla"
 	origin_tech = "plasmatech=2;powerstorage=2;engineering=1"
 	equip_cooldown = 10
 	energy_drain = 0
 	range = MELEE
-	construction_cost = list("metal"=10000,"silver"=500,"glass"=1000)
+	construction_cost = list("metal"=10000,"glass"=1000,"silver"=500)
 	var/datum/global_iterator/pr_mech_generator
 	var/coeff = 100
 	var/obj/item/stack/sheet/fuel
@@ -854,6 +878,11 @@
 		..()
 		init()
 		return
+
+	Destroy()
+		qdel(pr_mech_generator)
+		pr_mech_generator = null
+		..()
 
 	proc/init()
 		fuel = new /obj/item/stack/sheet/mineral/plasma(src)
@@ -974,10 +1003,10 @@
 
 /obj/item/mecha_parts/mecha_equipment/generator/nuclear
 	name = "exonuclear reactor"
-	desc = "Generates power using uranium. Pollutes the environment."
+	desc = "An exosuit module that generates power using uranium as fuel. Pollutes the environment."
 	icon_state = "tesla"
 	origin_tech = "powerstorage=3;engineering=3"
-	construction_cost = list("metal"=10000,"silver"=500,"glass"=1000)
+	construction_cost = list("metal"=10000,"glass"=1000,"silver"=500)
 	max_fuel = 50000
 	fuel_per_cycle_idle = 10
 	fuel_per_cycle_active = 30
@@ -1011,6 +1040,7 @@
 //This is pretty much just for the death-ripley so that it is harmless
 /obj/item/mecha_parts/mecha_equipment/tool/safety_clamp
 	name = "\improper KILL CLAMP"
+	desc = "They won't know what clamped them!"
 	icon_state = "mecha_clamp"
 	equip_cooldown = 15
 	energy_drain = 0
@@ -1046,7 +1076,7 @@
 							cargo_holder.cargo += O
 							O.loc = chassis
 							O.anchored = 0
-							chassis.occupant_message("<font color='blue'>[target] succesfully loaded.</font>")
+							chassis.occupant_message("<font color='blue'>[target] successfully loaded.</font>")
 							chassis.log_message("Loaded [O]. Cargo compartment capacity: [cargo_holder.cargo_capacity - cargo_holder.cargo.len]")
 						else
 							chassis.occupant_message("<font color='red'>You must hold still while handling objects.</font>")

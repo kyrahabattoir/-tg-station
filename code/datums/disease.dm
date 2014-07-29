@@ -49,6 +49,8 @@ var/list/diseases = typesof(/datum/disease) - /datum/disease
 	var/can_carry = 1 // If the disease allows "carriers".
 	// if hidden[1] is true, then virus is hidden from medical scanners
 	// if hidden[2] is true, then virus is hidden from PANDEMIC machine
+	var/requires = 0
+	var/list/required_limb = list()
 
 
 /datum/disease/proc/stage_act()
@@ -141,6 +143,7 @@ var/list/diseases = typesof(/datum/disease) - /datum/disease
 
 
 /datum/disease/proc/process()
+
 	if(!holder)
 		active_diseases -= src
 		return
@@ -151,7 +154,7 @@ var/list/diseases = typesof(/datum/disease) - /datum/disease
 		for(var/datum/disease/D in affected_mob.viruses)
 			if(D != src)
 				if(IsSame(D))
-					//error("Deleting [D.name] because it's the same as [src.name].")
+					//ERROR("Deleting [D.name] because it's the same as [src.name].")
 					del(D) // if there are somehow two viruses of the same kind in the system, delete the other one
 
 	if(holder == affected_mob)
@@ -173,14 +176,19 @@ var/list/diseases = typesof(/datum/disease) - /datum/disease
 	if(affected_mob)
 		if(resistance && !(type in affected_mob.resistances))
 			affected_mob.resistances += type
-		/*if(istype(src, /datum/disease/alien_embryo))	//Get rid of the infection flag if it's a xeno embryo.
-			affected_mob.status_flags &= ~(XENO_HOST)*/
 		affected_mob.viruses -= src		//remove the datum from the list
 	del(src)	//delete the datum to stop it processing
 	return
 
 
 /datum/disease/New(var/process=1, var/datum/disease/D)//process = 1 - adding the object to global list. List is processed by master controller.
+	if(requires == 1)
+		if(ishuman(affected_mob))
+			var/mob/living/carbon/human/H = affected_mob
+			if(!H.getlimb(required_limb))
+				cure(1)
+				return
+
 	cure_list = list(cure_id) // to add more cures, add more vars to this list in the actual disease's New()
 	if(process)				 // Viruses in list are considered active.
 		active_diseases += src

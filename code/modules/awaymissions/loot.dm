@@ -8,10 +8,10 @@
 /obj/effect/spawner/lootdrop/initialize()
 	if(loot && loot.len)
 		for(var/i = lootcount, i > 0, i--)
-			if(!loot.len) return
+			if(!loot.len) break
 			var/lootspawn = pick(loot)
 			if(!lootdoubles)
 				loot.Remove(lootspawn)
 
 			new lootspawn(get_turf(src))
-	del(src)
+	qdel(src)

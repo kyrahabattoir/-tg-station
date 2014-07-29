@@ -1,7 +1,7 @@
 /world
 	mob = /mob/new_player
 	turf = /turf/space
-	area = /area
+	area = /area/space
 	view = "15x15"
 	cache_lifespan = 1
 
@@ -52,6 +52,8 @@
 		// dumb and hardcoded but I don't care~
 		config.server_name += " #[(world.port % 1000) / 100]"
 
+	timezoneOffset = text2num(time2text(0,"hh")) * 36000
+
 	makepowernets()
 
 	sun = new /datum/sun()
@@ -88,19 +90,11 @@
 	process_ghost_teleport_locs()	//Sets up ghost teleport locations.
 	sleep_offline = 1
 
-	var/list/lines = file2list(file('tgstation.dme'))
-	for(var/l in lines)
-		if( dd_hassuffix(l, ".dmm\"") )
-			var/firstquote = findtext(l, "\"")
-			var/lastslash = 0
-			for(var/j = 1; j < length(l); j++)
-				var/lastslashtest = findtext(l, "\\", -j)
-				if(lastslashtest > 0)
-					lastslash = lastslashtest
-					break
-			map_name = copytext(l, max(firstquote+1,lastslash+1), length(l)-4)
-	if(!map_name)
-		map_name = "Unknown"
+	#ifdef MAP_NAME
+	map_name = "[MAP_NAME]"
+	#else
+	map_name = "Unknown"
+	#endif
 
 	spawn(3000)		//so we aren't adding to the round-start lag
 		if(config.kick_inactive)
@@ -149,7 +143,7 @@
 		s["host"] = host ? host : null
 
 		var/admins = 0
-		for(var/client/C in admins)
+		for(var/client/C in clients)
 			if(C.holder)
 				if(C.holder.fakekey)
 					continue	//so stealthmins aren't revealed by the hub
@@ -166,7 +160,17 @@
 		s["map_name"] = map_name ? map_name : "Unknown"
 
 		return list2params(s)
-
+	else if (copytext(T,1,9) == "announce")
+		var/input[] = params2list(T)
+		if(global.comms_allowed)
+			if(input["key"] != global.comms_key)
+				return "Bad Key"
+			else
+				#define CHAT_PULLR 2048
+				for(var/client/C in clients)
+					if(C.prefs && (C.prefs.toggles & CHAT_PULLR))
+						C << "<span class='announce'>PR: [input["announce"]]</span>"
+				#undef CHAT_PULLR
 
 /world/Reboot(var/reason)
 #ifdef dellogging
@@ -193,7 +197,7 @@
 #define INACTIVITY_KICK	6000	//10 minutes in ticks (approx.)
 /world/proc/KickInactiveClients()
 	spawn(-1)
-		set background = 1
+		set background = BACKGROUND_ENABLED
 		while(1)
 			sleep(INACTIVITY_KICK)
 			for(var/client/C in clients)
@@ -282,7 +286,7 @@
 		features += "hosted by <b>[config.hostedby]</b>"
 
 	if (features)
-		s += ": [dd_list2text(features, ", ")]"
+		s += ": [list2text(features, ", ")]"
 
 	/* does this help? I do not know */
 	if (src.status != s)

@@ -6,7 +6,7 @@
 	icon_state = "powersink0"
 	item_state = "electronic"
 	w_class = 4.0
-	flags = FPRINT | TABLEPASS | CONDUCT
+	flags = CONDUCT
 	throwforce = 5
 	throw_speed = 1
 	throw_range = 2
@@ -16,6 +16,7 @@
 	var/power_drained = 0 		// has drained this much power
 	var/max_power = 1e8		// maximum power that can be drained before exploding
 	var/mode = 0		// 0 = off, 1=clamped (off), 2=operating
+	var/admins_warned = 0 // stop spam, only warn the admins once that we are about to boom
 
 	var/const/DISCONNECTED = 0
 	var/const/CLAMPED_OFF = 1
@@ -94,6 +95,8 @@
 				"[user] activates \the [src]!", \
 				"You activate \the [src]!",
 				"You hear a click.")
+			message_admins("Power sink activated by [key_name(user, user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) at ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)")
+			log_game("Power sink activated by [key_name(user)] at ([x],[y],[z])")
 			set_mode(OPERATING)
 
 		if(OPERATING)
@@ -108,14 +111,14 @@
 		set_mode(DISCONNECTED)
 		return
 
-	var/datum/powernet/PN = attached.get_powernet()
+	var/datum/powernet/PN = attached.powernet
 	if(PN)
 		SetLuminosity(5)
 
 		// found a powernet, so drain up to max power from it
 
 		var/drained = min ( drain_rate, PN.avail )
-		PN.newload += drained
+		PN.load += drained
 		power_drained += drained
 
 		// if tried to drain more than available on powernet
@@ -127,10 +130,16 @@
 					if(A.operating && A.cell)
 						A.cell.charge = max(0, A.cell.charge - 50)
 						power_drained += 50
+						if(A.charging == 2) // If the cell was full
+							A.charging = 1 // It's no longer full
 
 	if(power_drained > max_power * 0.95)
+		if (!admins_warned)
+			admins_warned = 1
+			message_admins("Power sink at ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>) is 95% full. Explosion imminent.")
 		playsound(src, 'sound/effects/screech.ogg', 100, 1, 1)
+
 	if(power_drained >= max_power)
 		processing_objects.Remove(src)
 		explosion(src.loc, 3,6,9,12)
-		del(src)
+		qdel(src)

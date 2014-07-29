@@ -9,7 +9,7 @@
 	var/icon/virtualIcon
 	var/list/bulletholes = list()
 
-	Del()
+	Destroy()
 		// if a target is deleted and associated with a stake, force stake to forget
 		for(var/obj/structure/target_stake/T in view(3,src))
 			if(T.pinned_target == src)
@@ -37,7 +37,7 @@
 			var/obj/item/weapon/weldingtool/WT = W
 			if(WT.remove_fuel(0, user))
 				overlays.Cut()
-				usr << "You slice off [src]'s uneven chunks of aluminum and scorch marks."
+				usr << "You slice off [src]'s uneven chunks of aluminium and scorch marks."
 				return
 
 
@@ -97,7 +97,7 @@
 			for(var/mob/O in oviewers())
 				if ((O.client && !( O.blinded )))
 					O << "\red [src] breaks into tiny pieces and collapses!"
-			del(src)
+			qdel(src)
 
 		// Create a temporary object to represent the damage
 		var/obj/bmark = new

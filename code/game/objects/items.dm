@@ -1,19 +1,13 @@
 /obj/item
 	name = "item"
 	icon = 'icons/obj/items.dmi'
-	var/abstract = 0
 	var/item_state = null
-	var/r_speed = 1.0
-	var/health = null
-	var/burn_point = null
-	var/burning = null
 	var/hitsound = null
+	var/throwhitsound = null
 	var/w_class = 3.0
-	flags = FPRINT | TABLEPASS
 	var/slot_flags = 0		//This is used to determine on which slots an item can fit.
 	pass_flags = PASSTABLE
 	pressure_resistance = 5
-//	causeerrorheresoifixthis
 	var/obj/item/master = null
 
 	var/heat_protection = 0 //flags which determine which body parts are protected from heat. Use the HEAD, CHEST, GROIN, etc. flags. See setup.dm
@@ -33,33 +27,40 @@
 	var/permeability_coefficient = 1 // for chemicals/diseases
 	var/siemens_coefficient = 1 // for electrical admittance/conductance (electrocution checks and shit)
 	var/slowdown = 0 // How much clothing is slowing you down. Negative values speeds you up
-	var/canremove = 1 //Mostly for Ninja code at this point but basically will not allow the item to be removed if set to 0. /N
 	var/armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
 	var/list/allowed = null //suit storage stuff.
 	var/obj/item/device/uplink/hidden/hidden_uplink = null // All items can have an uplink hidden inside, just remember to add the triggers.
 	var/reflect_chance = 0 //This var dictates what % of a time an object will reflect an energy based weapon's shot
 
+	var/list/species_exception = list()	// even if a species cannot put items in a certain slot, if the species id is in the item's exception list, it will be able to wear that item
+
 /obj/item/device
 	icon = 'icons/obj/device.dmi'
+
+/obj/item/Destroy()
+	if(ismob(loc))
+		var/mob/m = loc
+		m.unEquip(src, 1)
+	return ..()
 
 /obj/item/ex_act(severity)
 	switch(severity)
 		if(1.0)
-			del(src)
+			qdel(src)
 			return
 		if(2.0)
 			if (prob(50))
-				del(src)
+				qdel(src)
 				return
 		if(3.0)
 			if (prob(5))
-				del(src)
+				qdel(src)
 				return
 		else
 	return
 
 /obj/item/blob_act()
-	del(src)
+	qdel(src)
 
 //user: The mob that is suiciding
 //damagetype: The type of damage the item will inflict on the user
@@ -110,7 +111,16 @@
 	if(src.blood_DNA)
 		f_name = "a bloody [name]"
 
-	usr << "\icon[src]This is [f_name]. It is a [size] item."
+	var/determiner
+	var/pronoun
+	if(src.gender == PLURAL)
+		determiner = "These are"
+		pronoun = "They are"
+	else
+		determiner = "This is"
+		pronoun = "It is"
+
+	usr << "\icon[src][determiner] [f_name]. [pronoun] a [size] item." //e.g. These are some gloves. They are a small item. or This is a toolbox. It is a bulky item.
 
 	if(src.desc)
 		usr << src.desc
@@ -119,21 +129,18 @@
 /obj/item/attack_hand(mob/user as mob)
 	if (!user) return
 	if (istype(src.loc, /obj/item/weapon/storage))
+		//If the item is in a storage item, take it out
 		var/obj/item/weapon/storage/S = src.loc
 		S.remove_from_storage(src)
 
 	src.throwing = 0
-	if (src.loc == user)
-		//canremove==0 means that object may not be removed. You can still wear it. This only applies to clothing. /N
-		if(!src.canremove)
+	if (loc == user)
+		if(!user.unEquip(src))
 			return
-		else
-			user.u_equip(src)
 	else
-		if(isliving(src.loc))
+		if(isliving(loc))
 			return
-		user.next_move = max(user.next_move+2,world.time + 2)
-	src.pickup(user)
+	pickup(user)
 	add_fingerprint(user)
 	user.put_in_active_hand(src)
 	return
@@ -148,16 +155,12 @@
 					M.client.screen -= src
 	src.throwing = 0
 	if (src.loc == user)
-		//canremove==0 means that object may not be removed. You can still wear it. This only applies to clothing. /N
-		if(istype(src, /obj/item/clothing) && !src:canremove)
+		if(!user.unEquip(src))
 			return
-		else
-			user.u_equip(src)
 	else
 		if(istype(src.loc, /mob/living))
 			return
 		src.pickup(user)
-		user.next_move = max(user.next_move+2,world.time + 2)
 
 	user.put_in_active_hand(src)
 	return
@@ -168,11 +171,18 @@
 
 	if(!A.has_fine_manipulation || w_class >= 4)
 		if(src in A.contents) // To stop Aliens having items stuck in their pockets
-			A.drop_from_inventory(src)
+			A.unEquip(src)
 		user << "Your claws aren't capable of such fine manipulation."
 		return
 	attack_paw(A)
 
+/obj/item/attack_ai(mob/user as mob)
+	if (istype(src.loc, /obj/item/weapon/robot_module))
+		//If the item is part of a cyborg module, equip it
+		if(!isrobot(user)) return
+		var/mob/living/silicon/robot/R = user
+		R.activate_module(src)
+		R.hud_used.update_robot_modules_display()
 
 // Due to storage type consolidation this should get used more now.
 // I have cleaned it up a little, but it could probably use more.  -Sayu
@@ -180,25 +190,29 @@
 	if(istype(W,/obj/item/weapon/storage))
 		var/obj/item/weapon/storage/S = W
 		if(S.use_to_pickup)
-			if(S.collection_mode) //Mode is set to collect all items on a tile and we clicked on a valid one.
+			if(S.collection_mode) //Mode is set to collect multiple items on a tile and we clicked on a valid one.
 				if(isturf(src.loc))
 					var/list/rejections = list()
 					var/success = 0
 					var/failure = 0
 
 					for(var/obj/item/I in src.loc)
+						if(S.collection_mode == 2 && !istype(I,src.type)) // We're only picking up items of the target type
+							failure = 1
+							continue
 						if(I.type in rejections) // To limit bag spamming: any given type only complains once
 							continue
 						if(!S.can_be_inserted(I))	// Note can_be_inserted still makes noise when the answer is no
 							rejections += I.type	// therefore full bags are still a little spammy
 							failure = 1
 							continue
+
 						success = 1
 						S.handle_item_insertion(I, 1)	//The 1 stops the "You put the [src] into [S]" insertion message from being displayed.
 					if(success && !failure)
-						user << "<span class='notice'>You put everything in [S].</span>"
+						user << "<span class='notice'>You put everything [S.preposition] [S].</span>"
 					else if(success)
-						user << "<span class='notice'>You put some things in [S].</span>"
+						user << "<span class='notice'>You put some things [S.preposition] [S].</span>"
 					else
 						user << "<span class='notice'>You fail to pick anything up with [S].</span>"
 
@@ -245,185 +259,11 @@
 //the mob M is attempting to equip this item into the slot passed through as 'slot'. Return 1 if it can do this and 0 if it can't.
 //If you are making custom procs but would like to retain partial or complete functionality of this one, include a 'return ..()' to where you want this to happen.
 //Set disable_warning to 1 if you wish it to not give you outputs.
-/obj/item/proc/mob_can_equip(M as mob, slot, disable_warning = 0)
-	if(!slot) return 0
-	if(!M) return 0
+/obj/item/proc/mob_can_equip(mob/M, slot, disable_warning = 0)
+	if(!M)
+		return 0
 
-	if(ishuman(M))
-		//START HUMAN
-		var/mob/living/carbon/human/H = M
-		switch(slot)
-			if(slot_l_hand)
-				if(H.l_hand)
-					return 0
-				return 1
-			if(slot_r_hand)
-				if(H.r_hand)
-					return 0
-				return 1
-			if(slot_wear_mask)
-				if(H.wear_mask)
-					return 0
-				if( !(slot_flags & SLOT_MASK) )
-					return 0
-				return 1
-			if(slot_back)
-				if(H.back)
-					return 0
-				if( !(slot_flags & SLOT_BACK) )
-					return 0
-				return 1
-			if(slot_wear_suit)
-				if(H.wear_suit)
-					return 0
-				if( !(slot_flags & SLOT_OCLOTHING) )
-					return 0
-				return 1
-			if(slot_gloves)
-				if(H.gloves)
-					return 0
-				if( !(slot_flags & SLOT_GLOVES) )
-					return 0
-				return 1
-			if(slot_shoes)
-				if(H.shoes)
-					return 0
-				if( !(slot_flags & SLOT_FEET) )
-					return 0
-				return 1
-			if(slot_belt)
-				if(H.belt)
-					return 0
-				if(!H.w_uniform)
-					if(!disable_warning)
-						H << "\red You need a jumpsuit before you can attach this [name]."
-					return 0
-				if( !(slot_flags & SLOT_BELT) )
-					return
-				return 1
-			if(slot_glasses)
-				if(H.glasses)
-					return 0
-				if( !(slot_flags & SLOT_EYES) )
-					return 0
-				return 1
-			if(slot_head)
-				if(H.head)
-					return 0
-				if( !(slot_flags & SLOT_HEAD) )
-					return 0
-				return 1
-			if(slot_ears)
-				if(H.ears)
-					return 0
-				if( !(slot_flags & SLOT_EARS) )
-					return 0
-				return 1
-			if(slot_w_uniform)
-				if(H.w_uniform)
-					return 0
-				if( !(slot_flags & SLOT_ICLOTHING) )
-					return 0
-				return 1
-			if(slot_wear_id)
-				if(H.wear_id)
-					return 0
-				if(!H.w_uniform)
-					if(!disable_warning)
-						H << "\red You need a jumpsuit before you can attach this [name]."
-					return 0
-				if( !(slot_flags & SLOT_ID) )
-					return 0
-				return 1
-			if(slot_l_store)
-				if(H.l_store)
-					return 0
-				if(!H.w_uniform)
-					if(!disable_warning)
-						H << "\red You need a jumpsuit before you can attach this [name]."
-					return 0
-				if(slot_flags & SLOT_DENYPOCKET)
-					return
-				if( w_class <= 2 || (slot_flags & SLOT_POCKET) )
-					return 1
-			if(slot_r_store)
-				if(H.r_store)
-					return 0
-				if(!H.w_uniform)
-					if(!disable_warning)
-						H << "\red You need a jumpsuit before you can attach this [name]."
-					return 0
-				if(slot_flags & SLOT_DENYPOCKET)
-					return 0
-				if( w_class <= 2 || (slot_flags & SLOT_POCKET) )
-					return 1
-				return 0
-			if(slot_s_store)
-				if(H.s_store)
-					return 0
-				if(!H.wear_suit)
-					if(!disable_warning)
-						H << "\red You need a suit before you can attach this [name]."
-					return 0
-				if(!H.wear_suit.allowed)
-					if(!disable_warning)
-						usr << "You somehow have a suit with no defined allowed items for suit storage, stop that."
-					return 0
-				if(src.w_class > 4)
-					if(!disable_warning)
-						usr << "The [name] is too big to attach."
-					return 0
-				if( istype(src, /obj/item/device/pda) || istype(src, /obj/item/weapon/pen) || is_type_in_list(src, H.wear_suit.allowed) )
-					return 1
-				return 0
-			if(slot_handcuffed)
-				if(H.handcuffed)
-					return 0
-				if(!istype(src, /obj/item/weapon/handcuffs))
-					return 0
-				return 1
-			if(slot_legcuffed)
-				if(H.legcuffed)
-					return 0
-				if(!istype(src, /obj/item/weapon/legcuffs))
-					return 0
-				return 1
-			if(slot_in_backpack)
-				if (H.back && istype(H.back, /obj/item/weapon/storage/backpack))
-					var/obj/item/weapon/storage/backpack/B = H.back
-					if(B.contents.len < B.storage_slots && w_class <= B.max_w_class)
-						return 1
-				return 0
-		return 0 //Unsupported slot
-		//END HUMAN
-
-	else if(ismonkey(M))
-		//START MONKEY
-		var/mob/living/carbon/monkey/MO = M
-		switch(slot)
-			if(slot_l_hand)
-				if(MO.l_hand)
-					return 0
-				return 1
-			if(slot_r_hand)
-				if(MO.r_hand)
-					return 0
-				return 1
-			if(slot_wear_mask)
-				if(MO.wear_mask)
-					return 0
-				if( !(slot_flags & SLOT_MASK) )
-					return 0
-				return 1
-			if(slot_back)
-				if(MO.back)
-					return 0
-				if( !(slot_flags & SLOT_BACK) )
-					return 0
-				return 1
-		return 0 //Unsupported slot
-
-		//END MONKEY
+	return M.can_equip(src, slot, disable_warning)
 
 
 /obj/item/verb/verb_pickup()
@@ -485,10 +325,7 @@
 		user << "\red You cannot locate any eyes on this creature!"
 		return
 
-	user.attack_log += "\[[time_stamp()]\]<font color='red'> Attacked [M.name] ([M.ckey]) with [src.name] (INTENT: [uppertext(user.a_intent)])</font>"
-	M.attack_log += "\[[time_stamp()]\]<font color='orange'> Attacked by [user.name] ([user.ckey]) with [src.name] (INTENT: [uppertext(user.a_intent)])</font>"
-
-	log_attack("<font color='red'> [user.name] ([user.ckey]) attacked [M.name] ([M.ckey]) with [src.name] (INTENT: [uppertext(user.a_intent)])</font>")
+	add_logs(user, M, "attacked", object="[src.name]", addition="(INTENT: [uppertext(user.a_intent)])")
 
 	src.add_fingerprint(user)
 	//if((CLUMSY in user.mutations) && prob(50))
@@ -530,7 +367,7 @@
 				M.drop_item()
 			M.eye_blurry += 10
 			M.Paralyse(1)
-			M.Weaken(4)
+			M.Weaken(2)
 		if (prob(M.eye_stat - 10 + 1))
 			if(M.stat != 2)
 				M << "\red You go blind!"
@@ -550,3 +387,4 @@
 	. = ..()
 	if(.)
 		transfer_blood = 0
+		bloody_hands_mob = null

@@ -8,7 +8,6 @@ var/global/list/rad_collectors = list()
 	icon_state = "ca"
 	anchored = 0
 	density = 1
-	directwired = 1
 	req_access = list(access_engine_equip)
 //	use_power = 0
 	var/obj/item/weapon/tank/plasma/P = null
@@ -21,7 +20,7 @@ var/global/list/rad_collectors = list()
 	..()
 	rad_collectors += src
 
-/obj/machinery/power/rad_collector/Del()
+/obj/machinery/power/rad_collector/Destroy()
 	rad_collectors -= src
 	..()
 

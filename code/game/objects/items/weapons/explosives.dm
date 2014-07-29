@@ -7,21 +7,23 @@
 	icon = 'icons/obj/assemblies.dmi'
 	icon_state = "plastic-explosive0"
 	item_state = "plasticx"
-	flags = FPRINT | TABLEPASS | NOBLUDGEON
+	flags = NOBLUDGEON
 	w_class = 2.0
 	origin_tech = "syndicate=2"
 	var/datum/wires/explosive/plastic/wires = null
 	var/timer = 10
 	var/atom/target = null
 	var/open_panel = 0
+	var/image_overlay = null
 
 /obj/item/weapon/plastique/New()
 	wires = new(src)
+	image_overlay = image('icons/obj/assemblies.dmi', "plastic-explosive2")
 	..()
 
 /obj/item/weapon/plastique/suicide_act(var/mob/user)
-	. = (BRUTELOSS)
-	viewers(user) << "\red <b>[user] activates the C4 and holds it above his head! It looks like \he's going out with a bang!</b>"
+	. = BRUTELOSS
+	user.visible_message("<span class='suicide'>[user] activates the C4 and holds it above his head! It looks like \he's going out with a bang!</span>")
 	var/message_say = "FOR NO RAISIN!"
 	if(user.mind)
 		if(user.mind.special_role)
@@ -34,6 +36,7 @@
 				message_say = "FOR NARSIE!"
 	user.say(message_say)
 	target = user
+	message_admins("[key_name(user, user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) suicided with C4 at ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
 	explode(get_turf(user))
 	return .
 
@@ -53,17 +56,12 @@
 		timer = newtime
 		user << "Timer set for [timer] seconds."
 
-/obj/item/weapon/plastique/afterattack(atom/target as obj|turf, mob/user as mob, flag)
+/obj/item/weapon/plastique/afterattack(atom/movable/target, mob/user, flag)
 	if (!flag)
 		return
-	if (istype(target, /turf/unsimulated) || istype(target, /turf/simulated/shuttle) || istype(target, /obj/item/weapon/storage/))
+	if (ismob(target) || istype(target, /turf/unsimulated) || istype(target, /turf/simulated/shuttle) || istype(target, /obj/item/weapon/storage/))
 		return
 	user << "Planting explosives..."
-	if(ismob(target))
-		user.attack_log += "\[[time_stamp()]\] <font color='red'> [user.real_name] tried planting [name] on [target:real_name] ([target:ckey])</font>"
-		log_attack("<font color='red'> [user.real_name] ([user.ckey]) tried planting [name] on [target:real_name] ([target:ckey])</font>")
-		user.visible_message("\red [user.name] is trying to plant some kind of explosive on [target.name]!")
-
 
 	if(do_after(user, 50) && in_range(user, target))
 		user.drop_item()
@@ -71,16 +69,21 @@
 		loc = null
 
 		if (ismob(target))
-			target:attack_log += "\[[time_stamp()]\]<font color='orange'> Had the [name] planted on them by [user.real_name] ([user.ckey])</font>"
+			add_logs(user, target, "planted [name] on")
 			user.visible_message("\red [user.name] finished planting an explosive on [target.name]!")
+			message_admins("[key_name(user, user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) planted C4 on [key_name(target)](<A HREF='?_src_=holder;adminmoreinfo=\ref[target]'>?</A>) with [timer] second fuse",0,1)
+			log_game("[key_name(user)] planted C4 on [key_name(target)] with [timer] second fuse")
 
-		target.overlays += image('icons/obj/assemblies.dmi', "plastic-explosive2")
+		else
+			message_admins("[key_name(user, user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) planted C4 on [target.name] at ([target.x],[target.y],[target.z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[target.x];Y=[target.y];Z=[target.z]'>JMP</a>) with [timer] second fuse",0,1)
+			log_game("[key_name(user)] planted C4 on [target.name] at ([target.x],[target.y],[target.z]) with [timer] second fuse")
+
+		target.overlays += image_overlay
 		user << "Bomb has been planted. Timer counting down from [timer]."
 		spawn(timer*10)
 			explode(get_turf(target))
 
 /obj/item/weapon/plastique/proc/explode(var/location)
-
 	if(!target)
 		target = get_atom_on_turf(src)
 	if(!target)
@@ -90,13 +93,13 @@
 
 	if(target)
 		if (istype(target, /turf/simulated/wall))
-			target:dismantle_wall(1)
+			var/turf/simulated/wall/W = target
+			W.dismantle_wall(1)
 		else
 			target.ex_act(1)
-		if (isobj(target))
-			if (target)
-				del(target)
-	del(src)
+	if(target)
+		target.overlays -= image_overlay
+	qdel(src)
 
 /obj/item/weapon/plastique/attack(mob/M as mob, mob/user as mob, def_zone)
 	return

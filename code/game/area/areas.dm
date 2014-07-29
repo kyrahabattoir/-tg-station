@@ -17,6 +17,12 @@
 /area
 	var/global/global_uid = 0
 	var/uid
+	var/list/ambientsounds = list('sound/ambience/ambigen1.ogg','sound/ambience/ambigen3.ogg',\
+									'sound/ambience/ambigen4.ogg','sound/ambience/ambigen5.ogg',\
+									'sound/ambience/ambigen6.ogg','sound/ambience/ambigen7.ogg',\
+									'sound/ambience/ambigen8.ogg','sound/ambience/ambigen9.ogg',\
+									'sound/ambience/ambigen10.ogg','sound/ambience/ambigen11.ogg',\
+									'sound/ambience/ambigen12.ogg','sound/ambience/ambigen14.ogg')
 
 /area/New()
 	icon_state = ""
@@ -24,15 +30,6 @@
 	master = src //moved outside the spawn(1) to avoid runtimes in lighting.dm when it references src.loc.loc.master ~Carn
 	uid = ++global_uid
 	related = list(src)
-
-	if(type == /area)	// override defaults for space. TODO: make space areas of type /area/space rather than /area
-		requires_power = 1
-		always_unpowered = 1
-		lighting_use_dynamic = 0
-		power_light = 0
-		power_equip = 0
-		power_environ = 0
-		//has_gravity = 0    // Space has gravity.  Because.. because.
 
 	if(requires_power)
 		luminosity = 0
@@ -48,6 +45,8 @@
 //	spawn(15)
 	power_change()		// all machines set to current power level, also updates lighting icon
 	InitializeLighting()
+
+	blend_mode = BLEND_MULTIPLY // Putting this in the constructure so that it stops the icons being screwed up in the map editor.
 
 
 /area/proc/poweralert(var/state, var/obj/source as obj)
@@ -256,9 +255,6 @@
 
 
 /area/Entered(A)
-	var/musVolume = 25
-	var/sound = 'sound/ambience/ambigen1.ogg'
-
 	if(!istype(A,/mob/living))	return
 
 	var/mob/living/L = A
@@ -267,9 +263,6 @@
 	if(!L.lastarea)
 		L.lastarea = get_area(L.loc)
 	var/area/newarea = get_area(L.loc)
-	var/area/oldarea = L.lastarea
-	if((oldarea.has_gravity == 0) && (newarea.has_gravity == 1) && (L.m_intent == "run")) // Being ready when you change areas gives you a chance to avoid falling all together.
-		thunk(L)
 
 	L.lastarea = newarea
 
@@ -281,58 +274,59 @@
 		L << sound('sound/ambience/shipambience.ogg', repeat = 1, wait = 0, volume = 35, channel = 2)
 
 	if(prob(35))
-
-		if(istype(src, /area/chapel))
-			sound = pick('sound/ambience/ambicha1.ogg','sound/ambience/ambicha2.ogg','sound/ambience/ambicha3.ogg','sound/ambience/ambicha4.ogg')
-		else if(istype(src, /area/medical/morgue))
-			sound = pick('sound/ambience/ambimo1.ogg','sound/ambience/ambimo2.ogg','sound/ambience/title2.ogg')
-		else if(type == /area)
-			sound = pick('sound/ambience/ambispace.ogg','sound/ambience/title2.ogg',)
-		else if(istype(src, /area/engine))
-			sound = pick('sound/ambience/ambisin1.ogg','sound/ambience/ambisin2.ogg','sound/ambience/ambisin3.ogg','sound/ambience/ambisin4.ogg')
-		else if(istype(src, /area/AIsattele) || istype(src, /area/turret_protected/ai) || istype(src, /area/turret_protected/ai_upload) || istype(src, /area/turret_protected/ai_upload_foyer))
-			sound = pick('sound/ambience/ambimalf.ogg')
-		else if(istype(src, /area/mine/explored) || istype(src, /area/mine/unexplored))
-			sound = pick('sound/ambience/ambimine.ogg')
-			musVolume = 25
-		else if(istype(src, /area/tcommsat) || istype(src, /area/turret_protected/tcomwest) || istype(src, /area/turret_protected/tcomeast) || istype(src, /area/turret_protected/tcomfoyer) || istype(src, /area/turret_protected/tcomsat))
-			sound = pick('sound/ambience/ambisin2.ogg', 'sound/ambience/signal.ogg', 'sound/ambience/signal.ogg', 'sound/ambience/ambigen10.ogg')
-		else
-			sound = pick('sound/ambience/ambigen1.ogg','sound/ambience/ambigen3.ogg','sound/ambience/ambigen4.ogg','sound/ambience/ambigen5.ogg','sound/ambience/ambigen6.ogg','sound/ambience/ambigen7.ogg','sound/ambience/ambigen8.ogg','sound/ambience/ambigen9.ogg','sound/ambience/ambigen10.ogg','sound/ambience/ambigen11.ogg','sound/ambience/ambigen12.ogg','sound/ambience/ambigen14.ogg')
+		var/sound = pick(ambientsounds)
 
 		if(!L.client.played)
-			L << sound(sound, repeat = 0, wait = 0, volume = musVolume, channel = 1)
+			L << sound(sound, repeat = 0, wait = 0, volume = 25, channel = 1)
 			L.client.played = 1
 			spawn(600)			//ewww - this is very very bad
 				if(L.&& L.client)
 					L.client.played = 0
 
-/area/proc/gravitychange(var/gravitystate = 0)
-
-	has_gravity = gravitystate
-
-	if(gravitystate)
-		for(var/mob/living/carbon/human/M in contents)
-			thunk(M)
-
 /area/proc/mob_activate(var/mob/living/L)
 	return
 
-/area/proc/thunk(mob)
-	if(istype(mob,/mob/living/carbon/human/))  // Only humans can wear magboots, so we give them a chance to.
-		if((istype(mob:shoes, /obj/item/clothing/shoes/magboots) && (mob:shoes.flags & NOSLIP)))
-			return
+/proc/has_gravity(atom/AT, turf/T)
+	if(!T)
+		T = get_turf(AT)
+	var/area/A = get_area(T)
+	if(istype(T, /turf/space)) // Turf never has gravity
+		return 0
+	else if(A && A.has_gravity) // Areas which always has gravity
+		return 1
+	else
+		// There's a gravity generator on our z level
+		if(T && gravity_generators["[T.z]"] && length(gravity_generators["[T.z]"]))
+			return 1
+	return 0
 
-	if(istype(get_turf(mob), /turf/space)) // Can't fall onto nothing.
-		return
+/area/proc/clear_docking_area()
+	var/list/dstturfs = list()
+	var/throwy = world.maxy
 
-	if((istype(mob,/mob/living/carbon/human/)) && (mob:m_intent == "run")) // Only clumbsy humans can fall on their asses.
-		mob:AdjustStunned(5)
-		mob:AdjustWeakened(5)
+	for(var/turf/T in src)
+		dstturfs += T
+		if(T.y < throwy)
+			throwy = T.y
 
-	else if (istype(mob,/mob/living/carbon/human/))
-		mob:AdjustStunned(2)
-		mob:AdjustWeakened(2)
+	// hey you, get out of the way!
+	for(var/turf/T in dstturfs)
+		// find the turf to move things to
+		var/turf/D = locate(T.x, throwy - 1, T.z)
+		for(var/atom/movable/AM as mob|obj in T)
+			//mobs take damage
+			if(istype(AM, /mob/living))
+				var/mob/living/living_mob = AM
+				living_mob.Paralyse(10)
+				living_mob.take_organ_damage(80)
+				living_mob.anchored = 0 //Unbuckle them so they can be moved
+			//Anything not bolted down is moved, everything else is destroyed
+			if(!AM.anchored)
+				AM.Move(D)
+			else
+				qdel(AM)
+		if(istype(T, /turf/simulated))
+			del(T)
 
-	mob << "Gravity!"
-
+	for(var/atom/movable/bug in src) // If someone (or something) is somehow still in the shuttle's docking area...
+		qdel(bug)

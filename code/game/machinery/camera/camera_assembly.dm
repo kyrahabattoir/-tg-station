@@ -6,11 +6,11 @@
 	w_class = 2
 	anchored = 0
 
-	m_amt = 700
-	g_amt = 300
+	m_amt = 400
+	g_amt = 250
 
 	//	Motion, EMP-Proof, X-Ray
-	var/list/obj/item/possible_upgrades = list(/obj/item/device/assembly/prox_sensor, /obj/item/stack/sheet/mineral/plasma, /obj/item/weapon/reagent_containers/food/snacks/grown/carrot)
+	var/list/obj/item/possible_upgrades = list(/obj/item/device/assembly/prox_sensor, /obj/item/stack/sheet/mineral/plasma, /obj/item/device/analyzer)
 	var/list/upgrades = list()
 	var/state = 0
 	var/busy = 0
@@ -48,7 +48,7 @@
 
 			else if(istype(W, /obj/item/weapon/wrench))
 				playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-				user << "You unattach the assembly from it's place."
+				user << "You unattach the assembly from its place."
 				anchored = 0
 				update_icon()
 				state = 0
@@ -56,17 +56,20 @@
 
 		if(2)
 			// State 2
-			if(istype(W, /obj/item/weapon/cable_coil))
-				var/obj/item/weapon/cable_coil/C = W
+			if(istype(W, /obj/item/stack/cable_coil))
+				var/obj/item/stack/cable_coil/C = W
 				if(C.use(2))
-					user << "You add wires to the assembly."
+					user << "<span class='notice'>You add wires to the assembly.</span>"
 					state = 3
+				else
+					user << "<span class='warning'>You need two lengths of cable to wire a camera.</span>"
+					return
 				return
 
 			else if(istype(W, /obj/item/weapon/weldingtool))
 
 				if(weld(W, user))
-					user << "You unweld the assembly from it's place."
+					user << "You unweld the assembly from its place."
 					state = 1
 					anchored = 1
 				return
@@ -95,8 +98,8 @@
 				C.auto_turn()
 
 				C.network = tempnetwork
-
-				C.c_tag = "[get_area_name(src)] ([rand(1, 999)]"
+				var/area/A = get_area_master(src)
+				C.c_tag = "[A.name] ([rand(1, 999)]"
 
 				for(var/i = 5; i >= 0; i -= 1)
 					var/direct = input(user, "Direction?", "Assembling Camera", null) in list("LEAVE IT", "NORTH", "EAST", "SOUTH", "WEST" )
@@ -110,7 +113,7 @@
 
 			else if(istype(W, /obj/item/weapon/wirecutters))
 
-				new/obj/item/weapon/cable_coil(get_turf(src), 2)
+				new/obj/item/stack/cable_coil(get_turf(src), 2)
 				playsound(src.loc, 'sound/items/Wirecutter.ogg', 50, 1)
 				user << "You cut the wires from the circuits."
 				state = 2
@@ -120,7 +123,7 @@
 	if(is_type_in_list(W, possible_upgrades) && !is_type_in_list(W, upgrades)) // Is a possible upgrade and isn't in the camera already.
 		user << "You attach the [W] into the assembly inner circuits."
 		upgrades += W
-		user.drop_item(W)
+		user.drop_item()
 		W.loc = src
 		return
 

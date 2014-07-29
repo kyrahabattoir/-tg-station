@@ -99,13 +99,13 @@
 	name = "offhand"
 	icon_state = "offhand"
 	w_class = 5.0
-	abstract = 1
+	flags = ABSTRACT
 
 /obj/item/weapon/twohanded/offhand/unwield()
-	del(src)
+	qdel(src)
 
 /obj/item/weapon/twohanded/offhand/wield()
-	del(src)
+	qdel(src)
 
 /obj/item/weapon/twohanded/offhand/IsShield()//if the actual twohanded weapon is a shield, we count as a shield too!
 	var/mob/user = loc
@@ -115,6 +115,32 @@
 	if(!I) return 0
 	return I.IsShield()
 
+///////////Two hand required objects///////////////
+//This is for objects that require two hands to even pick up
+/obj/item/weapon/twohanded/required/
+	w_class = 5.0
+
+/obj/item/weapon/twohanded/required/attack_self()
+	return
+
+/obj/item/weapon/twohanded/required/mob_can_equip(M as mob, slot)
+	if(wielded)
+		M << "<span class='warning'>[src.name] is too cumbersome to carry with anything but your hands!</span>"
+		return 0
+	return ..()
+
+/obj/item/weapon/twohanded/required/attack_hand(mob/user)//Can't even pick it up without both hands empty
+	var/obj/item/weapon/twohanded/required/H = user.get_inactive_hand()
+	if(H != null)
+		user.visible_message("<span class='notice'>[src.name] is too cumbersome to carry in one hand!</span>")
+		return
+	var/obj/item/weapon/twohanded/offhand/O = new(user)
+	user.put_in_inactive_hand(O)
+	..()
+	wielded = 1
+
+
+obj/item/weapon/twohanded/
 
 /*
  * Fireaxe
@@ -124,11 +150,13 @@
 	name = "fire axe"
 	desc = "Truly, the weapon of a madman. Who would think to fight fire with an axe?"
 	force = 5
+	throwforce = 15
 	w_class = 4.0
 	slot_flags = SLOT_BACK
 	force_unwielded = 5
 	force_wielded = 24 // Was 18, Buffed - RobRichards/RR
 	attack_verb = list("attacked", "chopped", "cleaved", "torn", "cut")
+	hitsound = 'sound/weapons/bladeslice.ogg'
 
 /obj/item/weapon/twohanded/fireaxe/update_icon()  //Currently only here to fuck with the on-mob icons.
 	icon_state = "fireaxe[wielded]"
@@ -146,7 +174,7 @@
 			if (W.dir == SOUTHWEST)
 				new /obj/item/weapon/shard( W.loc )
 				if(W.reinf) new /obj/item/stack/rods( W.loc)
-		del(A)
+		qdel(A)
 
 
 /*
@@ -158,14 +186,15 @@
 	desc = "Handle with care."
 	force = 3
 	throwforce = 5.0
-	throw_speed = 1
+	throw_speed = 3
 	throw_range = 5
 	w_class = 2.0
 	force_unwielded = 3
 	force_wielded = 34
 	wieldsound = 'sound/weapons/saberon.ogg'
 	unwieldsound = 'sound/weapons/saberoff.ogg'
-	flags = FPRINT | TABLEPASS | NOSHIELD
+	hitsound = "swing_hit"
+	flags = NOSHIELD
 	origin_tech = "magnets=3;syndicate=4"
 	item_color = "green"
 	attack_verb = list("attacked", "slashed", "stabbed", "sliced", "torn", "ripped", "diced", "cut")
@@ -185,9 +214,8 @@
 
 /obj/item/weapon/twohanded/dualsaber/attack(target as mob, mob/living/user as mob)
 	..()
-	if((CLUMSY in user.mutations) && (wielded) &&prob(40))
-		user << "\red You twirl around a bit before losing your balance and impaling yourself on the [src]."
-		user.take_organ_damage(20,25)
+	if((CLUMSY in user.mutations) && (wielded) && prob(40))
+		impale(user)
 		return
 	if((wielded) && prob(50))
 		spawn(0)
@@ -195,21 +223,31 @@
 				user.dir = i
 				sleep(1)
 
+/obj/item/weapon/twohanded/dualsaber/proc/impale(mob/living/user as mob)
+	user << "<span class='warning'>You twirl around a bit before losing your balance and impaling yourself on the [src].</span>"
+	if (force_wielded)
+		user.take_organ_damage(20,25)
+	else
+		user.adjustStaminaLoss(25)
+
 /obj/item/weapon/twohanded/dualsaber/IsShield()
 	if(wielded)
 		return 1
 	else
 		return 0
 
-/obj/item/weapon/twohanded/dualsaber/wield() //Specific wield () hulk checks due to reflect_chance var for balance issues
-	wielded = 1
+/obj/item/weapon/twohanded/dualsaber/wield() //Specific wield () hulk checks due to reflect_chance var for balance issues and switches hitsounds.
+	..()
 	var/mob/living/M = loc
 	if(istype(loc, /mob/living))
 		if (HULK in M.mutations)
 			loc << "<span class='warning'>You lack the grace to wield this to its full extent.</span>"
-	force = force_wielded
-	name = "[initial(name)] (Wielded)"
-	update_icon()
+	hitsound = 'sound/weapons/blade1.ogg' 
+
+
+/obj/item/weapon/twohanded/dualsaber/unwield() //Specific unwield () to switch hitsounds.
+	..()
+	hitsound = "swing_hit"
 
 /obj/item/weapon/twohanded/dualsaber/IsReflect()
 	if(wielded)
@@ -249,8 +287,9 @@
 	slot_flags = SLOT_BACK
 	force_unwielded = 10
 	force_wielded = 18 // Was 13, Buffed - RR
-	throwforce = 15
-	flags = FPRINT | TABLEPASS | NOSHIELD
+	throwforce = 20
+	throw_speed = 3
+	flags = NOSHIELD
 	hitsound = 'sound/weapons/bladeslice.ogg'
 	attack_verb = list("attacked", "poked", "jabbed", "torn", "gored")
 

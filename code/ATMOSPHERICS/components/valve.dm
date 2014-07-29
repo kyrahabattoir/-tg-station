@@ -64,9 +64,7 @@ obj/machinery/atmospherics/valve
 
 		return null
 
-	Del()
-		loc = null
-
+	Destroy()
 		if(node1)
 			node1.disconnect(src)
 			del(network_node1)
@@ -312,11 +310,3 @@ obj/machinery/atmospherics/valve
 						close()
 					else
 						open()
-
-	attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-		if (!istype(W, /obj/item/weapon/wrench))
-			return ..()
-		if (istype(src, /obj/machinery/atmospherics/valve/digital))
-			user << "\red You cannot unwrench this [src], it's too complicated."
-			return 1
-		return ..()

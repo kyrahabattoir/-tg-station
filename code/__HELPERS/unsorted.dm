@@ -138,44 +138,95 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 	return destination
 
+///////////////////
+//A* helpers procs
+///////////////////
 
+// Returns true if a link between A and B is blocked
+// Movement through doors allowed if ID has access
+/proc/LinkBlockedWithAccess(turf/A, turf/B, obj/item/weapon/card/id/ID)
 
-/proc/LinkBlocked(turf/A, turf/B)
 	if(A == null || B == null) return 1
 	var/adir = get_dir(A,B)
 	var/rdir = get_dir(B,A)
-	if((adir & (NORTH|SOUTH)) && (adir & (EAST|WEST)))	//	diagonal
-		var/iStep = get_step(A,adir&(NORTH|SOUTH))
-		if(!LinkBlocked(A,iStep) && !LinkBlocked(iStep,B)) return 0
+	if(adir & (adir-1))	//	diagonal
+		var/turf/iStep = get_step(A,adir&(NORTH|SOUTH))
+		if(!iStep.density && !LinkBlockedWithAccess(A,iStep, ID) && !LinkBlockedWithAccess(iStep,B,ID))
+			return 0
 
-		var/pStep = get_step(A,adir&(EAST|WEST))
-		if(!LinkBlocked(A,pStep) && !LinkBlocked(pStep,B)) return 0
+		var/turf/pStep = get_step(A,adir&(EAST|WEST))
+		if(!pStep.density && !LinkBlockedWithAccess(A,pStep,ID) && !LinkBlockedWithAccess(pStep,B,ID))
+			return 0
+
+		return 1
+
+	if(DirBlockedWithAccess(A,adir, ID))
+		return 1
+
+	if(DirBlockedWithAccess(B,rdir, ID))
+		return 1
+
+	for(var/obj/O in B)
+		if(O.density && !istype(O, /obj/machinery/door) && !(O.flags & ON_BORDER))
+			return 1
+
+	return 0
+
+// Returns true if direction is blocked from loc
+// Checks doors against access with given ID
+/proc/DirBlockedWithAccess(turf/loc,var/dir,var/obj/item/weapon/card/id/ID)
+	for(var/obj/structure/window/D in loc)
+		if(!D.density)			continue
+		if(D.dir == SOUTHWEST)	return 1 //full-tile window
+		if(D.dir == dir)		return 1 //matching border window
+
+	for(var/obj/machinery/door/D in loc)
+		if(!D.CanAStarPass(ID,dir))
+			return 1
+	return 0
+
+// Returns true if a link between A and B is blocked
+// Movement through doors allowed if door is open
+/proc/LinkBlocked(turf/A, turf/B)
+	if(A == null || B == null)
+		return 1
+	var/adir = get_dir(A,B)
+	var/rdir = get_dir(B,A)
+	if(adir & (adir-1)) //diagonal
+		var/turf/iStep = get_step(A,adir & (NORTH|SOUTH)) //check the north/south component
+		if(!iStep.density && !LinkBlocked(A,iStep) && !LinkBlocked(iStep,B))
+			return 0
+
+		var/turf/pStep = get_step(A,adir & (EAST|WEST)) //check the east/west component
+		if(!pStep.density && !LinkBlocked(A,pStep) && !LinkBlocked(pStep,B))
+			return 0
+
 		return 1
 
 	if(DirBlocked(A,adir)) return 1
 	if(DirBlocked(B,rdir)) return 1
+
+	for(var/obj/O in B)
+		if(O.density && !istype(O, /obj/machinery/door) && !(O.flags & ON_BORDER))
+			return 1
+
 	return 0
 
-
+// Returns true if direction is blocked from loc
+// Checks if doors are open
 /proc/DirBlocked(turf/loc,var/dir)
 	for(var/obj/structure/window/D in loc)
 		if(!D.density)			continue
-		if(D.dir == SOUTHWEST)	return 1
-		if(D.dir == dir)		return 1
+		if(D.dir == SOUTHWEST)	return 1 //full-tile window
+		if(D.dir == dir)		return 1 //matching border window
 
 	for(var/obj/machinery/door/D in loc)
-		if(!D.density)			continue
-		if(istype(D, /obj/machinery/door/window))
-			if((dir & SOUTH) && (D.dir & (EAST|WEST)))		return 1
-			if((dir & EAST ) && (D.dir & (NORTH|SOUTH)))	return 1
-		else return 1	// it's a real, air blocking door
+		if(!D.density)//if the door is open
+			continue
+		else return 1	// if closed, it's a real, air blocking door
 	return 0
 
-/proc/TurfBlockedNonWindow(turf/loc)
-	for(var/obj/O in loc)
-		if(O.density && !istype(O, /obj/structure/window))
-			return 1
-	return 0
+/////////////////////////////////////////////////////////////////////////
 
 /proc/getline(atom/M,atom/N)//Ultra-Fast Bresenham Line-Drawing Algorithm
 	var/px=M.x		//starting x
@@ -249,6 +300,28 @@ Turf and target are seperate in case you want to teleport some distance from a t
 		if(C.dna)
 			C.dna.real_name = real_name
 
+	if(isAI(src))
+		var/mob/living/silicon/ai/AI = src
+		if(oldname != real_name)
+			if(AI.eyeobj)
+				AI.eyeobj.name = "[newname] (AI Eye)"
+
+			// Set ai pda name
+			if(AI.aiPDA)
+				AI.aiPDA.owner = newname
+				AI.aiPDA.name = newname + " (" + AI.aiPDA.ownjob + ")"
+
+			// Notify Cyborgs
+			for(var/mob/living/silicon/robot/Slave in AI.connected_robots)
+				Slave.show_laws()
+
+	if(isrobot(src))
+		var/mob/living/silicon/robot/R = src
+		if(oldname != real_name)
+			R.notify_ai(3, oldname, newname)
+		if(R.camera)
+			R.camera.c_tag = real_name
+
 	if(oldname)
 		//update the datacore records! This is goig to be a bit costly.
 		for(var/list/L in list(data_core.general,data_core.medical,data_core.security,data_core.locked))
@@ -256,7 +329,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 			if(R)	R.fields["name"] = newname
 
 		//update our pda and id if we have them on our person
-		var/list/searching = GetAllContents(searchDepth = 3)
+		var/list/searching = GetAllContents()
 		var/search_id = 1
 		var/search_pda = 1
 
@@ -265,7 +338,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 				var/obj/item/weapon/card/id/ID = A
 				if(ID.registered_name == oldname)
 					ID.registered_name = newname
-					ID.name = "[newname]'s ID Card ([ID.assignment])"
+					ID.update_label()
 					if(!search_pda)	break
 					search_id = 0
 
@@ -273,14 +346,14 @@ Turf and target are seperate in case you want to teleport some distance from a t
 				var/obj/item/device/pda/PDA = A
 				if(PDA.owner == oldname)
 					PDA.owner = newname
-					PDA.name = "PDA-[newname] ([PDA.ownjob])"
+					PDA.update_label()
 					if(!search_id)	break
 					search_pda = 0
 
 		for(var/datum/mind/T in ticker.minds)
 			for(var/datum/objective/obj in T.objectives)
 				// Only update if this player is a target
-				if(obj.target && obj.target.current.real_name == name)
+				if(obj.target && obj.target.current && obj.target.current.real_name == name)
 					obj.update_explanation_text()
 
 	return 1
@@ -317,19 +390,12 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 		if(cmptext("ai",role))
 			if(isAI(src))
-				var/mob/living/silicon/ai/A = src
 				oldname = null//don't bother with the records update crap
-				//world << "<b>[newname] is the AI!</b>"
-				//world << sound('sound/AI/newAI.ogg')
-				// Set eyeobj name
-				if(A.eyeobj)
-					A.eyeobj.name = "[newname] (AI Eye)"
 
-				// Set ai pda name
-				if(A.aiPDA)
-					A.aiPDA.owner = newname
-					A.aiPDA.name = newname + " (" + A.aiPDA.ownjob + ")"
-
+		if(cmptext("cyborg",role))
+			if(isrobot(src))
+				var/mob/living/silicon/robot/A = src
+				A.custom_name = newname
 
 		fully_replace_character_name(oldname,newname)
 
@@ -337,7 +403,7 @@ Turf and target are seperate in case you want to teleport some distance from a t
 
 //Picks a string of symbols to display as the law number for hacked or ion laws
 /proc/ionnum()
-	return "[pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")]"
+	return "[pick("!","@","#","$","%","^","&")][pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")]"
 
 //Returns a list of unslaved cyborgs
 /proc/active_free_borgs()
@@ -514,6 +580,14 @@ Turf and target are seperate in case you want to teleport some distance from a t
 /proc/key_name_admin(var/whom, var/include_name = 1)
 	return key_name(whom, 1, include_name)
 
+/proc/get_mob_by_ckey(var/key)
+	if(!key)
+		return
+	var/list/mobs = sortmobs()
+	for(var/mob/M in mobs)
+		if(M.ckey == key)
+			return M
+
 // Returns the atom sitting on the turf.
 // For example, using this on a disk, which is in a bag, on a mob, will return the mob because it's on the turf.
 /proc/get_atom_on_turf(var/atom/movable/M)
@@ -591,29 +665,46 @@ proc/anim(turf/location as turf,target as mob|obj,a_icon,a_icon_state as text,fl
 		animation.master = target
 		flick(flick_anim, animation)
 	sleep(max(sleeptime, 15))
-	del(animation)
+	qdel(animation)
 
 
-//Will return the contents of an atom recursivly to a depth of 'searchDepth'
-/atom/proc/GetAllContents(searchDepth = 5)
-	var/list/toReturn = list()
+atom/proc/GetAllContents()
+	var/list/processing_list = list(src)
+	var/list/assembled = list()
 
-	for(var/atom/part in contents)
-		toReturn += part
-		if(part.contents.len && searchDepth)
-			toReturn += part.GetAllContents(searchDepth - 1)
+	while(processing_list.len)
+		var/atom/A = processing_list[1]
+		processing_list -= A
 
-	return toReturn
+		for(var/atom/a in A)
+			if(!(a in assembled))
+				processing_list |= a
+
+		assembled |= A
+
+	return assembled
 
 
-/atom/proc/GetTypeInAllContents(typepath, searchDepth = 5)
-	for(var/atom/part in contents)
-		if(istype(part, typepath))
-			return 1
-		if(part.contents.len && searchDepth)
-			if(part.GetTypeInAllContents(typepath, searchDepth - 1))
-				return 1
-	return 0
+atom/proc/GetTypeInAllContents(typepath)
+	var/list/processing_list = list(src)
+	var/list/processed = list()
+
+	var/atom/found = null
+
+	while(processing_list.len && found==null)
+		var/atom/A = processing_list[1]
+		if(istype(A, typepath))
+			found = A
+
+		processing_list -= A
+
+		for(var/atom/a in A)
+			if(!(a in processed))
+				processing_list |= a
+
+		processed |= A
+
+	return found
 
 
 //Step-towards method of determining whether one atom can see another. Similar to viewers()
@@ -680,7 +771,7 @@ proc/anim(turf/location as turf,target as mob|obj,a_icon,a_icon_state as text,fl
 	else
 		return 0
 
-/proc/do_after(var/mob/user as mob, delay as num, var/numticks = 5, var/needhand = 1)
+/proc/do_after(mob/user, delay, numticks = 5, needhand = 1)
 	if(!user || isnull(user))
 		return 0
 	if(numticks == 0)
@@ -689,6 +780,9 @@ proc/anim(turf/location as turf,target as mob|obj,a_icon,a_icon_state as text,fl
 	var/delayfraction = round(delay/numticks)
 	var/turf/T = user.loc
 	var/holding = user.get_active_hand()
+	var/holdingnull = 1
+	if(holding)
+		holdingnull = 0
 
 	for(var/i = 0, i<numticks, i++)
 		sleep(delayfraction)
@@ -696,8 +790,13 @@ proc/anim(turf/location as turf,target as mob|obj,a_icon,a_icon_state as text,fl
 
 		if(!user || user.stat || user.weakened || user.stunned || !(user.loc == T))
 			return 0
-		if(needhand && !(user.get_active_hand() == holding))	//Sometimes you don't want the user to have to keep their active hand
-			return 0
+
+		if(needhand)	//Sometimes you don't want the user to have to keep their active hand
+			if(!holdingnull)
+				if(!holding)
+					return 0
+			if(user.get_active_hand() != holding)
+				return 0
 
 	return 1
 
@@ -863,7 +962,7 @@ proc/anim(turf/location as turf,target as mob|obj,a_icon,a_icon_state as text,fl
 							X.icon = 'icons/turf/shuttle.dmi'
 							X.icon_state = replacetext(O.icon_state, "_f", "_s") // revert the turf to the old icon_state
 							X.name = "wall"
-							del(O) // prevents multiple shuttle corners from stacking
+							qdel(O) // prevents multiple shuttle corners from stacking
 							continue
 						if(!istype(O,/obj)) continue
 						O.loc = X
@@ -1113,7 +1212,7 @@ proc/oview_or_orange(distance = world.view , center = usr , type)
 
 //Quick type checks for some tools
 var/global/list/common_tools = list(
-/obj/item/weapon/cable_coil,
+/obj/item/stack/cable_coil,
 /obj/item/weapon/wrench,
 /obj/item/weapon/weldingtool,
 /obj/item/weapon/screwdriver,
@@ -1256,3 +1355,25 @@ var/list/WALLITEMS = list(
 	else
 		user << "\blue [target] is empty!"
 	return
+
+/proc/check_target_facings(mob/living/initator, mob/living/target)
+	/*This can be used to add additional effects on interactions between mobs depending on how the mobs are facing each other, such as adding a crit damage to blows to the back of a guy's head.
+	Given how click code currently works (Nov '13), the initiating mob will be facing the target mob most of the time
+	That said, this proc should not be used if the change facing proc of the click code is overriden at the same time*/
+	if(!ismob(target) || target.lying)
+	//Make sure we are not doing this for things that can't have a logical direction to the players given that the target would be on their side
+		return
+	if(initator.dir == target.dir) //mobs are facing the same direction
+		return 1
+	if(initator.dir + 4 == target.dir || initator.dir - 4 == target.dir) //mobs are facing each other
+		return 2
+	if(initator.dir + 2 == target.dir || initator.dir - 2 == target.dir || initator.dir + 6 == target.dir || initator.dir - 6 == target.dir) //Initating mob is looking at the target, while the target mob is looking in a direction perpendicular to the 1st
+		return 3
+
+/proc/random_step(atom/movable/AM, steps, chance)
+	var/initial_chance = chance
+	while(steps > 0)
+		if(prob(chance))
+			step(AM, pick(alldirs))
+		chance = max(chance - (initial_chance / steps), 0)
+		steps--

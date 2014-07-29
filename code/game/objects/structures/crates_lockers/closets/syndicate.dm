@@ -12,14 +12,14 @@
 /obj/structure/closet/syndicate/personal/New()
 	..()
 	sleep(2)
-	new /obj/item/weapon/tank/jetpack/oxygen(src)
+	new /obj/item/weapon/tank/jetpack/oxygen/harness(src)
 	new /obj/item/clothing/mask/gas/syndicate(src)
 	new /obj/item/clothing/under/syndicate(src)
 	new /obj/item/clothing/head/helmet/space/rig/syndi(src)
 	new /obj/item/clothing/suit/space/rig/syndi(src)
 	new /obj/item/weapon/storage/belt/military(src)
 	new /obj/item/weapon/crowbar/red(src)
-	new /obj/item/weapon/cell/high(src)
+	new /obj/item/weapon/stock_parts/cell/high(src)
 	new /obj/item/device/multitool(src)
 
 
@@ -68,7 +68,7 @@
 		//Sad trombone
 		if(pickednum == 1)
 			var/obj/item/weapon/paper/P = new /obj/item/weapon/paper(src)
-			P.name = "IOU"
+			P.name = "\improper IOU"
 			P.info = "Sorry man, we needed the money so we sold your stash. It's ok, we'll double our money for sure this time!"
 
 		//Metal (common ore)

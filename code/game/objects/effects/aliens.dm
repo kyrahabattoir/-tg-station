@@ -28,25 +28,27 @@
 	air_update_turf(1)
 	return
 
-/obj/structure/alien/resin/Del()
+/obj/structure/alien/resin/Destroy()
 	density = 0
 	air_update_turf(1)
 	..()
 	return
 
 /obj/structure/alien/resin/Move()
-	air_update_turf(1)
+	var/turf/T = loc
 	..()
-	air_update_turf(1)
-	return
+	move_update_air(T)
 
 /obj/structure/alien/resin/CanAtmosPass()
 	return !density
-	
+
 /obj/structure/alien/resin/wall
 	name = "resin wall"
 	desc = "Purple slime solidified into a wall."
 	icon_state = "resinwall"	//same as resin, but consistency ho!
+
+/obj/structure/alien/resin/wall/BlockSuperconductivity()
+	return 1
 
 /obj/structure/alien/resin/membrane
 	name = "resin membrane"
@@ -58,7 +60,7 @@
 
 /obj/structure/alien/resin/proc/healthcheck()
 	if(health <=0)
-		del(src)
+		qdel(src)
 
 
 /obj/structure/alien/resin/bullet_act(obj/item/projectile/Proj)
@@ -140,6 +142,7 @@
 #define NODERANGE 3
 
 /obj/structure/alien/weeds
+	gender = PLURAL
 	name = "weeds"
 	desc = "Weird purple weeds."
 	icon_state = "weeds"
@@ -153,7 +156,7 @@
 	..()
 	linked_node = node
 	if(istype(loc, /turf/space))
-		del(src)
+		qdel(src)
 		return
 	if(icon_state == "weeds")
 		icon_state = pick("weeds", "weeds1", "weeds2")
@@ -164,11 +167,11 @@
 
 
 /obj/structure/alien/weeds/proc/Life()
-	set background = 1
+	set background = BACKGROUND_ENABLED
 	var/turf/U = get_turf(src)
 
 	if(istype(U, /turf/space))
-		del(src)
+		qdel(src)
 		return
 
 	direction_loop:
@@ -189,14 +192,14 @@
 
 
 /obj/structure/alien/weeds/ex_act(severity)
-	del(src)
+	qdel(src)
 
 
 /obj/structure/alien/weeds/attackby(obj/item/I, mob/user)
 	if(I.attack_verb.len)
 		visible_message("<span class='danger'>[src] has been [pick(I.attack_verb)] with [I] by [user].</span>")
 	else
-		visible_message("<span class='danger'>[src] has been attacked with [I] by [user].</span>")
+		visible_message("<span class='danger'>[src] has been attacked with [I] by [user]!</span>")
 
 	var/damage = I.force / 4.0
 	if(istype(I, /obj/item/weapon/weldingtool))
@@ -211,7 +214,7 @@
 
 /obj/structure/alien/weeds/proc/healthcheck()
 	if(health <= 0)
-		del(src)
+		qdel(src)
 
 
 /obj/structure/alien/weeds/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
@@ -270,7 +273,7 @@
 			if(BURST)
 				user << "<span class='notice'>You clear the hatched egg.</span>"
 				playsound(loc, 'sound/effects/attackblob.ogg', 100, 1)
-				del(src)
+				qdel(src)
 				return
 			if(GROWING)
 				user << "<span class='notice'>The child is not developed yet.</span>"
@@ -325,7 +328,7 @@
 	if(I.attack_verb.len)
 		visible_message("<span class='danger'>[src] has been [pick(I.attack_verb)] with [I] by [user].</span>")
 	else
-		visible_message("<span class='danger'>[src] has been attacked with [I] by [user].</span>")
+		visible_message("<span class='danger'>[src] has been attacked with [I] by [user]!</span>")
 
 	var/damage = I.force / 4
 	if(istype(I, /obj/item/weapon/weldingtool))
@@ -344,7 +347,7 @@
 		if(status != BURST && status != BURSTING)
 			Burst()
 		else if(status == BURST && prob(50))
-			del(src)	//Remove the egg after it has been hit after bursting.
+			qdel(src)	//Remove the egg after it has been hit after bursting.
 
 
 /obj/structure/alien/egg/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
@@ -376,6 +379,7 @@
  * Acid
  */
 /obj/effect/acid
+	gender = PLURAL
 	name = "acid"
 	desc = "Burbling corrossive stuff."
 	icon = 'icons/effects/effects.dmi'
@@ -406,7 +410,7 @@
 
 /obj/effect/acid/proc/tick()
 	if(!target)
-		del(src)
+		qdel(src)
 
 	ticks++
 
@@ -417,9 +421,9 @@
 			var/turf/simulated/wall/W = target
 			W.dismantle_wall(1)
 		else
-			del(target)
+			qdel(target)
 
-		del(src)
+		qdel(src)
 		return
 
 	loc = target.loc

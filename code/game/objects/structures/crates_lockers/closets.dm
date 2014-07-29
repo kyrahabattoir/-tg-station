@@ -4,7 +4,6 @@
 	icon = 'icons/obj/closet.dmi'
 	icon_state = "closed"
 	density = 1
-	flags = FPRINT
 	var/icon_closed = "closed"
 	var/icon_opened = "open"
 	var/opened = 0
@@ -92,6 +91,8 @@
 		return 0
 	else if(AM.density || AM.anchored)
 		return 0
+	else if(AM.flags & NODROP)
+		return 0
 	AM.loc = src
 	return 1
 
@@ -124,50 +125,44 @@
 			for(var/atom/movable/A as mob|obj in src)//pulls everything out of the locker and hits it with an explosion
 				A.loc = src.loc
 				A.ex_act(severity++)
-			del(src)
+			qdel(src)
 		if(2)
 			if(prob(50))
 				for (var/atom/movable/A as mob|obj in src)
 					A.loc = src.loc
 					A.ex_act(severity++)
-				del(src)
+				qdel(src)
 		if(3)
 			if(prob(5))
 				for(var/atom/movable/A as mob|obj in src)
 					A.loc = src.loc
 					A.ex_act(severity++)
-				del(src)
+				qdel(src)
 
 /obj/structure/closet/bullet_act(var/obj/item/projectile/Proj)
-	health -= Proj.damage
 	..()
-	if(health <= 0)
-		for(var/atom/movable/A as mob|obj in src)
-			A.loc = src.loc
-		del(src)
-
+	if((Proj.damage_type == BRUTE || Proj.damage_type == BURN))
+		health -= Proj.damage
+		if(health <= 0)
+			for(var/atom/movable/A as mob|obj in src)
+				A.loc = src.loc
+			qdel(src)
 	return
 
 /obj/structure/closet/attack_animal(mob/living/simple_animal/user as mob)
-	if(user.wall_smash)
+	if(user.environment_smash)
 		visible_message("\red [user] destroys the [src]. ")
 		for(var/atom/movable/A as mob|obj in src)
 			A.loc = src.loc
-		del(src)
+		qdel(src)
 
 // this should probably use dump_contents()
 /obj/structure/closet/blob_act()
 	if(prob(75))
 		for(var/atom/movable/A as mob|obj in src)
 			A.loc = src.loc
-		del(src)
+		qdel(src)
 
-/obj/structure/closet/meteorhit(obj/O as obj)
-	if(O.icon_state == "flaming")
-		for(var/mob/M in src)
-			M.meteorhit(O)
-		src.dump_contents()
-		del(src)
 
 /obj/structure/closet/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if(src.opened)
@@ -175,38 +170,50 @@
 			if(src.large)
 				var/obj/item/weapon/grab/G = W
 				src.MouseDrop_T(G.affecting, user)	//act like they were dragged onto the closet
+				user.drop_item()
 			else
 				user << "<span class='notice'>The locker is too small to stuff [W] into!</span>"
+			return
 		if(istype(W,/obj/item/tk_grab))
 			return 0
 
 		if(istype(W, /obj/item/weapon/weldingtool))
 			var/obj/item/weapon/weldingtool/WT = W
-			if(!WT.remove_fuel(0,user))
-				user << "<span class='notice'>You need more welding fuel to complete this task.</span>"
-				return
-			new /obj/item/stack/sheet/metal(src.loc)
-			for(var/mob/M in viewers(src))
-				M.show_message("<span class='notice'>\The [src] has been cut apart by [user] with \the [WT].</span>", 3, "You hear welding.", 2)
-			del(src)
+			user << "<span class='notice'>You begin cutting the [src] apart...</span>"
+			playsound(loc, 'sound/items/Welder2.ogg', 40, 1)
+			if(do_after(user,40,5,1))
+				if(!WT.remove_fuel(0,user))
+					user << "<span class='notice'>You need more welding fuel to complete this task.</span>"
+					return
+				playsound(loc, 'sound/items/welder.ogg', 50, 1)
+				new /obj/item/stack/sheet/metal(src.loc)
+				for(var/mob/M in viewers(src))
+					M.show_message("<span class='notice'>\The [src] has been cut apart by [user] with \the [WT].</span>", 3, "You hear welding.", 2)
+				qdel(src)
 			return
 
 		if(isrobot(user))
 			return
 
-		user.drop_item(src)
+		if(user.drop_item())
+			W.Move(loc)
 
 	else if(istype(W, /obj/item/weapon/packageWrap))
 		return
 	else if(istype(W, /obj/item/weapon/weldingtool))
 		var/obj/item/weapon/weldingtool/WT = W
-		if(!WT.remove_fuel(0,user))
-			user << "<span class='notice'>You need more welding fuel to complete this task.</span>"
-			return
-		src.welded =! src.welded
-		src.update_icon()
-		for(var/mob/M in viewers(src))
-			M.show_message("<span class='warning'>[src] has been [welded?"welded shut":"unwelded"] by [user.name].</span>", 3, "You hear welding.", 2)
+		user << "<span class='notice'>You begin [welded ? "unwelding":"welding"] the [src]...</span>"
+		playsound(loc, 'sound/items/Welder2.ogg', 40, 1)
+		if(do_after(user,40,5,1))
+			if(WT.remove_fuel(0,user))
+				playsound(loc, 'sound/items/welder.ogg', 50, 1)
+				welded = !welded
+				user << "<span class='notice'>You [welded ? "welded the [src] shut":"unwelded the [src]"]</span>"
+				update_icon()
+				user.visible_message("<span class='warning'>[src] has been [welded? "welded shut":"unwelded"] by [user.name].</span>")
+			else
+				user << "<span class='notice'>You need more welding fuel to complete this task.</span>"
+		return
 	else if(!place(user, W))
 		src.attack_hand(user)
 	return
@@ -306,7 +313,7 @@
 		return  //Door's open, not locked or welded, no point in resisting.
 
 	//okay, so the closet is either welded or locked... resist!!!
-	user.next_move = world.time + 100
+	user.changeNext_move(100)
 	user.last_special = world.time + 100
 	user << "<span class='notice'>You lean on the back of [src] and start pushing the door open. (this will take about [breakout_time] minutes.)</span>"
 	for(var/mob/O in viewers(src))

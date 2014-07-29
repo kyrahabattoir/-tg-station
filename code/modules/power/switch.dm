@@ -10,7 +10,6 @@
 	icon_state = "switch-dbl-up"
 	var/icon_state_on = "switch-dbl-down"
 	var/icon_state_off = "switch-dbl-up"
-	flags = FPRINT
 	density = 0
 	anchored = 1
 	var/on = 0  //up is off, down is on
@@ -81,5 +80,5 @@
 	else
 		icon_state = icon_state_off
 		for(var/obj/structure/cable/C in src.loc)
-			del(C)
+			qdel(C)
 */

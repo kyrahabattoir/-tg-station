@@ -6,6 +6,7 @@
 	icon_state = "corgi"
 	icon_living = "corgi"
 	icon_dead = "corgi_dead"
+	gender = MALE
 	speak = list("YAP", "Woof!", "Bark!", "AUUUUUU")
 	speak_emote = list("barks", "woofs")
 	emote_hear = list("barks", "woofs", "yaps","pants")
@@ -18,6 +19,8 @@
 	response_disarm = "bops"
 	response_harm   = "kicks"
 	see_in_dark = 5
+	childtype = /mob/living/simple_animal/corgi/puppy
+	species = /mob/living/simple_animal/corgi
 	var/obj/item/inventory_head
 	var/obj/item/inventory_back
 	var/facehugger
@@ -25,6 +28,12 @@
 /mob/living/simple_animal/corgi/Life()
 	..()
 	regenerate_icons()
+
+/mob/living/simple_animal/corgi/sac_act(var/obj/effect/rune/R, victim)
+	usr << "<span class='warning'>Even dark gods from another plane have standards, sicko.</span>"
+	usr.reagents.add_reagent("hell_water", 2)
+	R.stone_or_gib(victim)
+
 
 /mob/living/simple_animal/corgi/show_inv(mob/user as mob)
 	user.set_machine(src)
@@ -135,7 +144,9 @@
 
 					if( ! ( item_to_add.type in allowed_types ) )
 						usr << "You set [item_to_add] on [src]'s back, but \he shakes it off!"
-						usr.drop_item()
+						if(!usr.drop_item())
+							usr << "<span class='notice'>\The [item_to_add] is stuck to your hand, you cannot put it on [src]'s back!</span>"
+							return
 						item_to_add.loc = loc
 						if(prob(25))
 							step_rand(item_to_add)
@@ -266,10 +277,10 @@
 			valid = 1
 
 		if(/obj/item/clothing/head/helmet/space/santahat)
-			name = "Rudolph the Red-Nosed Corgi"
-			emote_hear = list("barks christmas songs", "yaps")
-			desc = "He has a very shiny nose."
-			SetLuminosity(4)
+			name = "Santa's Corgi Helper"
+			emote_hear = list("barks christmas songs", "yaps merrily")
+			emote_see = list("looks for presents", "checks his list")
+			desc = "He's very fond of milk and cookies."
 			valid = 1
 
 		if(/obj/item/clothing/head/soft)
@@ -277,19 +288,40 @@
 			desc = "The reason your yellow gloves have chew-marks."
 			valid = 1
 
+		if(/obj/item/clothing/head/hardhat/reindeer)
+			name = "[real_name] the red-nosed Corgi"
+			emote_hear = list("lights the way", "illuminates", "yaps")
+			desc = "He has a very shiny nose."
+			SetLuminosity(1)
+			valid = 1
+
+		if(/obj/item/clothing/head/sombrero)
+			name = "Segnor [real_name]"
+			desc = "You must respect elder [real_name]"
+			valid = 1
+
+		if(/obj/item/clothing/head/hopcap)
+			name = "Lieutenant [real_name]"
+			desc = "Can actually be trusted to not run off on his own."
+			valid = 1
+
 	if(valid)
 		if(usr)
+			if(!usr.drop_item())
+				usr << "<span class='notice'>\The [item_to_add] is stuck to your hand, you cannot put it on [src]'s head!</span>"
+				return 0
 			usr.visible_message("[usr] puts [item_to_add] on [real_name]'s head.  [src] looks at [usr] and barks once.",
 				"You put [item_to_add] on [real_name]'s head.  [src] gives you a peculiar look, then wags \his tail once and barks.",
 				"You hear a friendly-sounding bark.")
-			usr.drop_item()
 		item_to_add.loc = src
 		src.inventory_head = item_to_add
 		regenerate_icons()
 
 	else
+		if(!usr.drop_item())
+			usr << "<span class='notice'>\The [item_to_add] is stuck to your hand, you cannot put it on [src]'s head!</span>"
+			return 0
 		usr << "You set [item_to_add] on [src]'s head, but \he shakes it off!"
-		usr.drop_item()
 		item_to_add.loc = loc
 		if(prob(25))
 			step_rand(item_to_add)
@@ -474,28 +506,9 @@
 /mob/living/simple_animal/corgi/Lisa/Life()
 	..()
 
+	make_babies()
+
 	if(!stat && !resting && !buckled)
-		turns_since_scan++
-		if(turns_since_scan > 15)
-			turns_since_scan = 0
-			var/alone = 1
-			var/ian = 0
-			for(var/mob/M in oviewers(7, src))
-				if(istype(M, /mob/living/simple_animal/corgi/Ian))
-					if(M.client)
-						alone = 0
-						break
-					else
-						ian = M
-				else
-					alone = 0
-					break
-			if(alone && ian && puppies < 4)
-				if(near_camera(src) || near_camera(ian))
-					return
-				new /mob/living/simple_animal/corgi/puppy(loc)
-
-
 		if(prob(1))
 			emote(pick("dances around","chases her tail"))
 			spawn(0)
@@ -512,7 +525,9 @@
 /mob/living/simple_animal/corgi/proc/wuv(change, mob/M)
 	if(change)
 		if(change > 0)
-			if(M)	flick_overlay(image('icons/mob/animal.dmi',src,"heart-ani2",MOB_LAYER+1), list(M.client), 20)
-			emote("yaps happily")
+			if(M && stat != DEAD) // Added check to see if this mob (the corgi) is dead to fix issue 2454
+				flick_overlay(image('icons/mob/animal.dmi',src,"heart-ani2",MOB_LAYER+1), list(M.client), 20)
+				emote("yaps happily")
 		else
-			emote("growls")
+			if(M && stat != DEAD) // Same check here, even though emote checks it as well (poor form to check it only in the help case)
+				emote("growls")

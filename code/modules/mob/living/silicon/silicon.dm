@@ -6,6 +6,7 @@
 	var/datum/ai_laws/laws = null//Now... THEY ALL CAN ALL HAVE LAWS
 	var/list/alarms_to_show = list()
 	var/list/alarms_to_clear = list()
+	var/designation = ""
 
 
 	var/list/alarm_types_show = list("Motion" = 0, "Fire" = 0, "Atmosphere" = 0, "Power" = 0, "Camera" = 0)
@@ -30,7 +31,7 @@
 		alarm_types_clear[type] += 1
 
 	if(!in_cooldown)
-		spawn(10 * 10) // 10 seconds
+		spawn(3 * 10) // 10 seconds
 
 			if(alarms_to_show.len < 5)
 				for(var/msg in alarms_to_show)
@@ -97,23 +98,42 @@
 	switch(severity)
 		if(1)
 			src.take_organ_damage(20)
-			Stun(rand(5,10))
+			Stun(8)
 		if(2)
 			src.take_organ_damage(10)
-			Stun(rand(1,5))
+			Stun(3)
 	flick("noise", src:flash)
 	src << "\red <B>*BZZZT*</B>"
 	src << "\red Warning: Electromagnetic pulse detected."
 	..()
 
+/mob/living/silicon/apply_damage(var/damage = 0,var/damagetype = BRUTE, var/def_zone = null, var/blocked = 0)
+	blocked = (100-blocked)/100
+	if(!damage || (blocked <= 0))	return 0
+	switch(damagetype)
+		if(BRUTE)
+			adjustBruteLoss(damage * blocked)
+		if(BURN)
+			adjustFireLoss(damage * blocked)
+		else
+			return 1
+	updatehealth()
+	return 1
+
 /mob/living/silicon/proc/damage_mob(var/brute = 0, var/fire = 0, var/tox = 0)
 	return
+
+/mob/living/silicon/can_inject(var/mob/user, var/error_msg)
+	if(error_msg)
+		user << "<span class='alert'>Their outer shell is too tough.</span>"
+	return 0
 
 /mob/living/silicon/IsAdvancedToolUser()
 	return 1
 
 /mob/living/silicon/bullet_act(var/obj/item/projectile/Proj)
-	if(!Proj.nodamage)	adjustBruteLoss(Proj.damage)
+	if((Proj.damage_type == BRUTE || Proj.damage_type == BURN))
+		adjustBruteLoss(Proj.damage)
 	Proj.on_hit(src,2)
 	return 2
 
@@ -169,7 +189,7 @@
 	return
 
 
-/mob/living/silicon/proc/statelaws() // -- TLE
+/mob/living/silicon/proc/statelaws()
 
 	src.say("Current Active Laws:")
 	//src.laws_sanity_check()
@@ -180,7 +200,7 @@
 
 
 	if (src.laws.zeroth)
-		if (src.lawcheck[1] == "Yes") //This line and the similar lines below make sure you don't state a law unless you want to. --NeoFite
+		if (src.lawcheck[1] == "Yes")
 			src.say("0. [src.laws.zeroth]")
 			sleep(10)
 
@@ -254,3 +274,40 @@
 	list += {"<br><br><A href='byond://?src=\ref[src];laws=1'>State Laws</A>"}
 
 	usr << browse(list, "window=laws")
+
+/mob/living/silicon/Bump(atom/movable/AM as mob|obj, yes)  //Allows the AI to bump into mobs if it's itself pushed
+	if ((!( yes ) || now_pushing))
+		return
+	now_pushing = 1
+	if(ismob(AM))
+		var/mob/tmob = AM
+		if(!(tmob.status_flags & CANPUSH))
+			now_pushing = 0
+			return
+	now_pushing = 0
+	..()
+	if (!istype(AM, /atom/movable))
+		return
+	if (!now_pushing)
+		now_pushing = 1
+		if (!AM.anchored)
+			var/t = get_dir(src, AM)
+			if (istype(AM, /obj/structure/window))
+				if(AM:ini_dir == NORTHWEST || AM:ini_dir == NORTHEAST || AM:ini_dir == SOUTHWEST || AM:ini_dir == SOUTHEAST)
+					for(var/obj/structure/window/win in get_step(AM,t))
+						now_pushing = 0
+						return
+			step(AM, t)
+		now_pushing = null
+
+/mob/living/silicon/put_in_hand_check() // This check is for borgs being able to receive items, not put them in others' hands.
+	return 0
+
+// The src mob is trying to place an item on someone
+// But the src mob is a silicon!!  Disable.
+/mob/living/silicon/stripPanelEquip(obj/item/what, mob/who, slot)
+	return 0
+
+
+/mob/living/silicon/assess_threat() //Secbots won't hunt silicon units
+	return -10

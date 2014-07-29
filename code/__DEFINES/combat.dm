@@ -5,7 +5,7 @@
 #define TOX			"tox"
 #define OXY			"oxy"
 #define CLONE		"clone"
-#define HALLOSS		"halloss"
+#define STAMINA 	"stamina"
 
 #define STUN		"stun"
 #define WEAKEN		"weaken"
@@ -26,6 +26,7 @@
 #define CANWEAKEN	2
 #define CANPARALYSE	4
 #define CANPUSH		8
+#define GOTTAGOFAST	16
 #define GODMODE		4096
 #define FAKEDEATH	8192	//Replaces stuff like changeling.changeling_fakedeath
 #define DISFIGURED	16384	//I'll probably move this elsewhere if I ever get wround to writing a bitflag mob-damage system
@@ -40,8 +41,8 @@
 #define GRAB_KILL		5
 
 #define HOSTILE_STANCE_IDLE			1
-#define HOSTILE_STANCE_ALERT		2
+//#define HOSTILE_STANCE_ALERT		2 //Was only used by bears
 #define HOSTILE_STANCE_ATTACK		3
 #define HOSTILE_STANCE_ATTACKING	4
-#define HOSTILE_STANCE_TIRED		5
+//#define HOSTILE_STANCE_TIRED		5 //Was also only used by bears
 

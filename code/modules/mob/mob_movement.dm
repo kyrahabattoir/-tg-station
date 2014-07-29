@@ -143,7 +143,7 @@
 /client/Move(n, direct)
 	if(!mob)
 		return 0
-	if(mob.monkeyizing)
+	if(mob.notransform)
 		return 0	//This is sota the goto stop mobs from moving var
 	if(mob.control_object)
 		return Move_object(direct)
@@ -174,7 +174,7 @@
 	if(!mob.lastarea)
 		mob.lastarea = get_area(mob.loc)
 
-	if((istype(mob.loc, /turf/space)) || (mob.lastarea.has_gravity == 0))
+	if(!has_gravity(mob))
 		if(!mob.Process_Spacemove(0))
 			return 0
 
@@ -200,9 +200,9 @@
 			if("run")
 				if(mob.drowsyness > 0)
 					move_delay += 6
-				move_delay += 1 + config.run_speed
+				move_delay += config.run_speed
 			if("walk")
-				move_delay += 7 + config.walk_speed
+				move_delay += config.walk_speed
 		move_delay += mob.movement_delay()
 
 		if(config.Tickcomp)
@@ -272,21 +272,21 @@
 
 		for(var/obj/item/weapon/grab/G in mob.grabbed_by)
 			if(G.state == GRAB_PASSIVE && !grabbing.Find(G.assailant))
-				del(G)
+				qdel(G)
 
 			if(G.state == GRAB_AGGRESSIVE)
 				move_delay = world.time + 10
 				if(!prob(25))
 					return 1
 				mob.visible_message("<span class='warning'>[mob] has broken free of [G.assailant]'s grip!</span>")
-				del(G)
+				qdel(G)
 
 			if(G.state == GRAB_NECK)
 				move_delay = world.time + 10
 				if(!prob(5))
 					return 1
 				mob.visible_message("<span class='warning'>[mob] has broken free of [G.assailant]'s headlock!</span>")
-				del(G)
+				qdel(G)
 	return 0
 
 
@@ -351,39 +351,19 @@
 ///Return 1 for movement 0 for none
 /mob/proc/Process_Spacemove(var/check_drift = 0)
 	//First check to see if we can do things
-	if(restrained())
+	if(!canmove)
 		return 0
 
 	if(!isturf(loc))	//if they're in a disposal unit, for example
 		return 1
-
-	/*
-	if(istype(src,/mob/living/carbon))
-		if(src.l_hand && src.r_hand)
-			return 0
-	*/
 
 	var/dense_object = 0
 	for(var/turf/turf in oview(1,src))
 		if(istype(turf,/turf/space))
 			continue
 
-		if(istype(src,/mob/living/carbon/human/))  // Only humans can wear magboots, so we give them a chance to.
-			if((istype(turf,/turf/simulated/floor)) && (src.lastarea.has_gravity == 0) && !(istype(src:shoes, /obj/item/clothing/shoes/magboots) && (src:shoes:flags & NOSLIP)))
-				continue
-
-
-		else
-			if((istype(turf,/turf/simulated/floor)) && (src.lastarea.has_gravity == 0)) // No one else gets a chance.
-				continue
-
-
-
-		/*
-		if(istype(turf,/turf/simulated/floor) && (src.flags & NOGRAV))
+		if(!turf.density && !mob_negates_gravity())
 			continue
-		*/
-
 
 		dense_object++
 		break
@@ -404,18 +384,22 @@
 	if(!dense_object)
 		return 0
 
-
-
 	//Check to see if we slipped
 	if(prob(Process_Spaceslipping(5)))
 		src << "\blue <B>You slipped!</B>"
 		src.inertia_dir = src.last_move
 		step(src, src.inertia_dir)
 		return 0
+
 	//If not then we can reset inertia and move
 	inertia_dir = 0
 	return 1
 
+/mob/proc/mob_has_gravity(turf/T)
+	return has_gravity(src, T)
+
+/mob/proc/mob_negates_gravity()
+	return 0
 
 /mob/proc/Process_Spaceslipping(var/prob_slip = 5)
 	//Setup slipage
@@ -438,7 +422,14 @@
 		var/atom/movable/t = M.pulling
 		M.stop_pulling()
 		step(pulling, get_dir(pulling.loc, A))
-		M.start_pulling(t)
+		if(M)
+			M.start_pulling(t)
 	else
 		step(pulling, get_dir(pulling.loc, A))
+	return
+
+/mob/proc/slip(var/s_amount, var/w_amount, var/obj/O, var/lube)
+	return
+
+/mob/proc/update_gravity()
 	return

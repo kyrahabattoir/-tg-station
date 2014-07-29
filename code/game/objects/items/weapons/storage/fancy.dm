@@ -48,7 +48,7 @@
 	icon_type = "donut"
 	name = "donut box"
 	storage_slots = 6
-	can_hold = list("/obj/item/weapon/reagent_containers/food/snacks/donut")
+	can_hold = list(/obj/item/weapon/reagent_containers/food/snacks/donut)
 
 
 /obj/item/weapon/storage/fancy/donut_box/New()
@@ -67,7 +67,7 @@
 	icon_type = "egg"
 	name = "egg box"
 	storage_slots = 12
-	can_hold = list("/obj/item/weapon/reagent_containers/food/snacks/egg")
+	can_hold = list(/obj/item/weapon/reagent_containers/food/snacks/egg)
 
 /obj/item/weapon/storage/fancy/egg_box/New()
 	..()
@@ -80,7 +80,7 @@
  */
 
 /obj/item/weapon/storage/fancy/candle_box
-	name = "Candle pack"
+	name = "candle pack"
 	desc = "A pack of red candles."
 	icon = 'icons/obj/candle.dmi'
 	icon_state = "candlebox5"
@@ -88,7 +88,6 @@
 	item_state = "candlebox5"
 	storage_slots = 5
 	throwforce = 2
-	flags = TABLEPASS
 	slot_flags = SLOT_BELT
 
 
@@ -111,7 +110,7 @@
 	storage_slots = 6
 	icon_type = "crayon"
 	can_hold = list(
-		"/obj/item/toy/crayon"
+		/obj/item/toy/crayon
 	)
 
 /obj/item/weapon/storage/fancy/crayons/New()
@@ -151,11 +150,10 @@
 	icon_state = "cigpacket"
 	item_state = "cigpacket"
 	w_class = 1
-	throwforce = 2
-	flags = TABLEPASS
+	throwforce = 0
 	slot_flags = SLOT_BELT
 	storage_slots = 6
-	can_hold = list("/obj/item/clothing/mask/cigarette")
+	can_hold = list(/obj/item/clothing/mask/cigarette)
 	icon_type = "cigarette"
 
 /obj/item/weapon/storage/fancy/cigarettes/New()
@@ -164,11 +162,6 @@
 	for(var/i = 1 to storage_slots)
 		new /obj/item/clothing/mask/cigarette(src)
 	create_reagents(15 * storage_slots)//so people can inject cigarettes without opening a packet, now with being able to inject the whole one
-
-/obj/item/weapon/storage/fancy/cigarettes/Del()
-	del(reagents)
-	..()
-
 
 /obj/item/weapon/storage/fancy/cigarettes/update_icon()
 	icon_state = "[initial(icon_state)][contents.len]"
@@ -199,3 +192,28 @@
 	desc = "A packet of six imported DromedaryCo cancer sticks. A label on the packaging reads, \"Wouldn't a slow death make a change?\""
 	icon_state = "Dpacket"
 	item_state = "Dpacket"
+
+
+/obj/item/weapon/storage/fancy/rollingpapers
+	name = "rolling paper pack"
+	desc = "A pack of NanoTrasen brand rolling papers."
+	w_class = 1
+	icon = 'icons/obj/cigarettes.dmi'
+	icon_state = "cig_paper_pack"
+	storage_slots = 10
+	icon_type = "rolling papers"
+	can_hold = list(/obj/item/weapon/rollingpaper)
+
+/obj/item/weapon/storage/fancy/rollingpapers/update_icon()
+	if(!contents.len)
+		icon_state = "[initial(icon_state)]0"
+	else
+		icon_state = initial(icon_state)
+
+	desc = "There are [contents.len] papers\s left!"
+	return
+
+/obj/item/weapon/storage/fancy/rollingpapers/New()
+	..()
+	for(var/i = 1 to storage_slots)
+		new /obj/item/weapon/rollingpaper(src)

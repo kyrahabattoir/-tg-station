@@ -49,13 +49,13 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 /obj/structure/plasticflaps/ex_act(severity)
 	switch(severity)
 		if (1)
-			del(src)
+			qdel(src)
 		if (2)
 			if (prob(50))
-				del(src)
+				qdel(src)
 		if (3)
 			if (prob(5))
-				del(src)
+				qdel(src)
 
 /obj/structure/plasticflaps/mining //A specific type for mining that doesn't allow airflow because of them damn crates
 	name = "airtight plastic flaps"
@@ -67,7 +67,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 			T.blocks_air = 1
 		..()
 
-	Del() //lazy hack to set the turf to allow air to pass if it's a simulated floor
+	Destroy() //lazy hack to set the turf to allow air to pass if it's a simulated floor //wow this is terrible
 		var/turf/T = get_turf(loc)
 		if(T)
 			if(istype(T, /turf/simulated/floor))
@@ -121,8 +121,11 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 	var/points_per_process = 1
 	var/points_per_slip = 2
 	var/points_per_crate = 5
-	var/plasma_per_point = 5 // 2 plasma for 1 point
+	var/points_per_intel = 100
+	var/plasma_per_point = 0.2 //5 points per plasma sheet due to increased rarity
 	var/centcom_message = "" // Remarks from Centcom on how well you checked the last order.
+	// Unique typepaths for unusual things we've already sent CentComm, associated with their potencies
+	var/list/discoveredPlants = list()
 	//control
 	var/ordernum
 	var/list/shoppinglist = list()
@@ -148,7 +151,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 	proc/process()
 
 		spawn(0)
-			set background = 1
+			set background = BACKGROUND_ENABLED
 			while(1)
 				if(processing)
 					iteration++
@@ -168,23 +171,17 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 	proc/send()
 		var/area/from
 		var/area/dest
-		var/area/the_shuttles_way
 		switch(at_station)
 			if(1)
 				from = locate(SUPPLY_STATION_AREATYPE)
 				dest = locate(SUPPLY_DOCK_AREATYPE)
-				the_shuttles_way = from
 				at_station = 0
 			if(0)
 				from = locate(SUPPLY_DOCK_AREATYPE)
 				dest = locate(SUPPLY_STATION_AREATYPE)
-				the_shuttles_way = dest
 				at_station = 1
+		dest.clear_docking_area()
 		moving = 0
-
-		//Do I really need to explain this loop?
-		for(var/mob/living/unlucky_person in the_shuttles_way)
-			unlucky_person.gib()
 
 		from.move_contents_to(dest)
 
@@ -226,6 +223,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 		if(!shuttle)	return
 
 		var/plasma_count = 0
+		var/intel_count = 0
 		var/crate_count = 0
 
 		centcom_message = ""
@@ -284,14 +282,39 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 					if(istype(A, /obj/item/stack/sheet/mineral/plasma))
 						var/obj/item/stack/sheet/mineral/plasma/P = A
 						plasma_count += P.amount
-			del(MA)
+
+					// Sell syndicate intel
+					if(istype(A, /obj/item/documents/syndicate))
+						intel_count += 1
+
+					if(istype(A, /obj/item/seeds))
+						var/obj/item/seeds/S = A
+						if(S.rarity == 0) // Mundane species
+							centcom_message += "<font color=red>+0</font>: We don't need samples of mundane species \"[capitalize(S.species)]\".<BR>"
+						else if(discoveredPlants[S.type]) // This species has already been sent to CentComm
+							var/potDiff = S.potency - discoveredPlants[S.type] // Compare it to the previous best
+							if(potDiff > 0) // This sample is better
+								discoveredPlants[S.type] = S.potency
+								centcom_message += "<font color=green>+[potDiff]</font>: New sample of \"[capitalize(S.species)]\" is superior.  Good work.<BR>"
+								points += potDiff
+							else // This sample is worthless
+								centcom_message += "<font color=red>+0</font>: New sample of \"[capitalize(S.species)]\" is not more potent than existing sample ([discoveredPlants[S.type]] potency).<BR>"
+						else // This is a new discovery!
+							discoveredPlants[S.type] = S.potency
+							centcom_message += "<font color=green>+[S.rarity]</font>: New species discovered: \"[capitalize(S.species)]\".  Excellent work.<BR>"
+							points += S.rarity // That's right, no bonus for potency.  Send a crappy sample first to "show improvement" later
+			qdel(MA)
 
 		if(plasma_count)
-			centcom_message += "<font color=green>+[round(plasma_count/plasma_per_point)]</font>: Received [plasma_count] units of exotic material.<BR>"
+			centcom_message += "<font color=green>+[round(plasma_count/plasma_per_point)]</font>: Received [plasma_count] unit(s) of exotic material.<BR>"
 			points += round(plasma_count / plasma_per_point)
 
+		if(intel_count)
+			centcom_message += "<font color=green>+[round(intel_count*points_per_intel)]</font>: Received [intel_count] article(s) of enemy intelligence.<BR>"
+			points += round(intel_count*points_per_intel)
+
 		if(crate_count)
-			centcom_message += "<font color=green>+[round(crate_count*points_per_crate)]</font>: Received [crate_count] crates.<BR>"
+			centcom_message += "<font color=green>+[round(crate_count*points_per_crate)]</font>: Received [crate_count] crate(s).<BR>"
 			points += crate_count * points_per_crate
 
 	//Buyin
@@ -368,7 +391,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 				// If it has multiple items, there's a 1% of each going missing... Not for secure crates or those large wooden ones, though.
 				if(contains.len > 1 && prob(1) && !findtext(SP.containertype,"/secure/") && !findtext(SP.containertype,"/largecrate/"))
 					slip.erroneous |= MANIFEST_ERROR_ITEM // This item was not included in the shipment!
-					del(B2) // Lost in space... or the loading dock.
+					qdel(B2) // Lost in space... or the loading dock.
 
 			//manifest finalisation
 			slip.info += "</ul><br>"
@@ -513,7 +536,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 
 /obj/machinery/computer/supplycomp/attack_hand(var/mob/user as mob)
 	if(!allowed(user))
-		user << "\red Access Denied."
+		user << "<span class='warning'> Access Denied.</span>"
 		return
 
 	if(..())
@@ -529,7 +552,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 		<HR>\nSupply Points: [supply_shuttle.points]<BR>\n<BR>
 		[supply_shuttle.moving ? "\n*Must be away to order items*<BR>\n<BR>":supply_shuttle.at_station ? "\n*Must be away to order items*<BR>\n<BR>":"\n<A href='?src=\ref[src];order=categories'>Order items</A><BR>\n<BR>"]
 		[supply_shuttle.moving ? "\n*Shuttle already called*<BR>\n<BR>":supply_shuttle.at_station ? "\n<A href='?src=\ref[src];send=1'>Send away</A><BR>\n<BR>":"\n<A href='?src=\ref[src];send=1'>Send to station</A><BR>\n<BR>"]
-		[supply_shuttle.shuttle_loan ? (supply_shuttle.shuttle_loan.dispatched ? "\n*Shuttle loaned to CentComm*<BR>\n<BR>" : "\n<A href='?src=\ref[src];send=1;loan=1'>Loan shuttle to CentComm (5 mins duration)</A><BR>\n<BR>") : "\n*No pending external shuttle requests*<BR>\n<BR>"]
+		[supply_shuttle.shuttle_loan ? (supply_shuttle.shuttle_loan.dispatched ? "\n*Shuttle loaned to Centcom*<BR>\n<BR>" : "\n<A href='?src=\ref[src];send=1;loan=1'>Loan shuttle to Centcom (5 mins duration)</A><BR>\n<BR>") : "\n*No pending external shuttle requests*<BR>\n<BR>"]
 		\n<A href='?src=\ref[src];viewrequests=1'>View requests</A><BR>\n<BR>
 		\n<A href='?src=\ref[src];vieworders=1'>View orders</A><BR>\n<BR>
 		\n<A href='?src=\ref[user];mach_close=computer'>Close</A><BR>
@@ -541,7 +564,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 
 /obj/machinery/computer/supplycomp/attackby(I as obj, user as mob)
 	if(istype(I,/obj/item/weapon/card/emag) && !hacked)
-		user << "\blue Special supplies unlocked."
+		user << "<span class='notice'> Special supplies unlocked.</span>"
 		hacked = 1
 		return
 	else
@@ -572,7 +595,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 					supply_shuttle.sell()
 					supply_shuttle.send()
 					supply_shuttle.shuttle_loan.loan_shuttle()
-					temp = "The supply shuttle has been loaned to CentComm.<BR><BR><A href='?src=\ref[src];mainmenu=1'>Main Menu</A>"
+					temp = "The supply shuttle has been loaned to Centcom.<BR><BR><A href='?src=\ref[src];mainmenu=1'>Main Menu</A>"
 					post_signal("supply")
 				else
 					temp = "You can not loan the supply shuttle at this time.<BR><BR><A href='?src=\ref[src];mainmenu=1'>Main Menu</A>"
@@ -586,7 +609,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 			if(href_list["loan"] && supply_shuttle.shuttle_loan)
 				if(!supply_shuttle.shuttle_loan.dispatched)
 					supply_shuttle.shuttle_loan.loan_shuttle()
-					temp = "The supply shuttle has been loaned to CentComm.<BR><BR><A href='?src=\ref[src];mainmenu=1'>Main Menu</A>"
+					temp = "The supply shuttle has been loaned to Centcom.<BR><BR><A href='?src=\ref[src];mainmenu=1'>Main Menu</A>"
 					post_signal("supply")
 				else
 					temp = "You can not loan the supply shuttle at this time.<BR><BR><A href='?src=\ref[src];mainmenu=1'>Main Menu</A>"
@@ -688,7 +711,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 		temp = "Invalid Request"
 		for(var/i=1, i<=supply_shuttle.requestlist.len, i++)
 			var/datum/supply_order/SO = supply_shuttle.requestlist[i]
-			if(SO.ordernum == ordernum)
+			if(SO && SO.ordernum == ordernum)
 				O = SO
 				P = O.object
 				if(supply_shuttle.points >= P.cost)
@@ -734,7 +757,7 @@ var/global/datum/controller/supply_shuttle/supply_shuttle
 		temp = "Invalid Request.<BR>"
 		for(var/i=1, i<=supply_shuttle.requestlist.len, i++)
 			var/datum/supply_order/SO = supply_shuttle.requestlist[i]
-			if(SO.ordernum == ordernum)
+			if(SO && SO.ordernum == ordernum)
 				supply_shuttle.requestlist.Cut(i,i+1)
 				temp = "Request removed.<BR>"
 				break

@@ -28,7 +28,7 @@
 
 /obj/item/weapon/implant/dropped(mob/user as mob)
 	. = 1
-	del src
+	qdel(src)
 	return .
 
 /obj/item/weapon/implant/tracking
@@ -119,7 +119,7 @@
 	R << "You hear a faint *beep*."
 	if(!reagents.total_volume)
 		R << "You hear a faint click from your chest."
-		del(src)
+		qdel(src)
 
 
 /obj/item/weapon/implant/loyalty
@@ -139,15 +139,13 @@
 	return dat
 
 
-/obj/item/weapon/implant/loyalty/implanted(mob/M)
-	if(!ishuman(M))	return 0
-	var/mob/living/carbon/human/H = M
-	if(H.mind in ticker.mode.head_revolutionaries)
-		H.visible_message("<span class='warning'>[H] seems to resist the implant!</span>", "<span class='warning'>You feel the corporate tendrils of Nanotrasen try to invade your mind!</span>")
+/obj/item/weapon/implant/loyalty/implanted(mob/target)
+	if(target.mind in ticker.mode.head_revolutionaries)
+		target.visible_message("<span class='warning'>[target] seems to resist the implant!</span>", "<span class='warning'>You feel the corporate tendrils of Nanotrasen try to invade your mind!</span>")
 		return 0
-	else if(H.mind in ticker.mode:revolutionaries)
-		ticker.mode:remove_revolutionary(H.mind)
-	H << "<span class='notice'>You feel a surge of loyalty towards Nanotrasen.</span>"
+	if(target.mind in ticker.mode.revolutionaries)
+		ticker.mode.remove_revolutionary(target.mind)
+	target << "<span class='notice'>You feel a surge of loyalty towards Nanotrasen.</span>"
 	return 1
 
 
@@ -178,13 +176,13 @@
 		source.lying = 0
 		source.update_canmove()
 
-		reagents.add_reagent("synaptizine", 10)
-		reagents.add_reagent("tricordrazine", 10)
-		reagents.add_reagent("hyperzine", 10)
+		source.reagents.add_reagent("synaptizine", 10)
+		source.reagents.add_reagent("tricordrazine", 10)
+		source.reagents.add_reagent("hyperzine", 10)
 
 /obj/item/weapon/implant/adrenalin/implanted(mob/source)
-	source.mind.store_memory("An adrenal implant can be activated by using the scream emote, <B>say *scream</B> to attempt to activate.", 0, 0)
-	source << "<span class='notice'>The implanted adrenaline implant can be activated by using the scream emote, <B>say *scream</B> to attempt to activate.</span>"
+	source.mind.store_memory("An adrenal implant can be activated [uses] time\s by using the scream emote, <B>say *scream</B> to attempt to activate.", 0, 0)
+	source << "<span class='notice'>The implanted adrenaline implant can be activated [uses] time\s by using the scream emote, <B>say *scream</B> to attempt to activate.</span>"
 	return 1
 
 
@@ -193,10 +191,10 @@
 	desc = "Triggers an EMP."
 
 	var/activation_emote = "chuckle"
-	var/uses = 1
+	var/uses = 2
 
 /obj/item/weapon/implant/emp/New()
-	activation_emote = pick("blink", "blink_r", "eyebrow", "chuckle", "twitch_s", "frown", "nod", "blush", "giggle", "grin", "groan", "shrug", "smile", "pale", "sniff", "whimper", "wink")
+	activation_emote = pick("blink", "blink_r", "eyebrow", "chuckle", "twitch_s", "frown", "nod", "blush", "giggle", "grin", "groan", "smile", "pale", "sniff", "whimper", "wink")
 	..()
 	return
 
@@ -208,6 +206,6 @@
 	return
 
 /obj/item/weapon/implant/emp/implanted(mob/living/carbon/source)
-		source.mind.store_memory("EMP implant can be activated by using the [src.activation_emote] emote, <B>say *[src.activation_emote]</B> to attempt to activate.", 0, 0)
-		source << "The implanted EMP implant can be activated by using the [src.activation_emote] emote, <B>say *[src.activation_emote]</B> to attempt to activate."
+		source.mind.store_memory("EMP implant can be activated [uses] time\s by using the [src.activation_emote] emote, <B>say *[src.activation_emote]</B> to attempt to activate.", 0, 0)
+		source << "The implanted EMP implant can be activated [uses] time\s by using the [src.activation_emote] emote, <B>say *[src.activation_emote]</B> to attempt to activate."
 		return 1

@@ -4,7 +4,7 @@
 	icon = 'icons/obj/flamethrower.dmi'
 	icon_state = "flamethrowerbase"
 	item_state = "flamethrower_0"
-	flags = FPRINT | TABLEPASS| CONDUCT
+	flags = CONDUCT
 	force = 3.0
 	throwforce = 10.0
 	throw_speed = 1
@@ -16,21 +16,19 @@
 	var/throw_amount = 100
 	var/lit = 0	//on or off
 	var/operating = 0//cooldown
-	var/turf/previousturf = null
 	var/obj/item/weapon/weldingtool/weldtool = null
 	var/obj/item/device/assembly/igniter/igniter = null
 	var/obj/item/weapon/tank/plasma/ptank = null
 
 
-/obj/item/weapon/flamethrower/Del()
+/obj/item/weapon/flamethrower/Destroy()
 	if(weldtool)
-		del(weldtool)
+		qdel(weldtool)
 	if(igniter)
-		del(igniter)
+		qdel(igniter)
 	if(ptank)
-		del(ptank)
+		qdel(ptank)
 	..()
-	return
 
 
 /obj/item/weapon/flamethrower/process()
@@ -83,7 +81,7 @@
 			ptank.loc = T
 			ptank = null
 		new /obj/item/stack/rods(T)
-		del(src)
+		qdel(src)
 		return
 
 	if(istype(W, /obj/item/weapon/screwdriver) && igniter && !lit)
@@ -164,17 +162,17 @@
 /obj/item/weapon/flamethrower/proc/flame_turf(turflist)
 	if(!lit || operating)	return
 	operating = 1
+	var/turf/previousturf = get_turf(src)
 	for(var/turf/simulated/T in turflist)
 		if(!T.air)
 			break
-		if(!previousturf && length(turflist)>1)
-			previousturf = get_turf(src)
+		if(T == previousturf)
 			continue	//so we don't burn the tile we be standin on
-		if(previousturf && LinkBlocked(previousturf, T))
+		if(!T.CanAtmosPass(previousturf))
 			break
 		ignite_turf(T)
 		sleep(1)
-	previousturf = null
+		previousturf = T
 	operating = 0
 	for(var/mob/M in viewers(1, loc))
 		if((M.client && M.machine == src))
@@ -186,10 +184,10 @@
 	//TODO: DEFERRED Consider checking to make sure tank pressure is high enough before doing this...
 	//Transfer 5% of current tank air contents to turf
 	var/datum/gas_mixture/air_transfer = ptank.air_contents.remove_ratio(0.05)
-	air_transfer.toxins = air_transfer.toxins * 5 // This is me not comprehending the air system. I realize this is retarded and I could probably make it work without fucking it up like this, but there you have it. -- TLE
+	air_transfer.toxins = air_transfer.toxins * 5
 	target.assume_air(air_transfer)
 	//Burn it based on transfered gas
-	target.hotspot_expose((ptank.air_contents.temperature*2) + 380,500) // -- More of my "how do I shot fire?" dickery. -- TLE
+	target.hotspot_expose((ptank.air_contents.temperature*2) + 380,500)
 	//location.hotspot_expose(1000,500,1)
 	air_master.add_to_active(target, 0)
 	return
@@ -206,5 +204,5 @@
 
 /obj/item/weapon/flamethrower/full/tank/New(var/loc)
 	..()
-	ptank = new /obj/item/weapon/tank/plasma(src)
+	ptank = new /obj/item/weapon/tank/plasma/full(src)
 	update_icon()

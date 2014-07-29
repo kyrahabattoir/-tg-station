@@ -15,7 +15,6 @@
 /datum/game_mode
 	var/name = "invalid"
 	var/config_tag = null
-	var/intercept_hacked = 0
 	var/votable = 1
 	var/probability = 1
 	var/station_was_nuked = 0 //see nuclearbomb.dm and malfunction.dm
@@ -31,6 +30,7 @@
 	var/uplink_welcome = "Syndicate Uplink Console:"
 	var/uplink_uses = 10
 	var/antag_flag = null //preferences flag such as BE_WIZARD that need to be turned on for players to be antag
+	var/datum/mind/sacrifice_target = null
 
 
 /datum/game_mode/proc/announce() //to be calles when round starts
@@ -44,12 +44,17 @@
 	for(var/mob/new_player/player in player_list)
 		if((player.client)&&(player.ready))
 			playerC++
-	if(playerC < required_players)
-		return 0
+	if(!Debug2)
+		if(playerC < required_players)
+			return 0
 	antag_candidates = get_players_for_role(antag_flag)
-	if(antag_candidates.len < required_enemies)
-		return 0
-	return 1
+	if(!Debug2)
+		if(antag_candidates.len < required_enemies)
+			return 0
+		return 1
+	else
+		world << "<span class='notice'>DEBUG: GAME STARTING WITHOUT PLAYER NUMBER CHECKS, THIS WILL PROBABLY BREAK SHIT."
+		return 1
 
 
 ///pre_setup()
@@ -170,16 +175,16 @@
 
 	var/list/possible_modes = list()
 	possible_modes.Add("revolution", "wizard", "nuke", "traitor", "malf", "changeling", "cult")
-	possible_modes -= "[ticker.mode]"
-	var/number = pick(2, 3)
+	possible_modes -= "[ticker.mode]" //remove current gamemode to prevent it from being randomly deleted, it will be readded later
+
+	var/number = pick(1, 2)
 	var/i = 0
-	for(i = 0, i < number, i++)
+	for(i = 0, i < number, i++) //remove 1 or 2 possibles modes from the list
 		possible_modes.Remove(pick(possible_modes))
 
-	if(!intercept_hacked)
-		possible_modes.Insert(rand(possible_modes.len), "[ticker.mode]")
+	possible_modes[rand(1, possible_modes.len)] = "[ticker.mode]" //replace a random game mode with the current one
 
-	shuffle(possible_modes)
+	possible_modes = shuffle(possible_modes) //shuffle the list to prevent meta
 
 	var/datum/intercept_text/i_text = new /datum/intercept_text
 	for(var/A in possible_modes)
@@ -197,10 +202,7 @@
 			comm.messagetitle.Add("Cent. Com. Status Summary")
 			comm.messagetext.Add(intercepttext)
 
-	command_alert("Summary downloaded and printed out at all communications consoles.", "Enemy communication intercept. Security Level Elevated.")
-	for(var/mob/M in player_list)
-		if(!istype(M,/mob/new_player))
-			M << sound('sound/AI/intercept.ogg')
+	priority_announce("Summary downloaded and printed out at all communications consoles.", "Enemy communication intercept. Security Level Elevated.", 'sound/AI/intercept.ogg')
 	if(security_level < SEC_LEVEL_BLUE)
 		set_security_level(SEC_LEVEL_BLUE)
 
@@ -219,6 +221,7 @@
 		if(BE_WIZARD)		roletext="wizard"
 		if(BE_REV)			roletext="revolutionary"
 		if(BE_CULTIST)		roletext="cultist"
+		if(BE_MONKEY)		roletext="monkey"
 
 
 	// Ultimate randomizing code right here

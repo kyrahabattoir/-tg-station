@@ -9,6 +9,7 @@
  *		Mining Satchel
  *		Plant Bag
  *		Sheet Snatcher
+ *		Book Bag
  *
  *	-Sayu
  */
@@ -20,7 +21,6 @@
 	display_contents_with_number = 1 // should work fine now
 	use_to_pickup = 1
 	slot_flags = SLOT_BELT
-	flags = FPRINT | TABLEPASS
 
 // -----------------------------
 //          Trash bag
@@ -36,7 +36,7 @@
 	max_w_class = 2
 	storage_slots = 21
 	can_hold = list() // any
-	cant_hold = list("/obj/item/weapon/disk/nuclear")
+	cant_hold = list(/obj/item/weapon/disk/nuclear)
 
 
 /obj/item/weapon/storage/bag/trash/update_icon()
@@ -47,6 +47,16 @@
 	else if(contents.len < 21)
 		icon_state = "trashbag2"
 	else icon_state = "trashbag3"
+
+/obj/item/weapon/storage/bag/trash/cyborg
+
+/obj/item/weapon/storage/bag/trash/proc/janicart_insert(mob/user, obj/structure/janitorialcart/J)
+	J.put_in_cart(src, user)
+	J.mybag=src
+	J.update_icon()
+
+/obj/item/weapon/storage/bag/trash/cyborg/janicart_insert(mob/user, obj/structure/janitorialcart/J)
+	return
 
 // -----------------------------
 //        Mining Satchel
@@ -62,7 +72,7 @@
 	storage_slots = 50
 	max_combined_w_class = 200 //Doesn't matter what this is, so long as it's more or equal to storage_slots * ore.w_class
 	max_w_class = 3
-	can_hold = list("/obj/item/weapon/ore")
+	can_hold = list(/obj/item/weapon/ore)
 
 
 // -----------------------------
@@ -77,7 +87,7 @@
 	max_combined_w_class = 200 //Doesn't matter what this is, so long as it's more or equal to storage_slots * plants.w_class
 	max_w_class = 3
 	w_class = 1
-	can_hold = list("/obj/item/weapon/reagent_containers/food/snacks/grown","/obj/item/seeds","/obj/item/weapon/grown")
+	can_hold = list(/obj/item/weapon/reagent_containers/food/snacks/grown,/obj/item/seeds,/obj/item/weapon/grown)
 
 ////////
 
@@ -92,9 +102,7 @@
 		set desc = "Activate to convert your plants into plantable seeds."
 		for(var/obj/item/O in contents)
 			seedify(O, 1)
-		for(var/mob/M in range(1))
-			if (M.s_active == src)
-				src.close(M)
+		close_all()
 
 
 // -----------------------------
@@ -119,7 +127,7 @@
 		//verbs += /obj/item/weapon/storage/bag/sheetsnatcher/quick_empty
 
 	can_be_inserted(obj/item/W as obj, stop_messages = 0)
-		if(!istype(W,/obj/item/stack/sheet) || istype(W,/obj/item/stack/sheet/mineral/sandstone) || istype(W,/obj/item/stack/sheet/wood))
+		if(!istype(W,/obj/item/stack/sheet) || istype(W,/obj/item/stack/sheet/mineral/sandstone) || istype(W,/obj/item/stack/sheet/mineral/wood))
 			if(!stop_messages)
 				usr << "The snatcher does not accept [W]."
 			return 0 //I don't care, but the existing code rejects them for not being "sheets" *shrug* -Sayu
@@ -156,12 +164,12 @@
 				break
 
 		if(!inserted || !S.amount)
-			usr.u_equip(S)
+			usr.unEquip(S)
 			if (usr.client && usr.s_active != src)
 				usr.client.screen -= S
 			S.dropped(usr)
 			if(!S.amount)
-				del S
+				qdel(S)
 			else
 				S.loc = src
 
@@ -206,7 +214,7 @@
 				N.amount = stacksize
 				S.amount -= stacksize
 			if(!S.amount)
-				del S // todo: there's probably something missing here
+				qdel(S)// todo: there's probably something missing here
 		orient2hud(usr)
 		if(usr.s_active)
 			usr.s_active.show_to(usr)
@@ -237,3 +245,75 @@
 	name = "sheet snatcher 9000"
 	desc = ""
 	capacity = 500//Borgs get more because >specialization
+
+
+// -----------------------------
+//           Book bag
+// -----------------------------
+
+/obj/item/weapon/storage/bag/books
+	name = "book bag"
+	desc = "A bag for books."
+	icon = 'icons/obj/library.dmi'
+	icon_state = "bookbag"
+	display_contents_with_number = 0 //This would look really stupid otherwise
+	storage_slots = 7
+	max_combined_w_class = 21
+	max_w_class = 3
+	w_class = 4 //Bigger than a book because physics
+	can_hold = list(/obj/item/weapon/book, /obj/item/weapon/spellbook) //No bibles, consistent with bookcase
+
+/*
+ * Trays - Agouri
+ */
+/obj/item/weapon/storage/bag/tray
+	name = "tray"
+	icon = 'icons/obj/food.dmi'
+	icon_state = "tray"
+	desc = "A metal tray to lay food on."
+	force = 5
+	throwforce = 10.0
+	throw_speed = 3
+	throw_range = 5
+	w_class = 4.0
+	flags = CONDUCT
+	m_amt = 3000
+	preposition = "on"
+
+/obj/item/weapon/storage/bag/tray/attack(mob/living/M as mob, mob/living/user as mob)
+	..()
+	// Drop all the things. All of them.
+	var/list/obj/item/oldContents = contents.Copy()
+	quick_empty()
+	
+	// Make each item scatter a bit
+	for(var/obj/item/I in oldContents)
+		spawn()
+			for(var/i = 1, i <= rand(1,2), i++)
+				if(I)
+					step(I, pick(NORTH,SOUTH,EAST,WEST))
+					sleep(rand(2,4))
+	
+	if(prob(50))
+		playsound(M, 'sound/items/trayhit1.ogg', 50, 1)	
+	else
+		playsound(M, 'sound/items/trayhit2.ogg', 50, 1)
+	
+	if(ishuman(M) || ismonkey(M))
+		if(prob(10))
+			M.Weaken(2)
+
+/obj/item/weapon/storage/bag/tray/proc/rebuild_overlays()
+	overlays.Cut()
+	for(var/obj/item/I in contents)
+		overlays += image("icon" = I.icon, "icon_state" = I.icon_state, "layer" = -1)
+
+/obj/item/weapon/storage/bag/tray/remove_from_storage(obj/item/W as obj, atom/new_location)
+	..()
+	rebuild_overlays()
+
+/obj/item/weapon/storage/bag/tray/handle_item_insertion(obj/item/I, prevent_warning = 0)
+	overlays += image("icon" = I.icon, "icon_state" = I.icon_state, "layer" = -1)
+	..()
+
+

@@ -25,7 +25,7 @@
 	proj_trail_icon_state = "magicmd"
 
 /obj/effect/proc_holder/spell/targeted/inflict_handler/magic_missile
-	amt_weakened = 5
+	amt_weakened = 3
 	amt_dam_fire = 10
 
 /obj/effect/proc_holder/spell/targeted/genetic/mutate
@@ -40,6 +40,7 @@
 	message = "\blue You feel strong! You feel a pressure building behind your eyes!"
 	range = -1
 	include_user = 1
+	centcom_cancast = 0
 
 	mutations = list(LASER, HULK)
 	duration = 300
@@ -107,7 +108,7 @@
 
 
 	smoke_spread = 1
-	smoke_amt = 10
+	smoke_amt = 1
 
 	inner_tele_radius = 0
 	outer_tele_radius = 6

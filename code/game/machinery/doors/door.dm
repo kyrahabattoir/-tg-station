@@ -15,6 +15,7 @@
 	var/glass = 0
 	var/normalspeed = 1
 	var/heat_proof = 0 // For glass airlocks/opacity firedoors
+	var/emergency = 0 // Emergency access override
 
 /obj/machinery/door/New()
 	..()
@@ -26,13 +27,15 @@
 		explosion_resistance = 0
 	update_freelook_sight()
 	air_update_turf(1)
+	airlocks += src
 	return
 
 
-/obj/machinery/door/Del()
+/obj/machinery/door/Destroy()
 	density = 0
 	air_update_turf(1)
 	update_freelook_sight()
+	airlocks -= src
 	..()
 	return
 
@@ -40,7 +43,7 @@
 	//return
 
 /obj/machinery/door/Bumped(atom/AM)
-	if(p_open || operating) return
+	if(operating || emagged) return
 	if(ismob(AM))
 		var/mob/M = AM
 		if(world.time - M.last_bumped <= 10) return	//Can bump-open one airlock per second. This is to prevent shock spam.
@@ -51,7 +54,7 @@
 
 	if(istype(AM, /obj/machinery/bot))
 		var/obj/machinery/bot/bot = AM
-		if(src.check_access(bot.botcard))
+		if(src.check_access(bot.botcard) || emergency == 1)
 			if(density)
 				open()
 		return
@@ -59,7 +62,7 @@
 	if(istype(AM, /obj/mecha))
 		var/obj/mecha/mecha = AM
 		if(density)
-			if(mecha.occupant && (src.allowed(mecha.occupant) || src.check_access_list(mecha.operation_req_access)))
+			if(mecha.occupant && (src.allowed(mecha.occupant) || src.check_access_list(mecha.operation_req_access) || emergency == 1))
 				open()
 			else
 				flick("door_deny", src)
@@ -67,9 +70,9 @@
 	return
 
 /obj/machinery/door/Move()
-	air_update_turf(1)
+	var/turf/T = loc
 	..()
-	air_update_turf(1)
+	move_update_air(T)
 
 /obj/machinery/door/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)
 	if(air_group) return 0
@@ -80,19 +83,19 @@
 /obj/machinery/door/CanAtmosPass()
 	return !density
 
+//used in the AStar algorithm to determinate if the turf the door is on is passable
+/obj/machinery/door/proc/CanAStarPass(var/obj/item/weapon/card/id/ID)
+	return !density || check_access(ID)
+
 /obj/machinery/door/proc/bumpopen(mob/user as mob)
 	if(operating)	return
 	src.add_fingerprint(user)
 	if(!src.requiresID())
 		user = null
 
-	if(density)
-		if(allowed(user))	open()
+	if(density && !emagged)
+		if(allowed(user) || src.emergency == 1)	open()
 		else				flick("door_deny", src)
-	return
-
-/obj/machinery/door/meteorhit(obj/M as obj)
-	src.open()
 	return
 
 
@@ -116,8 +119,9 @@
 /obj/machinery/door/attackby(obj/item/I as obj, mob/user as mob)
 	if(istype(I, /obj/item/device/detective_scanner))
 		return
-	if(src.operating || isrobot(user))	return //borgs can't attack doors open because it conflicts with their AI-like interaction with them.
+	if(isrobot(user))	return //borgs can't attack doors open because it conflicts with their AI-like interaction with them.
 	src.add_fingerprint(user)
+	if(operating || emagged)	return
 	if(!Adjacent(user))
 		user = null
 	if(!src.requiresID())
@@ -126,9 +130,16 @@
 		flick("door_spark", src)
 		sleep(6)
 		open()
-		operating = -1
+		emagged = 1
+		if(istype(src, /obj/machinery/door/airlock))
+			var/obj/machinery/door/airlock/A = src
+			A.lights = 0
+			A.locked = 1
+			A.loseMainPower()
+			A.loseBackupPower()
+			A.update_icon()
 		return 1
-	if(src.allowed(user))
+	if(src.allowed(user) || src.emergency == 1)
 		if(src.density)
 			open()
 		else
@@ -141,7 +152,7 @@
 
 /obj/machinery/door/blob_act()
 	if(prob(40))
-		del(src)
+		qdel(src)
 	return
 
 
@@ -159,10 +170,10 @@
 /obj/machinery/door/ex_act(severity)
 	switch(severity)
 		if(1.0)
-			del(src)
+			qdel(src)
 		if(2.0)
 			if(prob(25))
-				del(src)
+				qdel(src)
 		if(3.0)
 			if(prob(80))
 				var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
@@ -198,9 +209,9 @@
 
 /obj/machinery/door/proc/open()
 	if(!density)		return 1
-	if(operating > 0)	return
+	if(operating)		return
 	if(!ticker)			return 0
-	if(!operating)		operating = 1
+	operating = 1
 
 	do_animate("opening")
 	icon_state = "door0"

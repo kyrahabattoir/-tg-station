@@ -11,11 +11,10 @@ var/global/list/obj/item/device/pda/PDAs = list()
 	icon_state = "pda"
 	item_state = "electronic"
 	w_class = 1.0
-	flags = FPRINT | TABLEPASS
 	slot_flags = SLOT_ID | SLOT_BELT
 
 	//Main variables
-	var/owner = null
+	var/owner = null // String name of owner
 	var/default_cartridge = 0 // Access level defined by cartridge
 	var/obj/item/weapon/cartridge/cartridge = null //current cartridge
 	var/mode = 0 //Controls what menu the PDA will display. 0 is hub; the rest are either built in or based on cartridge.
@@ -133,7 +132,7 @@ var/global/list/obj/item/device/pda/PDAs = list()
 /obj/item/device/pda/syndicate
 	default_cartridge = /obj/item/weapon/cartridge/syndicate
 	icon_state = "pda-syndi"
-	name = "Military PDA"
+	name = "military PDA"
 	owner = "John Doe"
 	hidden = 1
 
@@ -203,11 +202,11 @@ var/global/list/obj/item/device/pda/PDAs = list()
 /obj/item/device/pda/pickup(mob/user)
 	if(fon)
 		SetLuminosity(0)
-		user.SetLuminosity(user.luminosity + f_lum)
+		user.AddLuminosity(f_lum)
 
 /obj/item/device/pda/dropped(mob/user)
 	if(fon)
-		user.SetLuminosity(user.luminosity - f_lum)
+		user.AddLuminosity(-f_lum)
 		SetLuminosity(f_lum)
 
 /obj/item/device/pda/New()
@@ -216,6 +215,9 @@ var/global/list/obj/item/device/pda/PDAs = list()
 	if(default_cartridge)
 		cartridge = new default_cartridge(src)
 	new /obj/item/weapon/pen(src)
+
+/obj/item/device/pda/proc/update_label()
+	name = "PDA-[owner] ([ownjob])" //Name generalisation
 
 /obj/item/device/pda/proc/can_use(mob/user)
 	if(user && ismob(user))
@@ -473,7 +475,7 @@ var/global/list/obj/item/device/pda/PDAs = list()
 				id_check(U, 1)
 			if("UpdateInfo")
 				ownjob = id.assignment
-				name = "PDA-[owner] ([ownjob])"
+				update_label()
 			if("Eject")//Ejects the cart, only done from hub.
 				if (!isnull(cartridge))
 					var/turf/T = loc
@@ -508,11 +510,11 @@ var/global/list/obj/item/device/pda/PDAs = list()
 			if("Light")
 				if(fon)
 					fon = 0
-					if(src in U.contents)	U.SetLuminosity(U.luminosity - f_lum)
+					if(src in U.contents)	U.AddLuminosity(-f_lum)
 					else					SetLuminosity(0)
 				else
 					fon = 1
-					if(src in U.contents)	U.SetLuminosity(U.luminosity + f_lum)
+					if(src in U.contents)	U.AddLuminosity(f_lum)
 					else					SetLuminosity(f_lum)
 			if("Medical Scan")
 				if(scanmode == 1)
@@ -849,7 +851,7 @@ var/global/list/obj/item/device/pda/PDAs = list()
 		if(!owner)
 			owner = idcard.registered_name
 			ownjob = idcard.assignment
-			name = "PDA-[owner] ([ownjob])"
+			update_label()
 			user << "<span class='notice'>Card scanned.</span>"
 		else
 			//Basic safety check. If either both objects are held by user or PDA is on ground and card is in hand.
@@ -949,10 +951,10 @@ var/global/list/obj/item/device/pda/PDAs = list()
 
 		explosion(T, -1, -1, 2, 3)
 
-	del(src)
+	qdel(src)
 	return
 
-/obj/item/device/pda/Del()
+/obj/item/device/pda/Destroy()
 	PDAs -= src
 	if (src.id)
 		src.id.loc = get_turf(src.loc)
@@ -960,36 +962,27 @@ var/global/list/obj/item/device/pda/PDAs = list()
 
 /obj/item/device/pda/clown/Crossed(AM as mob|obj) //Clown PDA is slippery.
 	if (istype(AM, /mob/living/carbon))
-		var/mob/M =	AM
-		if ((istype(M, /mob/living/carbon/human) && (istype(M:shoes, /obj/item/clothing/shoes) && M:shoes.flags&NOSLIP)) || M.m_intent == "walk")
-			return
-
-		if ((istype(M, /mob/living/carbon/human) && (M.real_name != src.owner) && (istype(src.cartridge, /obj/item/weapon/cartridge/clown))))
-			if (src.cartridge:honk_charges < 5)
-				src.cartridge:honk_charges++
-
-		M.stop_pulling()
-		M << "\blue You slipped on the PDA!"
-		playsound(src.loc, 'sound/misc/slip.ogg', 50, 1, -3)
-		M.Stun(8)
-		M.Weaken(5)
-
+		var/mob/living/carbon/M = AM
+		if(M.slip(8, 5, src, NO_SLIP_WHEN_WALKING))
+			if (ishuman(M) && (M.real_name != src.owner))
+				if (istype(src.cartridge, /obj/item/weapon/cartridge/clown))
+					var/obj/item/weapon/cartridge/clown/cart = src.cartridge
+					if(cart.honk_charges < 5)
+						cart.honk_charges++
 
 //AI verb and proc for sending PDA messages.
 
-/mob/living/silicon/ai/verb/cmd_send_pdamesg()
-	set category = "AI Commands"
-	set name = "PDA - Send Message"
+/mob/living/silicon/ai/proc/cmd_send_pdamesg(mob/user as mob)
 	var/list/names = list()
 	var/list/plist = list()
 	var/list/namecounts = list()
 
-	if(usr.stat == 2)
-		usr << "You can't send PDA messages because you are dead!"
+	if(user.stat == 2)
+		user << "You can't send PDA messages because you are dead!"
 		return
 
 	if(src.aiPDA.toff)
-		usr << "Turn on your receiver in order to send messages."
+		user << "Turn on your receiver in order to send messages."
 		return
 
 	for (var/obj/item/device/pda/P in get_viewable_pdas())
@@ -1008,7 +1001,7 @@ var/global/list/obj/item/device/pda/PDAs = list()
 
 		plist[text("[name]")] = P
 
-	var/c = input(usr, "Please select a PDA") as null|anything in sortList(plist)
+	var/c = input(user, "Please select a PDA") as null|anything in sortList(plist)
 
 	if (!c)
 		return
@@ -1042,24 +1035,22 @@ var/global/list/obj/item/device/pda/PDAs = list()
 	else
 		usr << "You do not have a PDA. You should make an issue report about this."
 
-/mob/living/silicon/ai/verb/cmd_show_message_log()
-	set category = "AI Commands"
-	set name = "PDA - Show Message Log"
-	if(usr.stat == 2)
-		usr << "You can't do that because you are dead!"
+/mob/living/silicon/ai/proc/cmd_show_message_log(mob/user as mob)
+	if(user.stat == 2)
+		user << "You can't do that because you are dead!"
 		return
 	if(!isnull(aiPDA))
 		var/HTML = "<html><head><title>AI PDA Message Log</title></head><body>[aiPDA.tnote]</body></html>"
-		usr << browse(HTML, "window=log;size=400x444;border=1;can_resize=1;can_close=1;can_minimize=0")
+		user << browse(HTML, "window=log;size=400x444;border=1;can_resize=1;can_close=1;can_minimize=0")
 	else
-		usr << "You do not have a PDA. You should make an issue report about this."
+		user << "You do not have a PDA. You should make an issue report about this."
 
 //Some spare PDAs in a box
 /obj/item/weapon/storage/box/PDAs
 	name = "spare PDAs"
 	desc = "A box of spare PDA microcomputers."
 	icon = 'icons/obj/storage.dmi'
-	icon_state = "pdabox"
+	icon_state = "pda"
 
 	New()
 		..()

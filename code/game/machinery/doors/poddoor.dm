@@ -5,6 +5,7 @@
 	icon_state = "closed"
 	explosion_resistance = 25
 	var/id = 1
+	var/auto_close = 0 // Time in seconds to automatically close when opened, 0 if it doesn't.
 
 /obj/machinery/door/poddoor/preopen
 	icon_state = "open"
@@ -52,6 +53,11 @@
 	air_update_turf(1)
 	update_freelook_sight()
 	operating = 0
+
+	if(auto_close)
+		spawn(auto_close)
+			// Checks for being able to close are in close().
+			close()
 
 	return 1
 
@@ -306,9 +312,9 @@
 		f1.sd_SetOpacity(opacity)
 		f2.sd_SetOpacity(opacity)
 
-	Del()
-		del f1
-		del f2
+	Destroy()
+		qdel(f1)
+		qdel(f2)
 		..()
 
 /obj/machinery/door/poddoor/two_tile_ver
@@ -325,9 +331,9 @@
 		f1.sd_SetOpacity(opacity)
 		f2.sd_SetOpacity(opacity)
 
-	Del()
-		del f1
-		del f2
+	Destroy()
+		qdel(f1)
+		qdel(f2)
 		..()
 
 /obj/machinery/door/poddoor/four_tile_hor
@@ -352,11 +358,11 @@
 		f4.sd_SetOpacity(opacity)
 		f3.sd_SetOpacity(opacity)
 
-	Del()
-		del f1
-		del f2
-		del f3
-		del f4
+	Destroy()
+		qdel(f1)
+		qdel(f2)
+		qdel(f3)
+		qdel(f4)
 		..()
 
 /obj/machinery/door/poddoor/four_tile_ver
@@ -381,11 +387,11 @@
 		f4.sd_SetOpacity(opacity)
 		f3.sd_SetOpacity(opacity)
 
-	Del()
-		del f1
-		del f2
-		del f3
-		del f4
+	Destroy()
+		qdel(f1)
+		qdel(f2)
+		qdel(f3)
+		qdel(f4)
 		..()
 
 /obj/machinery/door/poddoor/filler_object

@@ -12,7 +12,7 @@ LINEN BINS
 	item_state = "bedsheet"
 	slot_flags = SLOT_BACK
 	layer = 4.0
-	throwforce = 1
+	throwforce = 0
 	throw_speed = 1
 	throw_range = 2
 	w_class = 1.0
@@ -128,7 +128,7 @@ LINEN BINS
 	item_color = "cargo"
 
 /obj/item/weapon/bedsheet/centcom
-	name = "centcom bedsheet"
+	name = "\improper Centcom bedsheet"
 	desc = "Woven with advanced nanothread for warmth as well as being very decorated, essential for all officials."
 	icon_state = "sheetcentcom"
 	item_color = "centcom"
@@ -190,7 +190,9 @@ LINEN BINS
 		user << "<span class='notice'>You put [I] in [src].</span>"
 		update_icon()
 	else if(amount && !hidden && I.w_class < 4)	//make sure there's sheets to hide it among, make sure nothing else is hidden in there.
-		user.drop_item()
+		if(!user.drop_item())
+			user << "<span class='notice'>\The [I] is stuck to your hand, you cannot hide it among the sheets!</span>"
+			return
 		I.loc = src
 		hidden = I
 		user << "<span class='notice'>You hide [I] among the sheets.</span>"

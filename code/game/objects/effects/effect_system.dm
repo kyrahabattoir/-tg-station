@@ -11,14 +11,12 @@ would spawn and follow the beaker, even if it is carried or thrown.
 	icon = 'icons/effects/effects.dmi'
 	mouse_opacity = 0
 	unacidable = 1//So effect are not targeted by alien acid.
-	flags = TABLEPASS
 
 /obj/effect/effect/water
 	name = "water"
 	icon = 'icons/effects/effects.dmi'
 	icon_state = "extinguish"
 	var/life = 15.0
-	flags = TABLEPASS
 	mouse_opacity = 0
 
 /obj/effect/effect/smoke
@@ -36,6 +34,16 @@ would spawn and follow the beaker, even if it is carried or thrown.
 		reagents.delete()
 	return
 
+/datum/effect/effect/proc/fadeOut(var/atom/A, var/frames = 16)
+	if(A.alpha == 0) //Handle already transparent case
+		return
+	if(frames == 0)
+		frames = 1 //We will just assume that by 0 frames, the coder meant "during one frame".
+	var/step = A.alpha / frames
+	for(var/i = 0, i < frames, i++)
+		A.alpha -= step
+		sleep(world.tick_lag)
+	return
 
 /obj/effect/effect/water/New()
 	..()
@@ -45,13 +53,6 @@ would spawn and follow the beaker, even if it is carried or thrown.
 	spawn( 70 )
 		delete()
 		return
-	return
-
-/obj/effect/effect/water/Del()
-	//var/turf/T = src.loc
-	//if (istype(T, /turf))
-	//	T.firelevel = 0 //TODO: FIX
-	..()
 	return
 
 /obj/effect/effect/water/Move(turf/newloc)
@@ -164,7 +165,7 @@ steam.start() -- spawns the effect
 		delete()
 	return
 
-/obj/effect/effect/sparks/Del()
+/obj/effect/effect/sparks/Destroy()
 	var/turf/T = src.loc
 	if (istype(T, /turf))
 		T.hotspot_expose(1000,100)
@@ -326,6 +327,7 @@ steam.start() -- spawns the effect
 					step(smoke,direction)
 				spawn(75+rand(10,30))
 					if(smoke)
+						fadeOut(smoke)
 						smoke.delete()
 					src.total_smoke--
 
@@ -426,7 +428,9 @@ steam.start() -- spawns the effect
 					sleep(10)
 					step(smoke,direction)
 				spawn(150+rand(10,30))
-					smoke.delete()
+					if(smoke)
+						fadeOut(smoke)
+						smoke.delete()
 					src.total_smoke--
 
 
@@ -546,7 +550,7 @@ steam.start() -- spawns the effect
 					chemholder.reagents.copy_to(smoke, chemholder.reagents.total_volume / number) // copy reagents to each smoke, divide evenly
 
 				if(color)
-					smoke.icon += color // give the smoke color, if it has any to begin with
+					smoke.color = color // give the smoke color, if it has any to begin with
 				else
 					// if no color, just use the old smoke icon
 					smoke.icon = 'icons/effects/96x96.dmi'
@@ -556,7 +560,9 @@ steam.start() -- spawns the effect
 					sleep(10)
 					step(smoke,direction)
 				spawn(150+rand(10,30))
-					smoke.delete()
+					if(smoke)
+						fadeOut(smoke)
+						smoke.delete()
 					src.total_smoke--
 
 
@@ -576,6 +582,7 @@ steam.start() -- spawns the effect
 	icon = 'icons/effects/96x96.dmi'
 	pixel_x = -32
 	pixel_y = -32
+	color = "#9C3636"
 
 /obj/effect/effect/sleep_smoke/New()
 	..()
@@ -590,7 +597,7 @@ steam.start() -- spawns the effect
 //		if (M.wear_suit, /obj/item/clothing/suit/wizrobe && (M.hat, /obj/item/clothing/head/wizard) && (M.shoes, /obj/item/clothing/shoes/sandal))  // I'll work on it later
 		else
 			M.drop_item()
-			M:sleeping += 1
+			M:sleeping += 5
 			if (M.coughedtime != 1)
 				M.coughedtime = 1
 				M.emote("cough")
@@ -606,7 +613,7 @@ steam.start() -- spawns the effect
 			return
 		else
 			M.drop_item()
-			M:sleeping += 1
+			M:sleeping += 5
 			if (M.coughedtime != 1)
 				M.coughedtime = 1
 				M.emote("cough")
@@ -651,7 +658,9 @@ steam.start() -- spawns the effect
 					sleep(10)
 					step(smoke,direction)
 				spawn(150+rand(10,30))
-					smoke.delete()
+					if(smoke)
+						fadeOut(smoke)
+						smoke.delete()
 					src.total_smoke--
 
 
@@ -682,26 +691,26 @@ steam.start() -- spawns the effect
 			src.processing = 1
 		if(src.processing)
 			src.processing = 0
-			spawn(0)
-				var/turf/T = get_turf(src.holder)
-				if(T != src.oldposition)
-					if(istype(T, /turf/space))
-						var/obj/effect/effect/ion_trails/I = new /obj/effect/effect/ion_trails(src.oldposition)
-						src.oldposition = T
-						I.dir = src.holder.dir
-						flick("ion_fade", I)
-						I.icon_state = "blank"
-						spawn( 20 )
+			var/turf/T = get_turf(src.holder)
+			if(T != src.oldposition)
+				if(!has_gravity(T))
+					var/obj/effect/effect/ion_trails/I = new /obj/effect/effect/ion_trails(src.oldposition)
+					src.oldposition = T
+					I.dir = src.holder.dir
+					flick("ion_fade", I)
+					I.icon_state = "blank"
+					spawn( 20 )
+						if(I)
 							I.delete()
-					spawn(2)
-						if(src.on)
-							src.processing = 1
-							src.start()
-				else
-					spawn(2)
-						if(src.on)
-							src.processing = 1
-							src.start()
+				spawn(2)
+					if(src.on)
+						src.processing = 1
+						src.start()
+			else
+				spawn(2)
+					if(src.on)
+						src.processing = 1
+						src.start()
 
 	proc/stop()
 		src.processing = 0
@@ -795,7 +804,7 @@ steam.start() -- spawns the effect
 	return
 
 // on delete, transfer any reagents to the floor
-/obj/effect/effect/foam/Del()
+/obj/effect/effect/foam/Destroy()
 	if(!metal && reagents)
 		for(var/atom/A in oview(0,src))
 			if(A == src)
@@ -845,15 +854,8 @@ steam.start() -- spawns the effect
 		return
 
 	if (istype(AM, /mob/living/carbon))
-		var/mob/M =	AM
-		if (istype(M, /mob/living/carbon/human) && (istype(M:shoes, /obj/item/clothing/shoes) && M:shoes.flags&NOSLIP))
-			return
-
-		M.stop_pulling()
-		M << "\blue You slipped on the foam!"
-		playsound(src.loc, 'sound/misc/slip.ogg', 50, 1, -3)
-		M.Stun(5)
-		M.Weaken(2)
+		var/mob/living/carbon/M = AM
+		M.slip(5, 2, src)
 
 
 /datum/effect/effect/system/foam_spread
@@ -914,7 +916,8 @@ steam.start() -- spawns the effect
 	anchored = 1
 	name = "foamed metal"
 	desc = "A lightweight foamed metal wall."
-	var/metal = 1		// 1=aluminum, 2=iron
+	gender = PLURAL
+	var/metal = 1		// 1=aluminium, 2=iron
 
 	New()
 		..()
@@ -922,16 +925,16 @@ steam.start() -- spawns the effect
 
 
 
-	Del()
+	Destroy()
 
 		density = 0
 		air_update_turf(1)
 		..()
 
 	Move()
-		air_update_turf(1)
+		var/turf/T = loc
 		..()
-		air_update_turf(1)
+		move_update_air(T)
 
 	proc/updateicon()
 		if(metal == 1)
@@ -941,19 +944,25 @@ steam.start() -- spawns the effect
 
 
 	ex_act(severity)
-		del(src)
+		qdel(src)
 
 	blob_act()
-		del(src)
+		qdel(src)
 
 	bullet_act()
 		..()
 		if(metal==1 || prob(50))
-			del(src)
+			qdel(src)
 
 	attack_paw(var/mob/user)
 		attack_hand(user)
 		return
+
+	attack_animal(var/mob/living/simple_animal/M)
+		if(M.environment_smash >= 1)
+			M << "<span class='notice'>You smash apart the foam wall.</span>"
+			qdel(src)
+			return
 
 	attack_hand(var/mob/user)
 		if ((HULK in user.mutations) || (prob(75 - metal*25)))
@@ -962,7 +971,7 @@ steam.start() -- spawns the effect
 				if ((O.client && !( O.blinded )))
 					O << "\red [user] smashes through the foamed metal."
 
-			del(src)
+			qdel(src)
 		else
 			user << "\blue You hit the metal foam but bounce off it."
 		return
@@ -976,8 +985,8 @@ steam.start() -- spawns the effect
 			for(var/mob/O in viewers(src))
 				if (O.client)
 					O << "\red [G.assailant] smashes [G.affecting] through the foamed metal wall."
-			del(I)
-			del(src)
+			qdel(I)
+			qdel(src)
 			return
 
 		if(prob(I.force*20 - metal*25))
@@ -985,7 +994,7 @@ steam.start() -- spawns the effect
 			for(var/mob/O in oviewers(user))
 				if ((O.client && !( O.blinded )))
 					O << "\red [user] smashes through the foamed metal."
-			del(src)
+			qdel(src)
 		else
 			user << "\blue You hit the metal foam to no effect."
 

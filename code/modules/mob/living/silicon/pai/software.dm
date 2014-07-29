@@ -342,9 +342,10 @@
 	dat += "<a href='byond://?src=\ref[src];software=directive;getdna=1'>Request carrier DNA sample</a><br>"
 	dat += "<h2>Directives</h2><br>"
 	dat += "<b>Prime Directive</b><br>"
-	dat += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[src.pai_law0]<br>"
+	dat += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[src.laws.zeroth]<br>"
 	dat += "<b>Supplemental Directives</b><br>"
-	dat += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[src.pai_laws]<br>"
+	for(var/slaws in src.laws.supplied)
+		dat += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[slaws]<br>"
 	dat += "<br>"
 	dat += {"<i><p>Recall, personality, that you are a complex thinking, sentient being. Unlike station AI models, you are capable of
 			 comprehending the subtle nuances of human language. You may parse the \"spirit\" of a directive and follow its intent,
@@ -486,11 +487,11 @@
 		var/mob/living/M = card.loc
 		if(!istype(M, /mob/living))
 			while (!istype(M, /mob/living))
-				M = M.loc
 				if(istype(M, /turf))
 					src.temp = "Error: No biological host found. <br>"
 					src.subscreen = 0
 					return dat
+				M = M.loc
 		dat += {"Bioscan Results for [M]: <br>"
 		Overall Status: [M.stat > 1 ? "dead" : "[M.health]% healthy"] <br>
 		Scan Breakdown: <br>

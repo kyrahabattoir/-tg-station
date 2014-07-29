@@ -21,6 +21,10 @@ var/tinted_weldhelh = 1
 var/Debug = 0	// global debug switch
 var/Debug2 = 0
 
+//Server API key
+var/global/comms_key = "default_pwd"
+var/global/comms_allowed = 0 //By default, the server does not allow messages to be sent to it, unless the key is strong enough (this is to prevent misconfigured servers from becoming vulnerable)
+
 
 //This was a define, but I changed it to a variable so it can be changed in-game.(kept the all-caps definition because... code...) -Errorage
 var/MAX_EX_DEVESTATION_RANGE = 3
@@ -39,6 +43,7 @@ var/list/be_special_flags = list(
 	"Alien Lifeform" = BE_ALIEN,
 	"pAI" = BE_PAI,
 	"Cultist" = BE_CULTIST,
-	"Monkey" = BE_MONKEY,
-	"Ninja" = BE_NINJA
+	"Blob" = BE_BLOB,
+	"Ninja" = BE_NINJA,
+	"Monkey" = BE_MONKEY
 	)

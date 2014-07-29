@@ -15,9 +15,9 @@
 	name = "camera bug"
 	desc = "For illicit snooping through the camera network."
 	icon = 'icons/obj/device.dmi'
-	icon_state	= "mindflash2"
+	icon_state	= "camera_bug"
 	w_class		= 1.0
-	item_state	= "electronic"
+	item_state	= "camera_bug"
 	throw_speed	= 4
 	throw_range	= 20
 
@@ -43,6 +43,23 @@
 /obj/item/device/camera_bug/New()
 	..()
 	processing_objects += src
+
+/obj/item/device/camera_bug/Destroy()
+	if(expansion)
+		qdel(expansion)
+		expansion = null
+	del(src)
+/* Easier to just call del() than this nonsense
+	get_cameras()
+	for(var/cam_tag in bugged_cameras)
+		var/obj/machinery/camera/camera = bugged_cameras[cam_tag]
+		if(camera.bug == src)
+			camera.bug = null
+	bugged_cameras = list()
+	if(tracking)
+		tracking = null
+	..()
+*/
 
 /obj/item/device/camera_bug/interact(var/mob/user = usr)
 	var/datum/browser/popup = new(user, "camerabug","Camera Bug",nref=src)

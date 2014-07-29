@@ -51,6 +51,7 @@ var/list/uplink_items = list()
 /datum/uplink_item/proc/spawn_item(var/turf/loc, var/obj/item/device/uplink/U)
 	if(item)
 		U.uses -= max(cost, 0)
+		U.used_TC += cost
 		feedback_add_details("traitor_uplink_items_bought", "[item]")
 		return new item(loc)
 
@@ -77,7 +78,12 @@ var/list/uplink_items = list()
 		if(istype(I, /obj/item) && ishuman(user))
 			var/mob/living/carbon/human/A = user
 			A.put_in_any_hand_if_possible(I)
-			U.purchase_log += "[user] ([user.ckey]) bought [name]."
+
+			if(istype(I,/obj/item/weapon/storage/box/) && I.contents.len>0)
+				for(var/atom/o in I)
+					U.purchase_log += "<BIG>\icon[o]</BIG>"
+			else
+				U.purchase_log += "<BIG>\icon[I]</BIG>"
 
 		U.interact(user)
 		return 1
@@ -95,16 +101,22 @@ var/list/uplink_items = list()
 	category = "Conspicuous and Dangerous Weapons"
 
 /datum/uplink_item/dangerous/revolver
-	name = "Full Revolver"
+	name = "Syndicate Revolver"
 	desc = "The syndicate revolver is a traditional handgun that fires .357 Magnum cartridges and has 7 chambers."
 	item = /obj/item/weapon/gun/projectile/revolver
 	cost = 6
+
+/datum/uplink_item/dangerous/pistol
+	name = "Stechkin Pistol"
+	desc = "A small, easily concealable handgun that uses 10mm magazines and is compatible with silencers."
+	item = /obj/item/weapon/gun/projectile/automatic/pistol
+	cost = 5
 
 /datum/uplink_item/dangerous/smg
 	name = "C-20r Submachine Gun"
 	desc = "A fully-loaded Scarborough Arms-developed submachine gun that fires 12mm automatic rounds with a 20-round magazine."
 	item = /obj/item/weapon/gun/projectile/automatic/c20r
-	cost = 8
+	cost = 7
 	gamemodes = list(/datum/game_mode/nuclear)
 
 /datum/uplink_item/dangerous/machinegun
@@ -137,7 +149,7 @@ var/list/uplink_items = list()
 
 /datum/uplink_item/dangerous/emp
 	name = "EMP Kit"
-	desc = "A box that contains an EMP grenade, an EMP implant and a short ranged device disguised as a flashlight. Useful to disrupt communication and silicon lifeforms."
+	desc = "A box that contains two EMP grenades, an EMP implant and a short ranged recharging device disguised as a flashlight. Useful to disrupt communication and silicon lifeforms."
 	item = /obj/item/weapon/storage/box/syndie_kit/emp
 	cost = 3
 
@@ -159,7 +171,7 @@ var/list/uplink_items = list()
 	desc = "A chemical sprayer that allows a wide dispersal of selected chemicals. Especially tailored by the Tiger Cooperative, the deadly blend it comes stocked with will disorient, damage, and disable your foes... \
 	Use with extreme caution, to prevent exposure to yourself and your fellow operatives."
 	item = /obj/item/weapon/reagent_containers/spray/chemsprayer/bioterror
-	cost = 15
+	cost = 10
 	gamemodes = list(/datum/game_mode/nuclear)
 
 /datum/uplink_item/dangerous/gygax
@@ -176,8 +188,17 @@ var/list/uplink_items = list()
 	item = /obj/mecha/combat/marauder/mauler/loaded
 	cost = 70
 	gamemodes = list(/datum/game_mode/nuclear)
-
-
+/datum/uplink_item/dangerous/syndieborg
+	name = "Syndicate Cyborg"
+	desc = "A cyborg designed and programmed for systematic extermination of non-Syndicate personnel."
+	item = /obj/item/weapon/antag_spawner/borg_tele
+	cost = 25
+	gamemodes = list(/datum/game_mode/nuclear)
+//for refunding the syndieborg teleporter
+/datum/uplink_item/dangerous/syndieborg/spawn_item()
+	var/obj/item/weapon/antag_spawner/borg_tele/T = ..()
+	if(istype(T))
+		T.TC_cost = cost
 
 // AMMUNITION
 
@@ -201,8 +222,7 @@ var/list/uplink_items = list()
 	name = "Ammo-10mm"
 	desc = "An additional 8-round 10mm magazine for use in the Stetchkin pistol."
 	item = /obj/item/ammo_box/magazine/m10mm
-	cost = 2
-	gamemodes = list(/datum/game_mode/nuclear)
+	cost = 1
 
 /datum/uplink_item/ammo/machinegun
 	name = "Ammo-7.62×51mm"
@@ -216,11 +236,11 @@ var/list/uplink_items = list()
 /datum/uplink_item/stealthy_weapons
 	category = "Stealthy and Inconspicuous Weapons"
 
-/datum/uplink_item/stealthy_weapons/para_pen
-	name = "Paralysis Pen"
-	desc = "A syringe disguised as a functional pen, filled with a neuromuscular-blocking drug that renders a target immobile on injection and makes them seem dead to observers. \
-	Side effects of the drug include noticeable drooling. The pen holds one dose of paralyzing agent, and cannot be refilled."
-	item = /obj/item/weapon/pen/paralysis
+/datum/uplink_item/stealthy_weapons/sleepy_pen
+	name = "Sleepy Pen"
+	desc = "A syringe disguised as a functional pen, filled with a potent mix of drugs, including a strong anaesthetic and a chemical that is capable of blocking the movement of the vocal chords. \
+	The pen holds one dose of the mixture, and cannot be refilled."
+	item = /obj/item/weapon/pen/sleepy
 	cost = 3
 	excludefrom = list(/datum/game_mode/nuclear)
 
@@ -241,8 +261,7 @@ var/list/uplink_items = list()
 	name = "Stetchkin Silencer"
 	desc = "Fitted for use on the Stetchkin pistol, this silencer will make its shots quieter when equipped onto it."
 	item = /obj/item/weapon/silencer
-	cost = 3
-	gamemodes = list(/datum/game_mode/nuclear)
+	cost = 2
 
 // STEALTHY TOOLS
 
@@ -319,7 +338,7 @@ var/list/uplink_items = list()
 
 /datum/uplink_item/device_tools/space_suit
 	name = "Syndicate Space Suit"
-	desc = "The red syndicate space suit is less encumbering than Nanotrasen variants, fits inside bags, and has a weapon slot. Nanotrasen crewmembers are trained to report red space suit sightings."
+	desc = "The red and black syndicate space suit is less encumbering than Nanotrasen variants, fits inside bags, and has a weapon slot. Nanotrasen crewmembers are trained to report red space suit sightings."
 	item = /obj/item/weapon/storage/box/syndie_kit/space
 	cost = 3
 
@@ -351,10 +370,10 @@ var/list/uplink_items = list()
 
 /datum/uplink_item/device_tools/plastic_explosives
 	name = "Composition C-4"
-	desc = "C-4 is plastic explosive of the common variety Composition C. You can use it to breach walls, attach it to organisms to destroy them, or connect a signaler to its wiring to make it remotely detonable. \
+	desc = "C-4 is plastic explosive of the common variety Composition C. You can use it to breach walls or connect a signaler to its wiring to make it remotely detonable. \
 	It has a modifiable timer with a minimum setting of 10 seconds."
 	item = /obj/item/weapon/plastique
-	cost = 2
+	cost = 1
 
 /datum/uplink_item/device_tools/powersink
 	name = "Power sink"
@@ -373,10 +392,19 @@ var/list/uplink_items = list()
 
 /datum/uplink_item/device_tools/syndicate_bomb
 	name = "Syndicate Bomb"
-	desc = "The Syndicate Bomb has an adjustable timer with a minimum setting of 30 seconds. Ordering the bomb sends you a small beacon, which will teleport the explosive to your location when you activate it. \
-	You can wrench the bomb down to prevent removal. The crew may defuse the bomb."
+	desc = "The Syndicate Bomb has an adjustable timer with a minimum setting of 60 seconds. Ordering the bomb sends you a small beacon, which will teleport the explosive to your location when you activate it. \
+	You can wrench the bomb down to prevent removal. The crew may attempt to defuse the bomb."
 	item = /obj/item/device/sbeacondrop/bomb
 	cost = 5
+	excludefrom = list(/datum/game_mode/traitor/double_agents)
+
+/datum/uplink_item/device_tools/syndicate_detonator
+	name = "Syndicate Detonator"
+	desc = "The Syndicate Detonator is a companion device to the Syndicate Bomb. Simply press the included button and an encrypted radio frequency will instruct all live syndicate bombs to detonate. \
+	Useful for when speed matters or you wish to synchronize multiple bomb blasts. Be sure to stand clear of the blast radius before using the detonator."
+	item = /obj/item/device/syndicatedetonator
+	cost = 1
+	gamemodes = list(/datum/game_mode/nuclear)
 
 /datum/uplink_item/device_tools/teleporter
 	name = "Teleporter Circuit Board"
@@ -427,6 +455,14 @@ var/list/uplink_items = list()
 	desc = "Syndicate Bundles are specialised groups of items that arrive in a plain box. These items are collectively worth more than 10 telecrystals, but you do not know which specialisation you will receive."
 	item = /obj/item/weapon/storage/box/syndicate
 	cost = 10
+	excludefrom = list(/datum/game_mode/nuclear)
+
+/datum/uplink_item/badass/syndiecards
+	name = "Syndicate Playing Cards"
+	desc = "A special deck of space-grade playing cards with a mono-molecular edge and metal reinforcement, making them slightly more robust than a normal deck of cards. \
+	You can also play card games with them."
+	item = /obj/item/toy/cards/deck/syndicate
+	cost = 1
 	excludefrom = list(/datum/game_mode/nuclear)
 
 /datum/uplink_item/badass/balloon

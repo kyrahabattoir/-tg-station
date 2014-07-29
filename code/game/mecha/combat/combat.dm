@@ -79,9 +79,7 @@
 				M.updatehealth()
 			src.occupant_message("You hit [target].")
 			src.visible_message("<font color='red'><b>[src.name] hits [target].</b></font>")
-			occupant.attack_log += "\[[time_stamp()]\]<font color='red'> Attacked [M.name] ([M.ckey]) with [name] (INTENT: [uppertext(occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])</font>"
-			M.attack_log += "\[[time_stamp()]\]<font color='orange'> Attacked by [occupant.name] ([occupant.ckey]) with [name] (INTENT: [uppertext(occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])</font>"
-			log_attack("<font color='red'>[occupant.name] ([occupant.ckey]) attacked [M.name] ([M.ckey]) with [name] (INTENT: [uppertext(occupant.a_intent)]) (DAMTYE: [uppertext(src.damtype)])</font>" )
+			add_logs(occupant, M, "attacked", object=src, addition="(INTENT: [uppertext(occupant.a_intent)]) (DAMTYE: [uppertext(damtype)])")
 		else
 			step_away(M,src)
 			src.occupant_message("You push [target] out of the way.")
@@ -104,7 +102,7 @@
 						target:dismantle_wall(1)
 						src.occupant_message("\blue You smash through the wall.")
 						src.visible_message("<b>[src.name] smashes through the wall</b>")
-						playsound(src, 'sound/weapons/smash.ogg', 50, 1)
+						playsound(src, 'sound/effects/meteorimpact.ogg', 100, 1)
 					melee_can_hit = 0
 					if(do_after(melee_cooldown))
 						melee_can_hit = 1
@@ -116,7 +114,7 @@
 	if(!istype(target, /obj) && !istype(target, /mob)) return
 	if(istype(target, /mob))
 		var/mob/M = target
-		M.make_dizzy(3)
+		M.Dizzy(3)
 		M.adjustBruteLoss(1)
 		M.updatehealth()
 		for (var/mob/V in viewers(src))

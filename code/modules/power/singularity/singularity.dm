@@ -1,13 +1,8 @@
 //This file was auto-corrected by findeclaration.exe on 25.5.2012 20:42:33
 
-var/global/list/uneatable = list(
-	/turf/space,
-	/obj/effect/overlay
-	)
-
 /obj/machinery/singularity
-	name = "Gravitational Singularity"
-	desc = "A Gravitational Singularity."
+	name = "gravitational singularity"
+	desc = "A gravitational singularity."
 	icon = 'icons/obj/singularity.dmi'
 	icon_state = "singularity_s1"
 	anchored = 1
@@ -32,15 +27,13 @@ var/global/list/uneatable = list(
 	var/last_failed_movement = 0//Will not move in the same dir if it couldnt before, will help with the getting stuck on fields thing
 	var/teleport_del = 0
 	var/last_warning
+	var/list/uneatable = list(/turf/space, /obj/effect/overlay)
 
 /obj/machinery/singularity/New(loc, var/starting_energy = 50, var/temp = 0)
 	//CARN: admin-alert for chuckle-fuckery.
 	admin_investigate_setup()
 
 	src.energy = starting_energy
-	if(temp)
-		spawn(temp)
-			del(src)
 	..()
 	for(var/obj/machinery/singularity_beacon/singubeacon in world)
 		if(singubeacon.active)
@@ -57,19 +50,21 @@ var/global/list/uneatable = list(
 /obj/machinery/singularity/blob_act(severity)
 	return
 
-
 /obj/machinery/singularity/ex_act(severity)
 	switch(severity)
 		if(1.0)
-			if(prob(25))
-				del(src)
+			if(current_size <= 3)
+				investigate_log("has been destroyed by a heavy explosion.","singulo")
+				qdel(src)
 				return
 			else
-				energy += 50
-		if(2.0 to 3.0)
-			energy += round((rand(20,60)/2),1)
-			return
+				energy -= round(((energy+1)/2),1)
+		if(2.0)
+			energy -= round(((energy+1)/3),1)
+		if(3.0)
+			energy -= round(((energy+1)/4),1)
 	return
+
 
 /obj/machinery/singularity/bullet_act(obj/item/projectile/P)
 	return 0 //Will there be an impact? Who knows.  Will we see it? No.
@@ -189,7 +184,8 @@ var/global/list/uneatable = list(
 
 /obj/machinery/singularity/proc/check_energy()
 	if(energy <= 0)
-		del(src)
+		investigate_log("collapsed.","singulo")
+		qdel(src)
 		return 0
 	switch(energy)//Some of these numbers might need to be changed up later -Mport
 		if(1 to 199)
@@ -208,9 +204,9 @@ var/global/list/uneatable = list(
 
 
 /obj/machinery/singularity/proc/eat()
-	set background = 1
-	if(defer_powernet_rebuild != 2)
-		defer_powernet_rebuild = 1
+	set background = BACKGROUND_ENABLED
+//	if(defer_powernet_rebuild != 2)
+//		defer_powernet_rebuild = 1
 	// Let's just make this one loop.
 	for(var/atom/X in orange(grav_pull,src))
 		var/dist = get_dist(X, src)
@@ -219,19 +215,31 @@ var/global/list/uneatable = list(
 			if(is_type_in_list(X, uneatable))	continue
 			if(((X) &&(!X:anchored) && (!istype(X,/mob/living/carbon/human)))|| (src.current_size >= 9))
 				step_towards(X,src)
+
 			else if(istype(X,/mob/living/carbon/human))
 				var/mob/living/carbon/human/H = X
+
 				if(istype(H.shoes,/obj/item/clothing/shoes/magboots))
 					var/obj/item/clothing/shoes/magboots/M = H.shoes
-					if(M.magpulse)
-						continue
-				step_towards(H,src)
+					if(!M.magpulse)
+						step_towards(H,src)
+				else
+					step_towards(H,src)
+
+				if(current_size >= 5)
+					var/list/handlist = list(H.l_hand, H.r_hand)
+					for(var/obj/item/hand in handlist)
+						if(prob(current_size * 5) && hand.w_class >= ((11-current_size)/2)  && H.unEquip(hand))
+							step_towards(hand, src)
+							H << "<span class='warning'>\The [src] pulls \the [hand] from your grip!</span>"
+
+				H.apply_effect(current_size * 3, IRRADIATE)
 		// Turf and movable atoms
 		else if(dist <= consume_range && (isturf(X) || istype(X, /atom/movable)))
 			consume(X)
 
-	if(defer_powernet_rebuild != 2)
-		defer_powernet_rebuild = 0
+//	if(defer_powernet_rebuild != 2)
+//		defer_powernet_rebuild = 0
 	return
 
 
@@ -240,9 +248,10 @@ var/global/list/uneatable = list(
 	if(is_type_in_list(A, uneatable))
 		return 0
 	if (istype(A,/mob/living))//Mobs get gibbed
+		var/mob/living/M = A
 		gain = 20
-		if(istype(A,/mob/living/carbon/human))
-			var/mob/living/carbon/human/H = A
+		if(istype(M,/mob/living/carbon/human))
+			var/mob/living/carbon/human/H = M
 			if(H.mind)
 
 				if((H.mind.assigned_role == "Station Engineer") || (H.mind.assigned_role == "Chief Engineer") )
@@ -251,8 +260,8 @@ var/global/list/uneatable = list(
 				if(H.mind.assigned_role == "Clown")
 					gain = rand(-300, 300) // HONK
 
-		spawn()
-			A:gib()
+		investigate_log(" has consumed [key_name(M)].","singulo") //Oh that's where the clown ended up!
+		M.gib()
 		sleep(1)
 	else if(istype(A,/obj/))
 
@@ -264,7 +273,7 @@ var/global/list/uneatable = list(
 		if(istype(A, /obj/machinery/singularity))//Welp now you did it
 			var/obj/machinery/singularity/S = A
 			src.energy += (S.energy/2)//Absorb most of it
-			del(S)
+			qdel(S)
 			var/dist = max((current_size - 2),1)
 			explosion(src.loc,(dist),(dist*2),(dist*4))
 			return//Quits here, the obj should be gone, hell we might be
@@ -276,7 +285,8 @@ var/global/list/uneatable = list(
 			O.z = 2
 		else
 			A.ex_act(1.0)
-			if(A) del(A)
+			if(A && isnull(A.gc_destroyed))
+				qdel(A)
 		gain = 2
 	else if(isturf(A))
 		var/turf/T = A
@@ -447,154 +457,4 @@ var/global/list/uneatable = list(
 	for(var/obj/machinery/power/rad_collector/R in rad_collectors)
 		if(get_dist(R, src) <= 15) // Better than using orange() every process
 			R.receive_pulse(energy)
-	return
-
-
-
-/obj/machinery/singularity/narsie //Moving narsie to a child object of the singularity so it can be made to function differently. --NEO
-	name = "Nar-sie's Avatar"
-	desc = "Your mind begins to bubble and ooze as it tries to comprehend what it sees."
-	icon = 'icons/obj/magic_terror.dmi'
-	pixel_x = -89
-	pixel_y = -85
-	current_size = 9 //It moves/eats like a max-size singulo, aside from range. --NEO
-	contained = 0 //Are we going to move around?
-	dissipate = 0 //Do we lose energy over time?
-	move_self = 1 //Do we move on our own?
-	grav_pull = 5 //How many tiles out do we pull?
-	consume_range = 6 //How many tiles out do we eat
-
-/obj/machinery/singularity/narsie/large
-	name = "Nar-Sie"
-	icon = 'icons/obj/narsie.dmi'
-	// Pixel stuff centers Narsie.
-	pixel_x = -236
-	pixel_y = -256
-	current_size = 12
-	move_self = 1 //Do we move on our own?
-	grav_pull = 10
-	consume_range = 12 //How many tiles out do we eat
-
-/obj/machinery/singularity/narsie/large/New()
-	..()
-	world << "<font size='15' color='red'><b>NAR-SIE HAS RISEN</b></font>"
-	if(emergency_shuttle)
-		emergency_shuttle.incall(0.3) // Cannot recall
-
-/obj/machinery/singularity/narsie/process()
-	eat()
-	if(!target || prob(5))
-		pickcultist()
-	move()
-	if(prob(25))
-		mezzer()
-
-
-/obj/machinery/singularity/narsie/Bump(atom/A)//you dare stand before a god?!
-	godsmack(A)
-	return
-
-/obj/machinery/singularity/narsie/Bumped(atom/A)
-	godsmack(A)
-	return
-
-/obj/machinery/singularity/narsie/proc/godsmack(var/atom/A)
-	if(istype(A,/obj/))
-		var/obj/O = A
-		O.ex_act(1.0)
-		if(O) del(O)
-
-	else if(isturf(A))
-		var/turf/T = A
-		T.ChangeTurf(/turf/simulated/floor/engine/cult)
-
-
-/obj/machinery/singularity/narsie/mezzer()
-	for(var/mob/living/carbon/M in oviewers(8, src))
-		if(M.stat == CONSCIOUS)
-			if(!iscultist(M))
-				M << "\red You feel your sanity crumble away in an instant as you gaze upon [src.name]..."
-				M.apply_effect(3, STUN)
-
-
-/obj/machinery/singularity/narsie/consume(var/atom/A)
-	if(is_type_in_list(A, uneatable))
-		return 0
-
-	if(istype(A,/mob/living/))
-		var/mob/living/C = A
-		C.dust()
-
-	if(isturf(A))
-		var/turf/T = A
-		if(istype(T, /turf/simulated/floor) && !istype(T, /turf/simulated/floor/engine/cult))
-			if(prob(20)) T.ChangeTurf(/turf/simulated/floor/engine/cult)
-
-		else if(istype(T,/turf/simulated/wall) && !istype(T, /turf/simulated/wall/cult))
-			if(prob(20)) T.ChangeTurf(/turf/simulated/wall/cult)
-	return
-
-/obj/machinery/singularity/narsie/ex_act() //No throwing bombs at it either. --NEO
-	return
-
-/obj/machinery/singularity/narsie/proc/pickcultist() //Narsie rewards his cultists with being devoured first, then picks a ghost to follow. --NEO
-	var/list/cultists = list()
-	for(var/datum/mind/cult_nh_mind in ticker.mode.cult)
-		if(!cult_nh_mind.current)
-			continue
-		if(cult_nh_mind.current.stat)
-			continue
-		var/turf/pos = get_turf(cult_nh_mind.current)
-		if(pos.z != src.z)
-			continue
-		cultists += cult_nh_mind.current
-	if(cultists.len)
-		acquire(pick(cultists))
-		return
-		//If there was living cultists, it picks one to follow.
-	for(var/mob/living/carbon/human/food in living_mob_list)
-		if(food.stat)
-			continue
-		var/turf/pos = get_turf(food)
-		if(pos.z != src.z)
-			continue
-		cultists += food
-	if(cultists.len)
-		acquire(pick(cultists))
-		return
-		//no living cultists, pick a living human instead.
-	for(var/mob/dead/observer/ghost in player_list)
-		if(!ghost.client)
-			continue
-		var/turf/pos = get_turf(ghost)
-		if(pos.z != src.z)
-			continue
-		cultists += ghost
-	if(cultists.len)
-		acquire(pick(cultists))
-		return
-		//no living humans, follow a ghost instead.
-
-/obj/machinery/singularity/narsie/proc/acquire(var/mob/food)
-	target << "\blue <b>NAR-SIE HAS LOST INTEREST IN YOU</b>"
-	target = food
-	if(ishuman(target))
-		target << "\red <b>NAR-SIE HUNGERS FOR YOUR SOUL</b>"
-	else
-		target << "\red <b>NAR-SIE HAS CHOSEN YOU TO LEAD HIM TO HIS NEXT MEAL</b>"
-
-//Wizard narsie
-
-/obj/machinery/singularity/narsie/wizard
-	grav_pull = 0
-
-/obj/machinery/singularity/narsie/wizard/eat()
-	set background = 1
-	if(defer_powernet_rebuild != 2)
-		defer_powernet_rebuild = 1
-	for(var/atom/X in orange(consume_range,src))
-		if(isturf(X) || istype(X, /atom/movable))
-			consume(X)
-	if(defer_powernet_rebuild != 2)
-		defer_powernet_rebuild = 0
 	return

@@ -11,7 +11,8 @@
 	permeability_mod = 0.75
 	desc = "Some speculate, that this virus is the cause of Wizard Federation existance. Subjects affected show the signs of mental retardation, yelling obscure sentences or total gibberish. On late stages subjects sometime express the feelings of inner power, and, cite, 'the ability to control the forces of cosmos themselves!' A gulp of strong, manly spirits usually reverts them to normal, humanlike, condition."
 	severity = "Major"
-
+	requires = 1
+	required_limb = list(/obj/item/organ/limb/head)
 
 /*
 BIRUZ BENNAR
@@ -59,24 +60,21 @@ STI KALY - blind
 		var/mob/living/carbon/human/H = affected_mob
 		if(prob(chance))
 			if(!istype(H.head, /obj/item/clothing/head/wizard))
-				if(H.head)
-					H.drop_from_inventory(H.head)
-				H.head = new /obj/item/clothing/head/wizard(H)
-				H.head.layer = 20
+				if(!H.unEquip(H.head))
+					qdel(H.head)
+				H.equip_to_slot_or_del(new /obj/item/clothing/head/wizard(H), slot_head)
 			return
 		if(prob(chance))
 			if(!istype(H.wear_suit, /obj/item/clothing/suit/wizrobe))
-				if(H.wear_suit)
-					H.drop_from_inventory(H.wear_suit)
-				H.wear_suit = new /obj/item/clothing/suit/wizrobe(H)
-				H.wear_suit.layer = 20
+				if(!H.unEquip(H.wear_suit))
+					qdel(H.wear_suit)
+				H.equip_to_slot_or_del(new /obj/item/clothing/suit/wizrobe(H), slot_wear_suit)
 			return
 		if(prob(chance))
 			if(!istype(H.shoes, /obj/item/clothing/shoes/sandal))
-				if(H.shoes)
-					H.drop_from_inventory(H.shoes)
-				H.shoes = new /obj/item/clothing/shoes/sandal(H)
-				H.shoes.layer = 20
+				if(!H.unEquip(H.shoes))
+					qdel(H.shoes)
+			H.equip_to_slot_or_del(new /obj/item/clothing/shoes/sandal(H), slot_shoes)
 			return
 	else
 		var/mob/living/carbon/H = affected_mob
@@ -92,7 +90,7 @@ STI KALY - blind
 /datum/disease/wizarditis/proc/teleport()
 	var/list/theareas = new/list()
 	for(var/area/AR in orange(80, affected_mob))
-		if(theareas.Find(AR) || AR.name == "Space") continue
+		if(theareas.Find(AR) || istype(AR,/area/space)) continue
 		theareas += AR
 
 	if(!theareas)

@@ -4,7 +4,7 @@ var/list/preferences_datums = list()
 
 #define IS_MODE_COMPILED(MODE) (ispath(text2path("/datum/game_mode/"+(MODE))))
 
-var/global/list/special_roles = list( //keep synced with the defines BE_* in setup.dm --rastaf
+var/global/list/special_roles = list( //keep synced with the defines BE_* in setup.dm
 //some autodetection here.
 	"traitor" = IS_MODE_COMPILED("traitor"),             // 0
 	"operative" = IS_MODE_COMPILED("nuclear"),           // 1
@@ -12,10 +12,11 @@ var/global/list/special_roles = list( //keep synced with the defines BE_* in set
 	"wizard" = IS_MODE_COMPILED("wizard"),               // 3
 	"malf AI" = IS_MODE_COMPILED("malfunction"),         // 4
 	"revolutionary" = IS_MODE_COMPILED("revolution"),    // 5
-	"alien lifeform" = 1, //always show                 // 6
-	"pAI candidate" = 1, // -- TLE                       // 7
+	"alien" = 1, //always show                			 // 6
+	"pAI candidate" = 1,                                 // 7
 	"cultist" = IS_MODE_COMPILED("cult"),                // 8
-	"infested monkey" = IS_MODE_COMPILED("monkey"),      // 9
+	"blob" = IS_MODE_COMPILED("blob"),					 // 9
+	"monkey" = IS_MODE_COMPILED("monkey")				// 10
 )
 
 
@@ -53,6 +54,8 @@ datum/preferences
 	var/facial_hair_color = "000"		//Facial hair color
 	var/skin_tone = "caucasian1"		//Skin color
 	var/eye_color = "000"				//Eye color
+	var/datum/species/pref_species = new /datum/species/human()	//Mutant race
+	var/mutant_color = "FFF"			//Mutant race skin color
 
 		//Mob preview
 	var/icon/preview_icon_front = null
@@ -163,13 +166,18 @@ datum/preferences
 
 				dat += "<table width='100%'><tr><td width='24%' valign='top'>"
 
+				if(config.mutant_races)
+					dat += "<b>Species:</b><BR><a href='?_src_=prefs;preference=species;task=input'>[pref_species.name]</a><BR>"
+				else
+					dat += "<b>Species:</b> Human<BR>"
+
 				dat += "<b>Blood Type:</b> [blood_type]<BR>"
 				dat += "<b>Skin Tone:</b><BR><a href='?_src_=prefs;preference=s_tone;task=input'>[skin_tone]</a><BR>"
 				dat += "<b>Underwear:</b><BR><a href ='?_src_=prefs;preference=underwear;task=input'>[underwear]</a><BR>"
 				dat += "<b>Backpack:</b><BR><a href ='?_src_=prefs;preference=bag;task=input'>[backbaglist[backbag]]</a><BR>"
 
 
-				dat += "</td><td valign='top' width='28%'>"
+				dat += "</td><td valign='top' width='21%'>"
 
 				dat += "<h3>Hair Style</h3>"
 
@@ -177,7 +185,7 @@ datum/preferences
 				dat += "<span style='border:1px solid #161616; background-color: #[hair_color];'>&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=hair;task=input'>Change</a><BR>"
 
 
-				dat += "</td><td valign='top' width='28%'>"
+				dat += "</td><td valign='top' width='21%'>"
 
 				dat += "<h3>Facial Hair Style</h3>"
 
@@ -185,12 +193,17 @@ datum/preferences
 				dat += "<span style='border: 1px solid #161616; background-color: #[facial_hair_color];'>&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=facial;task=input'>Change</a><BR>"
 
 
-				dat += "</td><td valign='top'>"
+				dat += "</td><td valign='top' width='21%'>"
 
 				dat += "<h3>Eye Color</h3>"
 
 				dat += "<span style='border: 1px solid #161616; background-color: #[eye_color];'>&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=eyes;task=input'>Change</a><BR>"
 
+				dat += "</td><td valign='top' width='21%'>"
+
+				dat += "<h3>Alien Color</h3>"  // even if choosing your mutantrace is off, this is here in case you gain one during a round
+
+				dat += "<span style='border: 1px solid #161616; background-color: #[mutant_color];'>&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=mutant_color;task=input'>Change</a><BR>"
 
 				dat += "</td></tr></table>"
 
@@ -203,6 +216,7 @@ datum/preferences
 				dat += "<b>Play lobby music:</b> <a href='?_src_=prefs;preference=lobby_music'>[(toggles & SOUND_LOBBY) ? "Yes" : "No"]</a><br>"
 				dat += "<b>Ghost ears:</b> <a href='?_src_=prefs;preference=ghost_ears'>[(toggles & CHAT_GHOSTEARS) ? "Nearest Creatures" : "All Speech"]</a><br>"
 				dat += "<b>Ghost sight:</b> <a href='?_src_=prefs;preference=ghost_sight'>[(toggles & CHAT_GHOSTSIGHT) ? "Nearest Creatures" : "All Emotes"]</a><br>"
+				dat += "<b>Pull requests:</b> <a href='?_src_=prefs;preference=pull_requests'>[(toggles & CHAT_PULLR) ? "Yes" : "No"]</a><br>"
 
 				if(config.allow_Metadata)
 					dat += "<b>OOC Notes:</b> <a href='?_src_=prefs;preference=metadata;task=input'> Edit </a><br>"
@@ -251,18 +265,19 @@ datum/preferences
 		dat += "</center>"
 
 		//user << browse(dat, "window=preferences;size=560x560")
-		var/datum/browser/popup = new(user, "preferences", "<div align='center'>Character Setup</div>", 580, 580)
+		var/datum/browser/popup = new(user, "preferences", "<div align='center'>Character Setup</div>", 580, 600)
 		popup.set_content(dat)
 		popup.open(0)
 
-	proc/SetChoices(mob/user, limit = 17, list/splitJobs = list("Chief Engineer"), width = 555, height = 585)
+	proc/SetChoices(mob/user, limit = 17, list/splitJobs = list("Chief Engineer"), widthPerColumn = 295, height = 620)
 		if(!job_master)	return
 
-		//limit 	 - The amount of jobs allowed per column. Defaults to 17 to make it look nice.
+		//limit - The amount of jobs allowed per column. Defaults to 17 to make it look nice.
 		//splitJobs - Allows you split the table by job. You can make different tables for each department by including their heads. Defaults to CE to make it look nice.
-		//width	 - Screen' width. Defaults to 550 to make it look nice.
-		//height 	 - Screen's height. Defaults to 500 to make it look nice.
+		//widthPerColumn - Screen's width for every column.
+		//height - Screen's height.
 
+		var/width = widthPerColumn
 
 		var/HTML = "<center>"
 		HTML += "<b>Choose occupation chances</b><br>"
@@ -280,6 +295,7 @@ datum/preferences
 
 			index += 1
 			if((index >= limit) || (job.title in splitJobs))
+				width += widthPerColumn
 				if((index < limit) && (lastJob != null))
 					//If the cells were broken up by a job in the splitJob list then it will fill in the rest of the cells with
 					//the last job's selection color. Creating a rather nice effect.
@@ -425,6 +441,8 @@ datum/preferences
 		return 0
 
 	proc/UpdateJobPreference(mob/user, role, desiredLvl)
+		if(!job_master)
+			return
 		var/datum/job/job = job_master.GetJob(role)
 
 		if(!job)
@@ -608,6 +626,30 @@ datum/preferences
 						if(new_eyes)
 							eye_color = sanitize_hexcolor(new_eyes)
 
+					if("species")
+
+						var/result = input(user, "Select a species", "Species Selection") as null|anything in roundstart_species
+
+						if(result)
+							var/newtype = roundstart_species[result]
+							pref_species = new newtype()
+							if(!config.mutant_colors || mutant_color == "#000")
+								mutant_color = pref_species.default_color
+
+					if("mutant_color")
+						if(!config.mutant_colors)
+							user << "<span class='danger'>Alien colors are disabled.</span>"
+							return
+						var/new_mutantcolor = input(user, "Choose your character's alien skin color:", "Character Preference") as color|null
+						if(new_mutantcolor)
+							var/temp_hsv = RGBtoHSV(new_mutantcolor)
+							if(new_mutantcolor == "#000000")
+								mutant_color = pref_species.default_color
+							else if(ReadHSV(temp_hsv)[3] >= ReadHSV("#7F7F7F")[3]) // mutantcolors must be bright
+								mutant_color = sanitize_hexcolor(new_mutantcolor)
+							else
+								user << "<span class='danger'>Invalid color. Your color is not bright enough.</span>"
+
 					if("s_tone")
 						var/new_s_tone = input(user, "Choose your character's skin-tone:", "Character Preference")  as null|anything in skin_tones
 						if(new_s_tone)
@@ -671,6 +713,9 @@ datum/preferences
 					if("ghost_sight")
 						toggles ^= CHAT_GHOSTSIGHT
 
+					if("pull_requests")
+						toggles ^= CHAT_PULLR
+
 					if("save")
 						save_preferences()
 						save_character()
@@ -706,8 +751,15 @@ datum/preferences
 
 		character.real_name = real_name
 		character.name = character.real_name
+
 		if(character.dna)
 			character.dna.real_name = character.real_name
+			if(pref_species != /datum/species/human && config.mutant_races)
+				character.dna.species = new pref_species.type()
+			else
+				character.dna.species = new /datum/species/human()
+			character.dna.mutant_color = mutant_color
+			character.update_mutcolor()
 
 		character.gender = gender
 		character.age = age

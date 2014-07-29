@@ -1,5 +1,5 @@
 /obj/effect/mine
-	name = "Mine"
+	name = "mine"
 	desc = "I Better stay away from that thing."
 	density = 1
 	anchored = 1
@@ -32,8 +32,7 @@
 	obj:radiation += 50
 	randmutb(obj)
 	domutcheck(obj,null)
-	spawn(0)
-		del(src)
+	qdel(src)
 
 /obj/effect/mine/proc/triggerstun(obj)
 	if(ismob(obj))
@@ -42,53 +41,48 @@
 	var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
 	s.set_up(3, 1, src)
 	s.start()
-	spawn(0)
-		del(src)
+	qdel(src)
 
 /obj/effect/mine/proc/triggern2o(obj)
 	atmos_spawn_air("n2o", 360)
-	spawn(0)
-		del(src)
+	qdel(src)
 
 /obj/effect/mine/proc/triggerplasma(obj)
 	atmos_spawn_air(SPAWN_HEAT | SPAWN_TOXINS, 360)
-	spawn(0)
-		del(src)
+	qdel(src)
 
 /obj/effect/mine/proc/triggerkick(obj)
 	var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
 	s.set_up(3, 1, src)
 	s.start()
 	del(obj:client)
-	spawn(0)
-		del(src)
+	qdel(src)
 
 /obj/effect/mine/proc/explode(obj)
 	explosion(loc, 0, 1, 2, 3)
-	spawn(0)
-		del(src)
+	qdel(src)
 
 /obj/effect/mine/dnascramble
-	name = "Radiation Mine"
+	name = "radiation mine"
 	icon_state = "uglymine"
 	triggerproc = "triggerrad"
 
 /obj/effect/mine/plasma
-	name = "Plasma Mine"
+	name = "plasma mine"
 	icon_state = "uglymine"
 	triggerproc = "triggerplasma"
 
 /obj/effect/mine/kick
-	name = "Kick Mine"
+	name = "kick mine"
 	icon_state = "uglymine"
 	triggerproc = "triggerkick"
 
 /obj/effect/mine/n2o
-	name = "N2O Mine"
+	name = "\improper N2O mine"
 	icon_state = "uglymine"
 	triggerproc = "triggern2o"
 
 /obj/effect/mine/stun
-	name = "Stun Mine"
+	name = "stun mine"
 	icon_state = "uglymine"
 	triggerproc = "triggerstun"
