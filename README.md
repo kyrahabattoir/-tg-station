@@ -9,8 +9,12 @@ PRECONF EXTENDED
 ================================================================================
 https://github.com/kyrahabattoir/-tg-station/tree/preconf-extended
 
+This is mostly for my server so i don't have to configure anything.
+
 This branch preconfigure the server to run in extended mode, with a couple of
-other tweaks.
+other tweaks:
+* No random events.
+* Pre enabled database (you still need to put a password!).
 
 ================================================================================
 FUZZY CUFFS
@@ -20,6 +24,12 @@ https://github.com/kyrahabattoir/-tg-station/tree/FuzzyCuffs
 Primarily a test for building colored overlays on sprites, this will add a
 variant to the regular handcuffs that have a fur sleeve. Perfect for... "special 
 interrogation".
+
+================================================================================
+OTHERS?
+================================================================================
+Other branches might come and go, they are tweaks and bug fixes aimed for the
+tg-station main repository and will be removed as soon as they are merged.
 
 ================================================================================
 LICENSE
