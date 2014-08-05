@@ -20,10 +20,12 @@ other tweaks:
 FUZZY CUFFS
 ================================================================================
 https://github.com/kyrahabattoir/-tg-station/tree/FuzzyCuffs
+[fuzz]: http://i.imgur.com/ZtW7OZ7.png
+![][fuzz]
 
 Primarily a test for building colored overlays on sprites, this will add a
-variant to the regular handcuffs that have a fur sleeve. Perfect for... "special 
-interrogation".
+variant to the regular handcuffs that have a randomly colored fur sleeve.
+Perfect for... "special interrogation".
 
 ================================================================================
 OTHERS?
