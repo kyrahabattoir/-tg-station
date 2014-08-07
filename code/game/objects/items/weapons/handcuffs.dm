@@ -120,7 +120,7 @@
 	..()
 
 /obj/item/weapon/handcuffs/fur/proc/setColor(C)
-	var/icon/F = icon('icons/obj/items.dmi',"handcuff_fur")
+	var/icon/F = icon('icons/obj/furcuffs.dmi',"handcuff_fur")
 	F *= C
 	src.overlays += F
 	qdel(F)
