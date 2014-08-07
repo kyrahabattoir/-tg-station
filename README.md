@@ -27,6 +27,8 @@ Primarily a test for building colored overlays on sprites, this will add a
 variant to the regular handcuffs that have a randomly colored fur sleeve.
 Perfect for... "special interrogation".
 
+NOTE: I included a separate .dmi file so it's a simpler merge.
+
 ================================================================================
 OTHERS?
 ================================================================================
