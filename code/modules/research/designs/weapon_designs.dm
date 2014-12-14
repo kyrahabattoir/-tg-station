@@ -15,12 +15,22 @@ datum/design/nuclear_gun
 
 datum/design/stunrevolver
 	name = "Stun Revolver"
-	desc = "The prize of the Head of Security."
+	desc = "A high-tech revolver that fires internal, reusable stun cartidges in a revolving cylinder. The stun cartridges can be recharged using a conventional energy weapon recharger."
 	id = "stunrevolver"
 	req_tech = list("combat" = 3, "materials" = 3, "powerstorage" = 2)
 	build_type = PROTOLATHE
 	materials = list("$metal" = 4000)
 	build_path = /obj/item/weapon/gun/energy/stunrevolver
+	locked = 1
+
+datum/design/tele_shield
+	name = "Telescopic Riot Shield"
+	desc = "An advanced riot shield made of lightweight materials that collapses for easy storage."
+	id = "tele_shield"
+	req_tech = list("combat" = 4, "materials" = 3, "engineering" = 3)
+	build_type = PROTOLATHE
+	materials = list("$metal" = 4000, "$glass" = 5000, "$silver" = 300)
+	build_path = /obj/item/weapon/shield/riot/tele
 	locked = 1
 
 datum/design/lasercannon
@@ -61,16 +71,17 @@ datum/design/rapidsyringe
 	build_type = PROTOLATHE
 	materials = list("$metal" = 5000, "$glass" = 1000)
 	build_path = /obj/item/weapon/gun/syringe/rapidsyringe
-/*
+
 datum/design/largecrossbow
 	name = "Energy Crossbow"
-	desc = "A weapon favoured by syndicate infiltration teams."
+	desc = "A reverse-engineered energy crossbow favored by syndicate infiltration teams and carp hunters."
 	id = "largecrossbow"
-	req_tech = list("combat" = 4, "materials" = 5, "engineering" = 3, "biotech" = 4, "syndicate" = 3)
+	req_tech = list("combat" = 5, "materials" = 5, "engineering" = 3, "biotech" = 4, "syndicate" = 3)
 	build_type = PROTOLATHE
-	materials = list("$metal" = 5000, "$glass" = 1000, "$uranium" = 1000, "$silver" = 1000)
-	build_path = /obj/item/weapon/gun/energy/crossbow/largecrossbow"
-*/
+	materials = list("$metal" = 5000, "$glass" = 1500, "$uranium" = 1500, "$silver" = 1500)
+	build_path = /obj/item/weapon/gun/energy/crossbow/largecrossbow
+	locked = 1
+
 datum/design/temp_gun
 	name = "Temperature Gun"
 	desc = "A gun that shoots temperature bullet energythings to change temperature."//Change it if you want
@@ -101,14 +112,23 @@ datum/design/large_grenade
 	build_path = /obj/item/weapon/grenade/chem_grenade/large
 
 datum/design/smg
-	name = "Submachine Gun"
-	desc = "A lightweight, fast firing gun."
+	name = "Prototype Submachine Gun"
+	desc = "A prototype weapon made using lightweight materials on a traditional frame, designed to fire standard 9mm rounds."
 	id = "smg"
 	req_tech = list("combat" = 4, "materials" = 3)
 	build_type = PROTOLATHE
 	materials = list("$metal" = 8000, "$silver" = 2000, "$diamond" = 1000)
 	build_path = /obj/item/weapon/gun/projectile/automatic
 	locked = 1
+
+datum/design/mag_smg
+	name = "Submachine Gun Magazine (9mm)"
+	desc = "A 20-round magazine for the prototype submachine gun."
+	id = "mag_smg"
+	req_tech = list("combat" = 4, "materials" = 3)
+	build_type = PROTOLATHE
+	materials = list("$metal" = 2000)
+	build_path = /obj/item/ammo_box/magazine/smgm9mm
 
 datum/design/xray
 	name = "Xray Laser Gun"
@@ -130,23 +150,24 @@ datum/design/ionrifle
 	build_path = /obj/item/weapon/gun/energy/ionrifle
 	locked = 1
 
-datum/design/ammo_9mm
-	name = "Ammunition Box (9mm)"
-	desc = "A box of prototype 9mm ammunition."
-	id = "ammo_9mm"
-	req_tech = list("combat" = 4, "materials" = 3)
+datum/design/wormhole_projector
+	name = "Bluespace Wormhole Projector"
+	desc = "A projector that emits high density quantum-coupled bluespace beams."
+	id = "wormholeprojector"
+	req_tech = list("combat" = 6, "materials" = 6, "bluespace" = 4)
 	build_type = PROTOLATHE
-	materials = list("$metal" = 2000)
-	build_path = /obj/item/ammo_box/c9mm
+	materials = list("$silver" = 1000, "$metal" = 5000, "$diamond" = 3000)
+	build_path = /obj/item/weapon/gun/energy/wormhole_projector
+	locked = 1
 
-datum/design/mag_smg
-	name = "Submachine Gun Magazine (9mm)"
-	desc = "A prototype magazine for the submachine gun."
-	id = "mag_smg"
-	req_tech = list("combat" = 4, "materials" = 3)
+datum/design/reciever
+	name = "Modular Reciever"
+	desc = "A prototype modular reciever and trigger assembly for a variety of firearms."
+	id = "reciever"
+	req_tech = list("combat" = 5, "materials" = 4)
 	build_type = PROTOLATHE
-	materials = list("$metal" = 2000)
-	build_path = /obj/item/ammo_box/magazine/msmg9mm
+	materials = list("$metal" = 6500, "$silver" = 500)
+	build_path = /obj/item/weaponcrafting/reciever
 
 datum/design/stunshell
 	name = "Stun Shell"
@@ -155,7 +176,7 @@ datum/design/stunshell
 	req_tech = list("combat" = 3, "materials" = 3)
 	build_type = PROTOLATHE
 	materials = list("$metal" = 200)
-	build_path = /obj/item/ammo_casing/shotgun/stunshell
+	build_path = /obj/item/ammo_casing/shotgun/stunslug
 
 datum/design/techshell
 	name = "Unloaded Technological Shotshell"
@@ -165,3 +186,12 @@ datum/design/techshell
 	build_type = PROTOLATHE
 	materials = list("$metal" = 1000, "$glass" = 200, "$silver" = 300)
 	build_path = /obj/item/ammo_casing/shotgun/techshell
+
+datum/design/suppressor
+	name = "Universal Suppressor"
+	desc = "A reverse-engineered universal suppressor that fits on most small arms with threaded barrels."
+	id = "suppressor"
+	req_tech = list("combat" = 6, "engineering" = 5, "syndicate" = 3)
+	build_type = PROTOLATHE
+	materials = list("$metal" = 2000, "$silver" = 500)
+	build_path = /obj/item/weapon/suppressor

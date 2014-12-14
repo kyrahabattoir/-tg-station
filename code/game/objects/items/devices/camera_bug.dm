@@ -103,7 +103,7 @@
 				if(NETWORK_BUG,ADMIN_BUG)
 					if(length(list("SS13","MINE")&camera.network))
 						bugged_cameras[camera.c_tag] = camera
-	bugged_cameras = sortAssoc(bugged_cameras)
+	sortList(bugged_cameras)
 	return bugged_cameras
 
 
@@ -169,7 +169,7 @@
 	if(current && current.can_use())
 		var/list/seen = current.can_see()
 		var/list/names = list()
-		for(var/obj/machinery/singularity/S in seen) // god help you if you see more than one
+		for(var/obj/singularity/S in seen) // god help you if you see more than one
 			if(S.name in names)
 				names[S.name]++
 				dat += "[S.name] ([names[S.name]])"

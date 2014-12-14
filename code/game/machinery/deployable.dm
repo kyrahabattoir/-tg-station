@@ -64,6 +64,7 @@ for reference:
 	var/maxhealth = 100.0
 
 /obj/structure/barricade/wooden/attackby(obj/item/W as obj, mob/user as mob)
+	user.changeNext_move(CLICK_CD_MELEE)
 	if (istype(W, /obj/item/stack/sheet/mineral/wood))
 		if (src.health < src.maxhealth)
 			visible_message("<span class='danger'>[user] begins to repair the [src]!</span>")
@@ -90,7 +91,7 @@ for reference:
 			qdel(src)
 		..()
 
-/obj/structure/barricade/wooden/ex_act(severity)
+/obj/structure/barricade/wooden/ex_act(severity, target)
 	switch(severity)
 		if(1.0)
 			visible_message("<span class='danger'>The barricade is blown apart!</span>")
@@ -113,8 +114,8 @@ for reference:
 		qdel(src)
 	return
 
-/obj/structure/barricade/wooden/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)//So bullets will fly over and stuff.
-	if(air_group || (height==0))
+/obj/structure/barricade/wooden/CanPass(atom/movable/mover, turf/target, height=0)//So bullets will fly over and stuff.
+	if(height==0)
 		return 1
 	if(istype(mover) && mover.checkpass(PASSTABLE))
 		return 1
@@ -167,24 +168,6 @@ for reference:
 				visible_message("<span class='danger'>BZZzZZzZZzZT</span>")
 				return
 		return
-	else if (istype(W, /obj/item/weapon/card/emag))
-		if (src.emagged == 0)
-			src.emagged = 1
-			src.req_access = null
-			user << "You break the ID authentication lock on the [src]."
-			var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
-			s.set_up(2, 1, src)
-			s.start()
-			visible_message("<span class='danger'>BZZzZZzZZzZT</span>")
-			return
-		else if (src.emagged == 1)
-			src.emagged = 2
-			user << "You short out the anchoring mechanism on the [src]."
-			var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
-			s.set_up(2, 1, src)
-			s.start()
-			visible_message("<span class='danger'>BZZzZZzZZzZT</span>")
-			return
 	else if (istype(W, /obj/item/weapon/wrench))
 		if (src.health < src.maxhealth)
 			src.health = src.maxhealth
@@ -208,6 +191,25 @@ for reference:
 		if (src.health <= 0)
 			src.explode()
 		..()
+
+/obj/machinery/deployable/emag_act(user as mob)
+	if (src.emagged == 0)
+		src.emagged = 1
+		src.req_access = null
+		user << "You break the ID authentication lock on the [src]."
+		var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
+		s.set_up(2, 1, src)
+		s.start()
+		visible_message("<span class='danger'>BZZzZZzZZzZT</span>")
+		return
+	else if (src.emagged == 1)
+		src.emagged = 2
+		user << "You short out the anchoring mechanism on the [src]."
+		var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
+		s.set_up(2, 1, src)
+		s.start()
+		visible_message("<span class='danger'>BZZzZZzZZzZT</span>")
+		return
 
 /obj/machinery/deployable/barrier/ex_act(severity)
 	switch(severity)
@@ -234,8 +236,8 @@ for reference:
 		src.explode()
 	return
 
-/obj/machinery/deployable/barrier/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)//So bullets will fly over and stuff.
-	if(air_group || (height==0))
+/obj/machinery/deployable/barrier/CanPass(atom/movable/mover, turf/target, height=0)//So bullets will fly over and stuff.
+	if(height==0)
 		return 1
 	if(istype(mover) && mover.checkpass(PASSTABLE))
 		return 1

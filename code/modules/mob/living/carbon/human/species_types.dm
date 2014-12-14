@@ -82,7 +82,7 @@
 				H.adjustFireLoss(rand(5,15))
 				H.show_message("<span class='danger'>The radiation beam singes you!</span>")
 		if(/obj/item/projectile/energy/florayield)
-			H.nutrition = min(H.nutrition+30, 500)
+			H.nutrition = min(H.nutrition+30, NUTRITION_LEVEL_FULL)
 	return
 
 /*
@@ -103,14 +103,14 @@
 			if(A.lighting_use_dynamic)	light_amount = min(10,T.lighting_lumcount) - 5
 			else						light_amount =  5
 		H.nutrition += light_amount
-		if(H.nutrition > 500)
-			H.nutrition = 500
+		if(H.nutrition > NUTRITION_LEVEL_FULL)
+			H.nutrition = NUTRITION_LEVEL_FULL
 		if(light_amount > 2) //if there's enough light, heal
 			H.heal_overall_damage(1,1)
 			H.adjustToxLoss(-1)
 			H.adjustOxyLoss(-1)
 
-	if(H.nutrition < 200)
+	if(H.nutrition < NUTRITION_LEVEL_STARVING + 50)
 		H.take_overall_damage(2,0)
 
 /*
@@ -214,10 +214,7 @@
 		return 1
 
 /datum/species/fly/handle_speech(message)
-	if(copytext(message, 1, 2) != "*")
-		message = replacetext(message, "z", stutter("zz"))
-
-	return message
+	return replacetext(message, "z", stutter("zz"))
 
 /*
  SKELETONS
@@ -229,3 +226,30 @@
 	id = "skeleton"
 	sexes = 0
 	meat = /obj/item/weapon/reagent_containers/food/snacks/meat/human/mutant/skeleton
+/*
+ ZOMBIES
+*/
+
+/datum/species/zombie
+	// 1spooky
+	name = "Brain-Munching Zombie"
+	id = "zombie"
+	say_mod = "moans"
+	sexes = 0
+	meat = /obj/item/weapon/reagent_containers/food/snacks/meat/human/mutant/zombie
+
+/datum/species/zombie/handle_speech(message)
+	var/list/message_list = text2list(message, " ")
+	var/maxchanges = max(round(message_list.len / 1.5), 2)
+
+	for(var/i = rand(maxchanges / 2, maxchanges), i > 0, i--)
+		var/insertpos = rand(1, message_list.len - 1)
+		var/inserttext = message_list[insertpos]
+
+		if(!(copytext(inserttext, length(inserttext) - 2) == "..."))
+			message_list[insertpos] = inserttext + "..."
+
+		if(prob(20) && message_list.len > 3)
+			message_list.Insert(insertpos, "[pick("BRAINS", "Brains", "Braaaiinnnsss", "BRAAAIIINNSSS")]...")
+
+	return list2text(message_list, " ")

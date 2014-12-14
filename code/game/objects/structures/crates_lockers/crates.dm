@@ -273,7 +273,7 @@
 	if(opened)
 		close()
 	else
-		if(rigged && locate(/obj/item/device/radio/electropack) in src)
+		if(rigged && locate(/obj/item/device/electropack) in src)
 			if(isliving(user))
 				var/mob/living/L = user
 				if(L.electrocute_act(17, src))
@@ -307,7 +307,7 @@
 		overlays += redlight
 		add_fingerprint(user)
 		return
-	else if ( (istype(W, /obj/item/weapon/card/emag)||istype(W, /obj/item/weapon/melee/energy/blade)) && locked &&!broken)
+	else if (istype(W, /obj/item/weapon/melee/energy/blade) && locked && !broken)
 		overlays.Cut()
 		overlays += emag
 		overlays += sparks
@@ -321,6 +321,18 @@
 
 	return ..()
 
+/obj/structure/closet/crate/secure/emag_act(mob/user as mob)
+	if(locked && !broken)
+		overlays.Cut()
+		overlays += emag
+		overlays += sparks
+		spawn(6) overlays -= sparks //Tried lots of stuff but nothing works right. so i have to use this *sadface*
+		playsound(src.loc, "sparks", 60, 1)
+		src.locked = 0
+		src.broken = 1
+		user << "<span class='notice'>You unlock \the [src].</span>"
+		add_fingerprint(user)
+
 /obj/structure/closet/crate/attack_paw(mob/user as mob)
 	return attack_hand(user)
 
@@ -333,7 +345,7 @@
 			return
 		if(W)
 			W.loc = src.loc
-	else if(istype(W, /obj/item/weapon/packageWrap))
+	else if(istype(W, /obj/item/stack/packageWrap))
 		return
 	else if(istype(W, /obj/item/stack/cable_coil))
 		if(rigged)
@@ -346,7 +358,7 @@
 		else
 			user << "<span class='warning'>You need 5 lengths of cable to rig [src].</span>"
 		return
-	else if(istype(W, /obj/item/device/radio/electropack))
+	else if(istype(W, /obj/item/device/electropack))
 		if(rigged)
 			user  << "<span class='notice'>You attach [W] to [src].</span>"
 			user.drop_item()

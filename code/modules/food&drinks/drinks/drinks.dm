@@ -28,6 +28,10 @@
 		return 0
 
 	if(M == user)
+		if(src.reagents.has_reagent("sugar") && M.satiety < -150 && M.nutrition > NUTRITION_LEVEL_STARVING + 50 )
+			M << "<span class='notice'>You don't feel like drinking any more sugary drink at the moment.</span>"
+			return 0
+
 		M << "<span class='notice'>You swallow a gulp of [src].</span>"
 		if(reagents.total_volume)
 			reagents.reaction(M, INGEST)
@@ -74,34 +78,17 @@
 		if(target.reagents.total_volume >= target.reagents.maximum_volume)
 			user << "<span class='warning'>[target] is full.</span>"
 			return
-
+		var/refill = reagents.get_master_reagent_id()
 		var/trans = src.reagents.trans_to(target, amount_per_transfer_from_this)
 		user << "<span class='notice'> You transfer [trans] units of the solution to [target].</span>"
 
 		if(isrobot(user)) //Cyborg modules that include drinks automatically refill themselves, but drain the borg's cell
 			var/mob/living/silicon/robot/bro = user
 			bro.cell.use(30)
-			var/refill = reagents.get_master_reagent_id()
 			spawn(600)
 				reagents.add_reagent(refill, trans)
 
 	return
-
-/obj/item/weapon/reagent_containers/food/drinks/examine()
-	set src in view()
-	..()
-	if (!(usr in range(0)) && usr!=src.loc) return
-	if(!reagents || reagents.total_volume==0)
-		usr << "<span class='notice'>\The [src] is empty!</span>"
-	else if (reagents.total_volume<=src.volume/4)
-		usr << "<span class='notice'>\The [src] is almost empty!</span>"
-	else if (reagents.total_volume<=src.volume*0.66)
-		usr << "<span class='notice'>\The [src] is half full!</span>"
-	else if (reagents.total_volume<=src.volume*0.90)
-		usr << "<span class='notice'>\The [src] is almost full!</span>"
-	else
-		usr << "<span class='notice'>\The [src] is full!</span>"
-
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Drinks. END
@@ -111,7 +98,6 @@
 	desc = "A golden cup"
 	name = "golden cup"
 	icon_state = "golden_cup"
-	item_state = "" //nope :(
 	w_class = 4
 	force = 14
 	throwforce = 10
@@ -209,6 +195,7 @@
 /obj/item/weapon/reagent_containers/food/drinks/h_chocolate/New()
 	..()
 	reagents.add_reagent("hot_coco", 30)
+	reagents.add_reagent("sugar", 5)
 	src.pixel_x = rand(-10.0, 10)
 	src.pixel_y = rand(-10.0, 10)
 
@@ -277,10 +264,18 @@
 	volume = 100
 
 /obj/item/weapon/reagent_containers/food/drinks/flask
-	name = "Captain's Flask"
-	desc = "A metal flask belonging to the captain"
+	name = "captain's flask"
+	desc = "A silver flask belonging to the captain"
 	icon_state = "flask"
 	volume = 60
+
+/obj/item/weapon/reagent_containers/food/drinks/flask/det
+	name = "detective's flask"
+	desc = "The detective's only true friend."
+	icon_state = "detflask"
+	New()
+		..()
+		reagents.add_reagent("whiskey", 30)
 
 /obj/item/weapon/reagent_containers/food/drinks/britcup
 	name = "cup"

@@ -57,6 +57,7 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 
 	if(!href_list["operation"])
 		return
+	var/obj/item/weapon/circuitboard/communications/CM = circuit
 	switch(href_list["operation"])
 		// main interface
 		if("main")
@@ -199,7 +200,7 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 		// OMG CENTCOM LETTERHEAD
 		if("MessageCentcomm")
 			if(src.authenticated==2)
-				if(centcom_message_cooldown)
+				if(CM.cooldown)
 					usr << "Arrays recycling.  Please stand by."
 					return
 				var/input = stripped_input(usr, "Please choose a message to transmit to Centcom via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination.  Transmission does not guarantee a response.", "To abort, send an empty message.", "")
@@ -208,26 +209,22 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 				Centcomm_announce(input, usr)
 				usr << "Message transmitted."
 				log_say("[key_name(usr)] has made a Centcom announcement: [input]")
-				centcom_message_cooldown = 1
-				spawn(600)//One minute cooldown
-					centcom_message_cooldown = 0
+				CM.cooldown = 55
 
 
 		// OMG SYNDICATE ...LETTERHEAD
 		if("MessageSyndicate")
 			if((src.authenticated==2) && (src.emagged))
-				if(centcom_message_cooldown)
+				if(CM.cooldown)
 					usr << "Arrays recycling.  Please stand by."
 					return
-				var/input = stripped_input(usr, "Please choose a message to transmit to \[ABNORMAL ROUTING CORDINATES\] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination. Transmission does not guarantee a response.", "To abort, send an empty message.", "")
+				var/input = stripped_input(usr, "Please choose a message to transmit to \[ABNORMAL ROUTING COORDINATES\] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination. Transmission does not guarantee a response.", "To abort, send an empty message.", "")
 				if(!input || !(usr in view(1,src)))
 					return
 				Syndicate_announce(input, usr)
 				usr << "Message transmitted."
 				log_say("[key_name(usr)] has made a Syndicate announcement: [input]")
-				centcom_message_cooldown = 1
-				spawn(600)//One minute cooldown
-					centcom_message_cooldown = 0
+				CM.cooldown = 55 //about one minute
 
 		if("RestoreBackup")
 			usr << "Backup routing data restored!"
@@ -310,16 +307,18 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 	src.updateUsrDialog()
 
 /obj/machinery/computer/communications/attackby(var/obj/I as obj, var/mob/user as mob)
-	if((istype(I,/obj/item/weapon/card/emag/)) && (!src.emagged))
-		src.emagged = 1
-		if(authenticated == 1)
-			authenticated = 2
-		user << "You scramble the communication routing circuits!"
-	else if(istype(I, /obj/item/weapon/card/id))
+	if(istype(I, /obj/item/weapon/card/id))
 		attack_hand(user)
 	else
 		..()
 	return
+
+/obj/machinery/computer/communications/emag_act(mob/user as mob)
+	if(!emagged)
+		src.emagged = 1
+		if(authenticated == 1)
+			authenticated = 2
+		user << "You scramble the communication routing circuits!"
 
 /obj/machinery/computer/communications/attack_hand(var/mob/user as mob)
 	if(..())
@@ -332,7 +331,7 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 	var/dat = ""
 	if (emergency_shuttle.online && emergency_shuttle.location==0)
 		var/timeleft = emergency_shuttle.timeleft()
-		dat += "<B>Emergency shuttle</B>\n<BR>\nETA: [timeleft / 60 % 60]:[add_zero(num2text(timeleft % 60), 2)]<BR>"
+		dat += "<B>Emergency shuttle</B>\n<BR>\nETA: [timeleft / 60 % 60]:[add_zero(num2text(timeleft % 60), 2)]"
 
 
 	var/datum/browser/popup = new(user, "communications", "Communications Console", 400, 500)
@@ -354,10 +353,11 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 			if (src.authenticated)
 				if(emergency_shuttle.recall_count > 1)
 					if(emergency_shuttle.last_call_loc)
-						dat += "<BR>Last emergency shuttle call/recall traced to: <b>[format_text(emergency_shuttle.last_call_loc.name)]</b>.<BR>"
+						dat += "<BR>Most recent shuttle call/recall traced to: <b>[format_text(emergency_shuttle.last_call_loc.name)]</b>"
 					else
-						dat += "<BR>Last emergency shuttle call/recall trace failed.<BR>"
-				dat += "Logged in as: [auth_id]"
+						dat += "<BR>Unable to trace most recent shuttle call/recall signal."
+				dat += "<BR>Logged in as: [auth_id]"
+				dat += "<BR>"
 				dat += "<BR>\[ <A HREF='?src=\ref[src];operation=logout'>Log Out</A> \]<BR>"
 				dat += "<BR><B>General Functions</B>"
 				dat += "<BR>\[ <A HREF='?src=\ref[src];operation=messagelist'>Message List</A> \]"
@@ -567,7 +567,7 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 		spawn(600)//One minute cooldown
 			message_cooldown = 0
 	log_say("[key_name(user)] has made a priority announcement: [input]")
-	message_admins("[key_name_admin(user)] has made a priority announcement.", 1)
+	message_admins("[key_name_admin(user)] has made a priority announcement.")
 
 /proc/call_shuttle_proc(var/mob/user, var/call_reason)
 	if ((!( ticker ) || emergency_shuttle.location))
@@ -584,7 +584,7 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 		user << "The emergency shuttle is already on its way."
 		return
 
-	call_reason = strip_html_simple(trim(call_reason))
+	call_reason = strip_html_properly(trim(call_reason))
 
 	if(length(call_reason) < CALL_SHUTTLE_REASON_LENGTH)
 		user << "You must provide a reason."
@@ -593,14 +593,12 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 	var/area/signal_origin = get_area(user)
 	var/emergency_reason = "\nNature of emergency:\n\n[call_reason]"
 	if (seclevel2num(get_security_level()) == SEC_LEVEL_RED) // There is a serious threat we gotta move no time to give them five minutes.
-		emergency_shuttle.incall(0.6, signal_origin)
-		priority_announce("The emergency shuttle has been called. Red Alert state confirmed: Dispatching priority shuttle. It will arrive in [round(emergency_shuttle.timeleft()/60)] minutes.[emergency_reason]", null, 'sound/AI/shuttlecalled.ogg', "Priority")
+		emergency_shuttle.incall(0.6, signal_origin, emergency_reason, 1)
 	else
-		emergency_shuttle.incall(1, signal_origin)
-		priority_announce("The emergency shuttle has been called. It will arrive in [round(emergency_shuttle.timeleft()/60)] minutes.[emergency_reason]", null, 'sound/AI/shuttlecalled.ogg', "Priority")
+		emergency_shuttle.incall(1, signal_origin, emergency_reason, 0)
 
 	log_game("[key_name(user)] has called the shuttle.")
-	message_admins("[key_name_admin(user)] has called the shuttle.", 1)
+	message_admins("[key_name_admin(user)] has called the shuttle.")
 
 	return
 
@@ -622,7 +620,8 @@ var/const/CALL_SHUTTLE_REASON_LENGTH = 12
 		var/area/signal_origin = get_area(user)
 		emergency_shuttle.recall(signal_origin)
 		log_game("[key_name(user)] has recalled the shuttle.")
-		message_admins("[key_name_admin(user)] has recalled the shuttle.", 1)
+		message_admins("[key_name_admin(user)] has recalled the shuttle.")
+		return 1
 	return
 
 /obj/machinery/computer/communications/proc/post_status(var/command, var/data1, var/data2)

@@ -103,6 +103,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/corn/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 
@@ -116,7 +117,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/cherries/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 15), 1))
-		reagents.add_reagent("sugar", 1 + round((potency / 15), 1))
+		reagents.add_reagent("sugar", 1 + round((potency / 50), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 
@@ -156,6 +157,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/potato/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = reagents.total_volume
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/potato/attackby(obj/item/weapon/W as obj, mob/user as mob)
@@ -184,7 +186,8 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/grapes/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 10), 1))
-		reagents.add_reagent("sugar", 1 + round((potency / 5), 1))
+		reagents.add_reagent("sugar", 1 + round((potency / 40), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/grapes/green
@@ -208,6 +211,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/cabbage/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 
@@ -221,6 +225,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/berries/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/berries/poison
@@ -318,6 +323,7 @@
 	reagents.add_reagent("kelotane", 1 + round(potency / 8, 1))
 	reagents.add_reagent("bicaridine", 1 + round(potency / 10, 1))
 	reagents.add_reagent("toxin", 1 + round(potency / 10, 1))
+	reagents.add_reagent("vitamin", 1 + round((potency / 20), 1))
 
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/ambrosia/deus
@@ -332,6 +338,7 @@
 	reagents.add_reagent("synaptizine", 1 + round(potency / 8, 1))
 	reagents.add_reagent("hyperzine", 1 + round(potency / 10, 1))
 	reagents.add_reagent("space_drugs", 1 + round(potency / 10, 1))
+	reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/apple
@@ -344,6 +351,7 @@
 	if(..())
 		reagents.maximum_volume = 20
 		reagents.add_reagent("nutriment", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 20), 1))
 		bitesize = reagents.maximum_volume // Always eat the apple in one
 
 
@@ -386,6 +394,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/watermelon/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 6), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/pumpkin
@@ -397,6 +406,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/pumpkin/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 6), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/pumpkin/attackby(obj/item/weapon/W as obj, mob/user as mob)
@@ -417,6 +427,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/citrus/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 20), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/citrus/lime
@@ -447,6 +458,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/whitebeet/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", round((potency / 20), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 20), 1))
 		reagents.add_reagent("sugar", 1 + round((potency / 5), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
@@ -461,7 +473,9 @@
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/banana/add_juice()
 	if(..())
+		reagents.add_reagent("nutriment", 1 + round((potency / 50), 1))
 		reagents.add_reagent("banana", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 20), 1))
 		bitesize = 5
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/chili
@@ -474,6 +488,7 @@
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 25), 1))
 		reagents.add_reagent("capsaicin", 3+round(potency / 5, 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 25), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/chili/attackby(var/obj/item/O as obj, var/mob/user as mob)
@@ -491,6 +506,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/icepepper/add_juice()
 	..()
 	reagents.add_reagent("nutriment", 1 + round((potency / 50), 1))
+	reagents.add_reagent("vitamin", 1 + round((potency / 50), 1))
 	reagents.add_reagent("frostoil", 3+round(potency / 5, 1))
 	bitesize = 1 + round(reagents.total_volume / 2, 1)
 
@@ -546,6 +562,7 @@
 /obj/item/weapon/reagent_containers/food/snacks/grown/eggplant/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 20), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 
@@ -581,6 +598,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 /obj/item/weapon/reagent_containers/food/snacks/grown/soybeans/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 20), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/koibeans
@@ -593,6 +611,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 30), 1))
 		reagents.add_reagent("carpotoxin", 1 + round((potency / 20), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/moonflower
@@ -606,6 +625,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 50), 1))
 		reagents.add_reagent("moonshine", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 50), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 //tomaters
@@ -619,6 +639,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 /obj/item/weapon/reagent_containers/food/snacks/grown/tomato/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 10), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/tomato/proc/squish(atom/target)
@@ -639,21 +660,33 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 	name = "killer-tomato"
 	desc = "I say to-mah-to, you say tom-mae-to... OH GOD IT'S EATING MY LEGS!!"
 	icon_state = "killertomato"
+	var/awakening = 0
+
+/obj/item/weapon/reagent_containers/food/snacks/grown/tomato/killer/attack(mob/M, mob/user, def_zone)
+	if(awakening)
+		user << "<span class='warning'>The tomato is twitching and shaking, preventing you from eating it.</span>"
+		return
+	..()
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/tomato/killer/attack_self(mob/user as mob)
-	if(istype(user.loc,/turf/space))
+	if(awakening || istype(user.loc,/turf/space))
 		return
 	user << "<span class='notice'>You begin to awaken the Killer Tomato.</span>"
-	sleep(30)
-	var/mob/living/simple_animal/hostile/killertomato/K = new /mob/living/simple_animal/hostile/killertomato(get_turf(src.loc))
-	K.maxHealth += round(endurance / 3)
-	K.melee_damage_lower += round(potency / 10)
-	K.melee_damage_upper += round(potency / 10)
-	K.move_to_delay -= round(production / 50)
-	K.health = K.maxHealth
-	user.unEquip(src)
-	qdel(src)
-	K.visible_message("<span class='notice'>The Killer Tomato growls as it suddenly awakens.</span>")
+	awakening = 1
+
+	spawn(30)
+		if(!gc_destroyed)
+			var/mob/living/simple_animal/hostile/killertomato/K = new /mob/living/simple_animal/hostile/killertomato(get_turf(src.loc))
+			K.maxHealth += round(endurance / 3)
+			K.melee_damage_lower += round(potency / 10)
+			K.melee_damage_upper += round(potency / 10)
+			K.move_to_delay -= round(production / 50)
+			K.health = K.maxHealth
+			K.visible_message("<span class='notice'>The Killer Tomato growls as it suddenly awakens.</span>")
+			if(user)
+				user.unEquip(src)
+			qdel(src)
+
 
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/tomato/blood
@@ -736,14 +769,41 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/grass/attack_self(mob/user as mob)
 	user << "<span class='notice'>You prepare the astroturf.</span>"
-	var/location = get_turf(user)
 	var/grassAmt = 1 + round(potency / 50) // The grass we're holding
-	for(var/obj/item/weapon/reagent_containers/food/snacks/grown/grass/grassToConvert in location) // The grass on the floor
-		grassAmt += 1
-		qdel(grassToConvert)
-	var/obj/item/stack/tile/newAstroturf = new /obj/item/stack/tile/grass(location)
-	newAstroturf.amount = grassAmt
+	for(var/obj/item/weapon/reagent_containers/food/snacks/grown/grass/G in user.loc) // The grass on the floor
+		grassAmt += 1 + round(G.potency / 50)
+		qdel(G)
+	while(grassAmt > 0)
+		var/obj/item/stack/tile/GT = new /obj/item/stack/tile/grass(user.loc)
+		if(grassAmt >= GT.max_amount)
+			GT.amount = GT.max_amount
+		else
+			GT.amount = grassAmt
+		grassAmt -= GT.max_amount
 	qdel(src)
+	return
+
+/obj/item/weapon/reagent_containers/food/snacks/grown/carpet
+	seed = /obj/item/seeds/carpetseed
+	name = "carpet"
+	desc = "The textile industry's dark secret."
+	icon_state = "carpetclump"
+
+/obj/item/weapon/reagent_containers/food/snacks/grown/carpet/attack_self(mob/user as mob)
+	user << "<span class='notice'>You roll out the red carpet.</span>"
+	var/carpetAmt = 1 + round(potency / 50) // The carpet we're holding
+	for(var/obj/item/weapon/reagent_containers/food/snacks/grown/carpet/C in user.loc) // The carpet on the floor
+		carpetAmt += 1 + round(C.potency / 50)
+		qdel(C)
+	while(carpetAmt > 0)
+		var/obj/item/stack/tile/CT = new /obj/item/stack/tile/carpet(user.loc)
+		if(carpetAmt >= CT.max_amount)
+			CT.amount = CT.max_amount
+		else
+			CT.amount = carpetAmt
+		carpetAmt -= CT.max_amount
+	qdel(src)
+	return
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/kudzupod
 	seed = /obj/item/seeds/kudzuseed
@@ -769,6 +829,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 /obj/item/weapon/reagent_containers/food/snacks/grown/carrot/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 20), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 20), 1))
 		reagents.add_reagent("imidazoline", 3+round(potency / 5, 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
@@ -856,6 +917,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 /obj/item/weapon/reagent_containers/food/snacks/grown/mushroom/plumphelmet/add_juice()
 	..()
 	reagents.add_reagent("nutriment", 2+round((potency / 10), 1))
+	reagents.add_reagent("vitamin", 1 + round((potency / 20), 1))
 	bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 
@@ -1001,6 +1063,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 /obj/item/weapon/reagent_containers/food/snacks/grown/coffee/add_juice()
 	if(..())
 		reagents.add_reagent("coffeepowder", 1 + round((potency / 10), 2))
+		reagents.add_reagent("vitamin", 1 + round((potency / 10), 1))
 		bitesize = 1 + round(reagents.total_volume / 2, 1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/coffee/arabica
@@ -1028,6 +1091,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 /obj/item/weapon/reagent_containers/food/snacks/grown/tobacco/add_juice()
 	if(..())
 		reagents.add_reagent("nutriment", 1 + round((potency / 40), 1))
+		reagents.add_reagent("vitamin", 1 + round((potency / 40), 1))
 
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/tobacco_space
@@ -1050,6 +1114,7 @@ obj/item/weapon/reagent_containers/food/snacks/grown/shell/eggy/add_juice()
 /obj/item/weapon/reagent_containers/food/snacks/grown/tea/add_juice()
 	if(..())
 		reagents.add_reagent("teapowder", 1 + round((potency / 10), 2))
+		reagents.add_reagent("vitamin", 1 + round((potency / 20), 1))
 
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/tea/aspera

@@ -80,6 +80,11 @@
 
 					if(mobtype in humans)
 						race = "Human"
+						language = race
+
+					else if(mobtype in slimes) // NT knows a lot about slimes, but not aliens. Can identify slimes
+						race = "Slime"
+						language = race
 
 					else if(mobtype in monkeys)
 						race = "Monkey"
@@ -87,9 +92,10 @@
 
 					else if(mobtype in silicons || C.parameters["job"] == "AI") // sometimes M gets deleted prematurely for AIs... just check the job
 						race = "Artificial Life"
+						language = race
 
-					else if(mobtype in slimes) // NT knows a lot about slimes, but not aliens. Can identify slimes
-						race = "slime"
+					else if(istype(mobtype, /obj))
+						race = "Machinery"
 						language = race
 
 					else if(mobtype in animals)
@@ -99,7 +105,6 @@
 					else
 						race = "<i>Unidentifiable</i>"
 						language = race
-
 
 					// -- If the orator is a human, or universal translate is active, OR mob has universal speech on --
 
@@ -215,12 +220,13 @@
 	updateUsrDialog()
 	return
 
-/obj/machinery/computer/telecomms/server/attackby(var/obj/item/weapon/D as obj, var/mob/user as mob)
-	if(istype(D, /obj/item/weapon/card/emag) && !emagged)
+/obj/machinery/computer/telecomms/server/attackby()
+	..()
+	src.updateUsrDialog()
+	return
+
+/obj/machinery/computer/telecomms/server/emag_act(mob/user as mob)
+	if(!emagged)
 		playsound(src.loc, 'sound/effects/sparks4.ogg', 75, 1)
 		emagged = 1
 		user << "<span class='notice'>You you disable the security protocols.</span>"
-	else
-		..()
-	src.updateUsrDialog()
-	return

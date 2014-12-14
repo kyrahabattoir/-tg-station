@@ -19,12 +19,11 @@ var/const/SAFETY_COOLDOWN = 100
 	..()
 	update_icon()
 
-/obj/machinery/recycler/examine()
-	set src in view()
+/obj/machinery/recycler/examine(mob/user)
 	..()
-	usr << "The power light is [(stat & NOPOWER) ? "off" : "on"]."
-	usr << "The safety-mode light is [safety_mode ? "on" : "off"]."
-	usr << "The safety-sensors status light is [emagged ? "off" : "on"]."
+	user << "The power light is [(stat & NOPOWER) ? "off" : "on"]."
+	user << "The safety-mode light is [safety_mode ? "on" : "off"]."
+	user << "The safety-sensors status light is [emagged ? "off" : "on"]."
 
 /obj/machinery/recycler/power_change()
 	..()
@@ -32,15 +31,7 @@ var/const/SAFETY_COOLDOWN = 100
 
 
 /obj/machinery/recycler/attackby(var/obj/item/I, var/mob/user)
-	if(istype(I, /obj/item/weapon/card/emag))
-		if(!emagged)
-			emagged = 1
-			if(safety_mode)
-				safety_mode = 0
-				update_icon()
-			playsound(src.loc, "sparks", 75, 1, -1)
-			user << "<span class='notice'>You use the [I.name] on the [src.name].</span>"
-	else if(istype(I, /obj/item/weapon/screwdriver))
+	if(istype(I, /obj/item/weapon/screwdriver))
 		if(emagged)
 			emagged = 0
 			update_icon()
@@ -49,6 +40,15 @@ var/const/SAFETY_COOLDOWN = 100
 		..()
 		return
 	add_fingerprint(user)
+
+/obj/machinery/recycler/emag_act(user as mob)
+	if(!emagged)
+		emagged = 1
+		if(safety_mode)
+			safety_mode = 0
+			update_icon()
+		playsound(src.loc, "sparks", 75, 1, -1)
+		user << "<span class='notice'>You use the cryptographic sequencer on the [src.name].</span>"
 
 /obj/machinery/recycler/update_icon()
 	..()

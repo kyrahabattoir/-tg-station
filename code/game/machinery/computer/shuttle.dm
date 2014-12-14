@@ -36,11 +36,12 @@
 				if (src.auth_need - src.authorized.len > 0)
 					message_admins("[key_name(user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) has authorized early shuttle launch in ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
 					log_game("[user.ckey]([user]) has authorized early shuttle launch in ([x],[y],[z])")
-					minor_announce("[src.auth_need - src.authorized.len] more authorization(s) needed until shuttle is launched early")
+					minor_announce("[src.auth_need - src.authorized.len] more authorization(s) needed until shuttle is launched early",null,1)
 				else
-					message_admins("[key_name(user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) has launched the emergency shuttle in ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
-					log_game("[user.ckey]([user]) has launched the emergency shuttle in ([x],[y],[z])")
-					minor_announce("The emergency shuttle will launch in 10 seconds")
+					var/time = emergency_shuttle.timeleft()
+					message_admins("[key_name(user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) has launched the emergency shuttle in ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>) [time] seconds before launch.",0,1)
+					log_game("[user.ckey]([user]) has launched the emergency shuttle in ([x],[y],[z]) [time] seconds before launch.")
+					minor_announce("The emergency shuttle will launch in 10 seconds",null,1)
 					emergency_shuttle.online = 1
 					emergency_shuttle.settimeleft(10)
 					//src.authorized = null
@@ -55,18 +56,19 @@
 				minor_announce("All authorizations to launch the shuttle early have been revoked.")
 				src.authorized.len = 0
 				src.authorized = list(  )
+	return
 
-	else if (istype(W, /obj/item/weapon/card/emag) && !emagged)
-		var/choice = alert(user, "Would you like to launch the shuttle?","Shuttle control", "Launch", "Cancel")
-
-		if(!emagged && emergency_shuttle.location == DOCKED && user.get_active_hand() == W)
+/obj/machinery/computer/emergency_shuttle/emag_act(mob/user as mob)
+	var/choice = alert(user, "Would you like to launch the shuttle?","Shuttle control", "Launch", "Cancel")
+	if(!emagged)
+		if(emergency_shuttle.location == DOCKED)
 			switch(choice)
 				if("Launch")
-					message_admins("[key_name(user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) has emagged the emergency shuttle in ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
-					log_game("[user.ckey]([user]) has emagged the emergency shuttle in ([x],[y],[z])")
-					minor_announce("The emergency shuttle will launch in 10 seconds", "System Error:")
+					var/time = emergency_shuttle.timeleft()
+					message_admins("[key_name(user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) has emagged the emergency shuttle in ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>) [time] seconds before launch.",0,1)
+					log_game("[user.ckey]([user]) has emagged the emergency shuttle in ([x],[y],[z]) [time] seconds before launch.")
+					minor_announce("The emergency shuttle will launch in 10 seconds", "SYSTEM ERROR:",null,1)
 					emergency_shuttle.settimeleft( 10 )
 					emagged = 1
 				if("Cancel")
 					return
-	return

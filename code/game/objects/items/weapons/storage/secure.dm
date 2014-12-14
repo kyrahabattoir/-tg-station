@@ -27,29 +27,25 @@
 	max_w_class = 2
 	max_combined_w_class = 14
 
-/obj/item/weapon/storage/secure/examine()
-	set src in oview(1)
+/obj/item/weapon/storage/secure/examine(mob/user)
 	..()
-	usr << text("The service panel is [src.open ? "open" : "closed"].")
+	user << text("The service panel is [src.open ? "open" : "closed"].")
 
 /obj/item/weapon/storage/secure/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if(locked)
-		if ( (istype(W, /obj/item/weapon/card/emag)||istype(W, /obj/item/weapon/melee/energy/blade)) && (!src.emagged))
+		if (istype(W, /obj/item/weapon/melee/energy/blade) && !emagged)
 			emagged = 1
 			src.overlays += image('icons/obj/storage.dmi', icon_sparking)
 			sleep(6)
 			src.overlays = null
 			overlays += image('icons/obj/storage.dmi', icon_locking)
 			locked = 0
-			if(istype(W, /obj/item/weapon/melee/energy/blade))
-				var/datum/effect/effect/system/spark_spread/spark_system = new /datum/effect/effect/system/spark_spread()
-				spark_system.set_up(5, 0, src.loc)
-				spark_system.start()
-				playsound(src.loc, 'sound/weapons/blade1.ogg', 50, 1)
-				playsound(src.loc, "sparks", 50, 1)
-				user << "You slice through the lock on [src]."
-			else
-				user << "You short out the lock on [src]."
+			var/datum/effect/effect/system/spark_spread/spark_system = new /datum/effect/effect/system/spark_spread()
+			spark_system.set_up(5, 0, src.loc)
+			spark_system.start()
+			playsound(src.loc, 'sound/weapons/blade1.ogg', 50, 1)
+			playsound(src.loc, "sparks", 50, 1)
+			user << "You slice through the lock on [src]."
 			return
 
 		if (istype(W, /obj/item/weapon/screwdriver))
@@ -80,6 +76,16 @@
 	// -> storage/attackby() what with handle insertion, etc
 	..()
 
+/obj/item/weapon/storage/secure/emag_act(mob/user as mob)
+	if(locked)
+		if(!emagged)
+			emagged = 1
+			src.overlays += image('icons/obj/storage.dmi', icon_sparking)
+			sleep(6)
+			src.overlays = null
+			overlays += image('icons/obj/storage.dmi', icon_locking)
+			locked = 0
+			user << "You short out the lock on [src]."
 
 /obj/item/weapon/storage/secure/MouseDrop(over_object, src_location, over_location)
 	if (locked)
@@ -153,11 +159,13 @@
 	item_state = "sec-case"
 	desc = "A large briefcase with a digital locking system."
 	force = 8.0
+	hitsound = "swing_hit"
 	throw_speed = 2
 	throw_range = 4
 	w_class = 4.0
 	max_w_class = 3
 	max_combined_w_class = 21
+	attack_verb = list("bashed", "battered", "bludgeoned", "thrashed", "whacked")
 
 /obj/item/weapon/storage/secure/briefcase/New()
 	..()
