@@ -42,6 +42,8 @@
 
 	var/client/C
 	if(istext(whom))
+		if(cmptext(copytext(whom,1,2),"@"))
+			whom = findStealthKey(whom)
 		C = directory[whom]
 	else if(istype(whom,/client))
 		C = whom
@@ -67,6 +69,8 @@
 	if(!check_rights(R_SERVER|R_DEBUG,0))
 		msg = sanitize(copytext(msg,1,MAX_MESSAGE_LEN))
 		if(!msg)	return
+
+	msg = emoji_parse(msg)
 
 	if(C.holder)
 		if(holder)	//both are admins

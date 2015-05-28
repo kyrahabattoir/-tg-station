@@ -2,7 +2,7 @@
 	name = "flash"
 	desc = "A powerful and versatile flashbulb device, with applications ranging from disorienting attackers to acting as visual receptors in robot production."
 	icon_state = "flash"
-	item_state = "flashbang"	//looks exactly like a flash (and nothing like a flashbang)
+	item_state = "flashtool"
 	throwforce = 0
 	w_class = 1
 	throw_speed = 3
@@ -15,8 +15,8 @@
 	var/last_used = 0 //last world.time it was used.
 
 
-/obj/item/device/flash/proc/clown_check(mob/user)
-	if(user && (CLUMSY in user.mutations) && prob(50))
+/obj/item/device/flash/proc/clown_check(mob/living/carbon/human/user)
+	if(user.disabilities & CLUMSY && prob(50))
 		flash_carbon(user, user, 15, 0)
 		return 0
 	return 1
@@ -25,7 +25,7 @@
 /obj/item/device/flash/proc/burn_out() //Made so you can override it if you want to have an invincible flash from R&D or something.
 	broken = 1
 	icon_state = "[initial(icon_state)]burnt"
-	visible_message("<span class='notice'>The [src.name] burns out!</span>")
+	visible_message("The [src.name] burns out!")
 
 
 /obj/item/device/flash/proc/flash_recharge(var/mob/user)
@@ -57,20 +57,28 @@
 	return 1
 
 
-/obj/item/device/flash/proc/flash_carbon(var/mob/living/carbon/M, var/mob/user = null, var/power = 5, convert = 1)
+/obj/item/device/flash/proc/flash_carbon(var/mob/living/carbon/M, var/mob/user = null, var/power = 5, targeted = 1)
 	add_logs(user, M, "flashed", object="[src.name]")
-	var/safety = M:eyecheck()
-	if(safety <= 0)
-		M.confused += power
-		flick("e_flash", M.flash)
-		if(user && convert)
+	if(user && targeted)
+		if(M.weakeyes)
+			M.Weaken(3) //quick weaken bypasses eye protection but has no eye flash
+		if(M.flash_eyes(1, 1))
+			M.confused += power
 			terrible_conversion_proc(M, user)
 			M.Stun(1)
-		user.visible_message("<span class='disarm'>[user] blinds [M] with the flash!</span>")
-		return 1
+			visible_message("<span class='disarm'>[user] blinds [M] with the flash!</span>")
+			user << "<span class='danger'>You blind [M] with the flash!</span>"
+			M << "<span class='userdanger'>[user] blinds you with the flash!</span>"
+			if(M.weakeyes)
+				M.Stun(2)
+				M.visible_message("<span class='disarm'>[M] gasps and shields their eyes!</span>", "<span class='userdanger'>You gasp and shields your eyes!</span>")
+		else
+			visible_message("<span class='disarm'>[user] fails to blind [M] with the flash!</span>")
+			user << "<span class='warning'>You fail to blind [M] with the flash!</span>"
+			M << "<span class='danger'>[user] fails to blind you with the flash!</span>"
 	else
-		user.visible_message("<span class='disarm'>[user] fails to blind [M] with the flash!</span>")
-		return 0
+		if(M.flash_eyes())
+			M.confused += power
 
 /obj/item/device/flash/attack(mob/living/M, mob/user)
 	if(!try_use_flash(user))
@@ -81,17 +89,19 @@
 		return 1
 
 	else if(issilicon(M))
-		M.Weaken(rand(5,10))
 		add_logs(user, M, "flashed", object="[src.name]")
-		user.visible_message("<span class='disarm'>[user] overloads [M]'s sensors with the flash!</span>")
+		flick("e_flash", M.flash)
+		M.Weaken(rand(5,10))
+		user.visible_message("<span class='disarm'>[user] overloads [M]'s sensors with the flash!</span>", "<span class='danger'>You overload [M]'s sensors with the flash!</span>")
 		return 1
 
-	user.visible_message("<span class='notice'>[user] fails to blind [M] with the flash!</span>")
+	user.visible_message("<span class='disarm'>[user] fails to blind [M] with the flash!</span>", "<span class='warning'>You fail to blind [M] with the flash!</span>")
 
 
 /obj/item/device/flash/attack_self(mob/living/carbon/user, flag = 0, emp = 0)
 	if(!try_use_flash(user))
 		return 0
+	user.visible_message("<span class='disarm'>[user]'s flash emits a blinding light!</span>", "<span class='danger'>Your flash emits a blinding light!</span>")
 	for(var/mob/living/carbon/M in oviewers(3, null))
 		flash_carbon(M, user, 3, 0)
 
@@ -107,7 +117,7 @@
 
 /obj/item/device/flash/proc/terrible_conversion_proc(var/mob/M, var/mob/user)
 	if(ishuman(M) && ishuman(user) && M.stat != DEAD)
-		if(user.mind && ((user.mind in ticker.mode.head_revolutionaries) || (user.mind in ticker.mode.A_bosses) || (user.mind in ticker.mode.B_bosses)))
+		if(user.mind && (user.mind in ticker.mode.head_revolutionaries))
 			if(M.client)
 				if(M.stat == CONSCIOUS)
 					M.mind_initialize() //give them a mind datum if they don't have one.
@@ -115,12 +125,6 @@
 					if(!isloyal(M))
 						if(user.mind in ticker.mode.head_revolutionaries)
 							if(!ticker.mode.add_revolutionary(M.mind))
-								resisted = 1
-						if(user.mind in ticker.mode.A_bosses)
-							if(!ticker.mode.add_gangster(M.mind,"A"))
-								resisted = 1
-						if(user.mind in ticker.mode.B_bosses)
-							if(!ticker.mode.add_gangster(M.mind,"B"))
 								resisted = 1
 					else
 						resisted = 1

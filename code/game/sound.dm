@@ -20,8 +20,7 @@
 				M.playsound_local(turf_source, soundin, vol, vary, frequency, falloff, surround)
 
 
-/mob/proc/playsound_local(var/turf/turf_source, soundin, vol as num, vary, frequency, falloff, surround = 1)
-	if(!src.client || ear_deaf > 0)	return
+/atom/proc/playsound_local(var/turf/turf_source, soundin, vol as num, vary, frequency, falloff, surround = 1)
 	soundin = get_sfx(soundin)
 
 	var/sound/S = sound(soundin)
@@ -74,9 +73,17 @@
 
 	src << S
 
+/mob/playsound_local(var/turf/turf_source, soundin, vol as num, vary, frequency, falloff, surround = 1)
+	if(!client || ear_deaf > 0)
+		return
+	..()
+
+/mob/proc/stopLobbySound()
+	src << sound(null, repeat = 0, wait = 0, volume = 85, channel = 1)
+
 /client/proc/playtitlemusic()
 	if(!ticker || !ticker.login_music)	return
-	if(prefs.toggles & SOUND_LOBBY)
+	if(prefs && (prefs.toggles & SOUND_LOBBY))
 		src << sound(ticker.login_music, repeat = 0, wait = 0, volume = 85, channel = 1) // MAD JAMS
 
 /proc/get_rand_frequency()

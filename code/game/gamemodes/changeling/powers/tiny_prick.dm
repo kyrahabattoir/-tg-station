@@ -40,7 +40,7 @@
 		return
 	if(get_dist(user, target) > (user.mind.changeling.sting_range))
 		return //sanity check as AStar is still throwing insane stunts
-	if(!AStar(user.loc, target.loc, /turf/proc/AdjacentTurfs, /turf/proc/Distance, user.mind.changeling.sting_range))
+	if(!AStar(user.loc, target.loc, null, /turf/proc/Distance, user.mind.changeling.sting_range))
 		return //hope this ancient magic still works
 	if(target.mind && target.mind.changeling)
 		sting_feedback(user,target)
@@ -81,7 +81,7 @@
 /obj/effect/proc_holder/changeling/sting/transformation/can_sting(var/mob/user, var/mob/target)
 	if(!..())
 		return
-	if((HUSK in target.mutations) || !check_dna_integrity(target))
+	if((target.disabilities & HUSK) || !check_dna_integrity(target))
 		user << "<span class='warning'>Our sting appears ineffective against its DNA.</span>"
 		return 0
 	return 1
@@ -140,7 +140,7 @@ obj/effect/proc_holder/changeling/sting/blind
 /obj/effect/proc_holder/changeling/sting/blind/sting_action(var/mob/user, var/mob/target)
 	add_logs(user, target, "stung", object="blind sting")
 	target << "<span class='danger'>Your eyes burn horrifically!</span>"
-	target.disabilities |= NEARSIGHTED
+	target.disabilities |= NEARSIGHT
 	target.eye_blind = 20
 	target.eye_blurry = 40
 	feedback_add_details("changeling_powers","BS")
@@ -174,6 +174,5 @@ obj/effect/proc_holder/changeling/sting/cryo
 	add_logs(user, target, "stung", object="cryo sting")
 	if(target.reagents)
 		target.reagents.add_reagent("frostoil", 30)
-		target.reagents.add_reagent("ice", 30)
 	feedback_add_details("changeling_powers","CS")
 	return 1

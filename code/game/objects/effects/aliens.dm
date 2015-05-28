@@ -7,6 +7,10 @@
  *		effect/acid
  */
 
+#define WEED_NORTH_EDGING "north"
+#define WEED_SOUTH_EDGING "south"
+#define WEED_EAST_EDGING "east"
+#define WEED_WEST_EDGING "west"
 
 /obj/structure/alien
 	icon = 'icons/mob/alien.dmi'
@@ -55,6 +59,11 @@
 
 /obj/structure/alien/resin/wall/BlockSuperconductivity()
 	return 1
+
+/obj/structure/alien/resin/wall/shadowling //For chrysalis
+	name = "chrysalis wall"
+	desc = "Some sort of purple substance in an egglike shape. It pulses and throbs from within and seems impenetrable."
+	health = INFINITY
 
 /obj/structure/alien/resin/membrane
 	name = "resin membrane"
@@ -108,14 +117,12 @@
 	health -= tforce
 	healthcheck()
 
-
-/obj/structure/alien/resin/attack_hand(mob/living/user)
-	if(HULK in user.mutations)
-		user.do_attack_animation(src)
-		user.visible_message("<span class='danger'>[user] destroys [src]!</span>")
-		health = 0
-		healthcheck()
-
+/obj/structure/alien/resin/attack_hulk(mob/living/carbon/human/user)
+	..(user, 1)
+	user.do_attack_animation(src)
+	user.visible_message("<span class='danger'>[user] destroys [src]!</span>")
+	health = 0
+	healthcheck()
 
 /obj/structure/alien/resin/attack_paw(mob/user)
 	return attack_hand(user)
@@ -134,7 +141,7 @@
 	healthcheck()
 
 
-/obj/structure/alien/resin/attackby(obj/item/I, mob/living/user)
+/obj/structure/alien/resin/attackby(obj/item/I, mob/living/user, params)
 	user.changeNext_move(CLICK_CD_MELEE)
 	health -= I.force
 	playsound(loc, 'sound/effects/attackblob.ogg', 100, 1)
@@ -164,6 +171,7 @@
 	layer = 2
 	var/health = 15
 	var/obj/structure/alien/weeds/node/linked_node = null
+	var/static/list/weedImageCache
 
 
 /obj/structure/alien/weeds/New(pos, node)
@@ -184,6 +192,7 @@
 	loc = null
 	for (var/obj/structure/alien/weeds/W in range(1,T))
 		W.updateWeedOverlays()
+	linked_node = null
 	..()
 
 /obj/structure/alien/weeds/proc/Life()
@@ -215,7 +224,7 @@
 	qdel(src)
 
 
-/obj/structure/alien/weeds/attackby(obj/item/I, mob/user)
+/obj/structure/alien/weeds/attackby(obj/item/I, mob/user, params)
 	user.changeNext_move(CLICK_CD_MELEE)
 	if(I.attack_verb.len)
 		visible_message("<span class='danger'>[user] has [pick(I.attack_verb)] [src] with [I]!</span>")
@@ -247,22 +256,31 @@
 /obj/structure/alien/weeds/proc/updateWeedOverlays()
 
 	overlays.Cut()
+
+	if(!weedImageCache || !weedImageCache.len)
+		weedImageCache = list()
+		weedImageCache.len = 4
+		weedImageCache[WEED_NORTH_EDGING] = image('icons/mob/alien.dmi', "weeds_side_n", layer=2.11, pixel_y = -32)
+		weedImageCache[WEED_SOUTH_EDGING] = image('icons/mob/alien.dmi', "weeds_side_s", layer=2.11, pixel_y = 32)
+		weedImageCache[WEED_EAST_EDGING] = image('icons/mob/alien.dmi', "weeds_side_e", layer=2.11, pixel_x = -32)
+		weedImageCache[WEED_WEST_EDGING] = image('icons/mob/alien.dmi', "weeds_side_w", layer=2.11, pixel_x = 32)
+
 	var/turf/N = get_step(src, NORTH)
 	var/turf/S = get_step(src, SOUTH)
 	var/turf/E = get_step(src, EAST)
 	var/turf/W = get_step(src, WEST)
 	if(!locate(/obj/structure/alien) in N.contents)
 		if(istype(N, /turf/simulated/floor))
-			src.overlays += image('icons/mob/alien.dmi', "weeds_side_s", layer=2, pixel_y = 32)
+			overlays += weedImageCache[WEED_SOUTH_EDGING]
 	if(!locate(/obj/structure/alien) in S.contents)
 		if(istype(S, /turf/simulated/floor))
-			src.overlays += image('icons/mob/alien.dmi', "weeds_side_n", layer=2, pixel_y = -32)
+			overlays += weedImageCache[WEED_NORTH_EDGING]
 	if(!locate(/obj/structure/alien) in E.contents)
 		if(istype(E, /turf/simulated/floor))
-			src.overlays += image('icons/mob/alien.dmi', "weeds_side_w", layer=2, pixel_x = 32)
+			overlays += weedImageCache[WEED_WEST_EDGING]
 	if(!locate(/obj/structure/alien) in W.contents)
 		if(istype(W, /turf/simulated/floor))
-			src.overlays += image('icons/mob/alien.dmi', "weeds_side_e", layer=2, pixel_x = -32)
+			overlays += weedImageCache[WEED_EAST_EDGING]
 
 
 /obj/structure/alien/weeds/proc/fullUpdateWeedOverlays()
@@ -371,7 +389,7 @@
 	healthcheck()
 
 
-/obj/structure/alien/egg/attackby(obj/item/I, mob/user)
+/obj/structure/alien/egg/attackby(obj/item/I, mob/user, params)
 	if(I.attack_verb.len)
 		visible_message("<span class='danger'>[user] has [pick(I.attack_verb)] [src] with [I]!</span>")
 	else
@@ -491,3 +509,8 @@
 	spawn(1)
 		if(src)
 			tick()
+
+#undef WEED_NORTH_EDGING
+#undef WEED_SOUTH_EDGING
+#undef WEED_EAST_EDGING
+#undef WEED_WEST_EDGING

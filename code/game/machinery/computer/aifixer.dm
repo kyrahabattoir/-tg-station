@@ -1,6 +1,6 @@
 /obj/machinery/computer/aifixer
 	name = "\improper AI system integrity restorer"
-	desc = "Used with inteliCards containing nonfunctioning AIs to restore them to working order."
+	desc = "Used with intelliCards containing nonfunctioning AIs to restore them to working order."
 	icon = 'icons/obj/computer.dmi'
 	icon_state = "ai-fixer"
 	req_access = list(access_captain, access_robotics, access_heads)
@@ -13,7 +13,7 @@
 	..()
 
 
-/obj/machinery/computer/aifixer/attackby(I as obj, user as mob)
+/obj/machinery/computer/aifixer/attackby(I as obj, user as mob, params)
 	if(occupier && istype(I, /obj/item/weapon/screwdriver))
 		if(stat & (NOPOWER|BROKEN))
 			user << "<span class='warning'>The screws on [name]'s screen won't budge.</span>"

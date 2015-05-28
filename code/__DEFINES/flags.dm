@@ -25,7 +25,7 @@
 #define MASKCOVERSMOUTH		2048		// on other items, these are just for mask/head
 #define HEADCOVERSMOUTH		2048
 
-#define HEADBANGPROTECT		1024
+#define HEADBANGPROTECT		4096
 #define EARBANGPROTECT		1024
 
 #define NOSLIP		1024 		//prevents from slipping on wet floors, in space etc (NOTE: flag shared with THICKMATERIAL for external suits and helmet)
@@ -68,6 +68,8 @@
 #define NOGUNS		512
 #define NOBLOOD		1024
 #define NOFIRE		2048
+#define VIRUSIMMUNE	4096
+#define HARDFEET	8192
 
 /*
 	These defines are used specifically with the atom/movable/languages bitmask.
