@@ -5,6 +5,13 @@ Do not clone this specific branch, it only exist to present a nice readme to
 anyone visiting my github repo.
 
 ================================================================================
+TESTING SANDBOX
+================================================================================
+https://github.com/kyrahabattoir/-tg-station/tree/testing-sandbox
+
+A minimalistic, functional station, useful for testing & debugging.
+
+================================================================================
 PRECONF EXTENDED
 ================================================================================
 https://github.com/kyrahabattoir/-tg-station/tree/preconf-extended
