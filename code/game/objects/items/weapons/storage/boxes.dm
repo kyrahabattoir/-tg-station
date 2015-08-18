@@ -24,6 +24,7 @@
 	desc = "It's just an ordinary box."
 	icon_state = "box"
 	item_state = "syringe_kit"
+	burn_state = 0 //Burnable
 	var/foldable = /obj/item/stack/sheet/cardboard
 
 
@@ -72,6 +73,16 @@
 	contents = list()
 	new /obj/item/clothing/mask/breath(src)
 	new /obj/item/weapon/tank/internals/emergency_oxygen/engi(src)
+	new /obj/item/weapon/reagent_containers/hypospray/medipen(src)
+	return
+
+/obj/item/weapon/storage/box/security
+
+/obj/item/weapon/storage/box/security/New()
+	..()
+	contents = list()
+	new /obj/item/clothing/mask/gas/sechailer(src)
+	new /obj/item/weapon/tank/internals/emergency_oxygen(src)
 	new /obj/item/weapon/reagent_containers/hypospray/medipen(src)
 	return
 
@@ -477,6 +488,21 @@
 	new /obj/item/weapon/restraints/handcuffs/cable/zipties(src)
 	new /obj/item/weapon/restraints/handcuffs/cable/zipties(src)
 
+/obj/item/weapon/storage/box/alienhandcuffs
+	name = "box of spare handcuffs"
+	desc = "A box full of handcuffs."
+	icon_state = "alienboxCuffs"
+
+/obj/item/weapon/storage/box/alienhandcuffs/New()
+	..()
+	new	/obj/item/weapon/restraints/handcuffs/alien(src)
+	new	/obj/item/weapon/restraints/handcuffs/alien(src)
+	new	/obj/item/weapon/restraints/handcuffs/alien(src)
+	new	/obj/item/weapon/restraints/handcuffs/alien(src)
+	new	/obj/item/weapon/restraints/handcuffs/alien(src)
+	new	/obj/item/weapon/restraints/handcuffs/alien(src)
+	new	/obj/item/weapon/restraints/handcuffs/alien(src)
+
 /obj/item/weapon/storage/box/fakesyndiesuit
 	name = "boxed space suit and helmet"
 	desc = "A sleek, sturdy box used to hold replica spacesuits."
@@ -616,3 +642,23 @@
 	new /obj/item/weapon/grenade/chem_grenade/metalfoam(src)
 	new /obj/item/weapon/grenade/chem_grenade/metalfoam(src)
 	new /obj/item/weapon/grenade/chem_grenade/metalfoam(src)
+
+
+/obj/item/weapon/storage/box/hug
+	name = "box of hugs"
+	desc = "A special box for sensitive people."
+	icon_state = "hugbox"
+	foldable = null
+
+/obj/item/weapon/storage/box/hug/attack_self(mob/user)
+	..()
+	user.changeNext_move(CLICK_CD_MELEE)
+	playsound(loc, "rustle", 50, 1, -5)
+	user.visible_message("<span class='notice'>[user] hugs \the [src].</span>","<span class='notice'>You hug \the [src].</span>")
+	return
+
+/obj/item/weapon/storage/box/hug/medical/New()
+	..()
+	new /obj/item/stack/medical/bruise_pack(src)
+	new /obj/item/stack/medical/ointment(src)
+	new /obj/item/weapon/reagent_containers/hypospray/medipen(src)

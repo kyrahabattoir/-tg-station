@@ -12,8 +12,7 @@
 	volume = 15
 	var/mode = SYRINGE_DRAW
 	var/busy = 0		// needed for delayed drawing of blood
-	g_amt = 20
-	m_amt = 10
+	materials = list(MAT_METAL=10, MAT_GLASS=20)
 
 /obj/item/weapon/reagent_containers/syringe/New()
 	..()
@@ -141,7 +140,14 @@
 			if(ismob(target) && target != user)
 				target.visible_message("<span class='danger'>[user] is trying to inject [target]!</span>", \
 										"<span class='userdanger'>[user] is trying to inject [target]!</span>")
-				if(!do_mob(user, target)) return
+				if(!do_mob(user, target))
+					return
+				//Sanity checks after sleep
+				if(!reagents.total_volume)
+					return
+				if(target.reagents.total_volume >= target.reagents.maximum_volume)
+					return
+
 				target.visible_message("<span class='danger'>[user] injects [target] with the syringe!", \
 								"<span class='userdanger'>[user] injects [target] with the syringe!")
 				//Attack log entries are produced here due to failure to produce elsewhere. Remove them here if you have doubles from normal syringes.
@@ -150,8 +156,9 @@
 					rinject += R.name
 				var/contained = english_list(rinject)
 				var/mob/M = target
-				add_logs(user, M, "injected", object="[src.name]", addition="which had [contained]")
-				reagents.reaction(target, INGEST)
+				add_logs(user, M, "injected", src, addition="which had [contained]")
+				var/fraction = min(amount_per_transfer_from_this/reagents.total_volume, 1)
+				reagents.reaction(target, INGEST, fraction)
 			if(ismob(target) && target == user)
 				//Attack log entries are produced here due to failure to produce elsewhere. Remove them here if you have doubles from normal syringes.
 				var/list/rinject = list()
@@ -161,8 +168,8 @@
 				var/mob/M = target
 				log_attack("<font color='red'>[user.name] ([user.ckey]) injected [M.name] ([M.ckey]) with [src.name], which had [contained] (INTENT: [uppertext(user.a_intent)])</font>")
 				M.attack_log += text("\[[time_stamp()]\] <font color='orange'>Injected themselves ([contained]) with [src.name].</font>")
-
-				reagents.reaction(target, INGEST)
+				var/fraction = min(amount_per_transfer_from_this/reagents.total_volume, 1)
+				reagents.reaction(target, INGEST, fraction)
 			spawn(5)
 				var/datum/reagent/blood/B
 				for(var/datum/reagent/blood/d in src.reagents.reagent_list)
@@ -180,7 +187,7 @@
 
 
 /obj/item/weapon/reagent_containers/syringe/update_icon()
-	var/rounded_vol = round(reagents.total_volume,5)
+	var/rounded_vol = min(max(round(reagents.total_volume,5),5),15)
 	overlays.Cut()
 	if(ismob(loc))
 		var/injoverlay
@@ -195,12 +202,7 @@
 
 	if(reagents.total_volume)
 		var/image/filling = image('icons/obj/reagentfillings.dmi', src, "syringe10")
-
-		switch(rounded_vol)
-			if(5)	filling.icon_state = "syringe5"
-			if(10)	filling.icon_state = "syringe10"
-			if(15)	filling.icon_state = "syringe15"
-
+		filling.icon_state = "syringe[rounded_vol]"
 		filling.color = mix_color_from_reagents(reagents.reagent_list)
 		overlays += filling
 
@@ -218,6 +220,11 @@
 	name = "syringe (spaceacillin)"
 	desc = "Contains antiviral agents."
 	list_reagents = list("spaceacillin" = 15)
+
+/obj/item/weapon/reagent_containers/syringe/bioterror
+	name = "bioterror syringe"
+	desc = "Contains several paralyzing reagents."
+	list_reagents = list("neurotoxin" = 5, "mutetoxin" = 5, "sodium_thiopental" = 5)
 
 /obj/item/weapon/reagent_containers/syringe/stimulants
 	name = "Stimpack"

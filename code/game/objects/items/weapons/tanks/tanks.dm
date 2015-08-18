@@ -48,6 +48,8 @@
 		if (icon == src) user << "<span class='notice'>If you want any more information you'll need to get closer.</span>"
 		return
 
+	user << "<span class='notice'>The pressure gauge reads [src.air_contents.return_pressure()] kPa.</span>"
+
 	var/celsius_temperature = src.air_contents.temperature-T0C
 	var/descriptive
 
@@ -77,7 +79,7 @@
 
 		qdel(src)
 
-/obj/item/weapon/tank/attackby(obj/item/weapon/W as obj, mob/user as mob, params)
+/obj/item/weapon/tank/attackby(obj/item/weapon/W, mob/user, params)
 	..()
 
 	src.add_fingerprint(user)
@@ -90,13 +92,19 @@
 	if(istype(W, /obj/item/device/assembly_holder))
 		bomb_assemble(W,user)
 
-/obj/item/weapon/tank/attack_self(mob/user as mob)
+/obj/item/weapon/tank/attack_self(mob/user)
 	if (!(src.air_contents))
 		return
 
 	ui_interact(user)
 
-/obj/item/weapon/tank/ui_interact(mob/user, ui_key = "main")
+/obj/item/weapon/tank/interact(mob/user, ui_key = "main")
+	SSnano.try_update_ui(user, src, ui_key, null, src.get_ui_data())
+
+/obj/item/weapon/tank/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null)
+	ui = SSnano.push_open_or_new_ui(user, src, ui_key, ui, "tanks.tmpl", "Tank", 500, 300, 0)
+
+/obj/item/weapon/tank/get_ui_data()
 	var/mob/living/carbon/location = null
 
 	if(istype(loc, /mob/living/carbon))
@@ -104,19 +112,12 @@
 	else if(istype(loc.loc, /mob/living/carbon))
 		location = loc.loc
 
-	var/using_internal
-	if(istype(location))
-		if(location.internal==src)
-			using_internal = 1
-
-	// this is the data which will be sent to the ui
 	var/data = list()
 	data["tankPressure"] = round(air_contents.return_pressure() ? air_contents.return_pressure() : 0)
 	data["releasePressure"] = round(distribute_pressure ? distribute_pressure : 0)
 	data["defaultReleasePressure"] = round(TANK_DEFAULT_RELEASE_PRESSURE)
 	data["maxReleasePressure"] = round(TANK_MAX_RELEASE_PRESSURE)
-	data["valveOpen"] = using_internal ? 1 : 0
-
+	data["valveOpen"] = 0
 	data["maskConnected"] = 0
 
 	if(istype(location))
@@ -124,6 +125,7 @@
 
 		if(location.internal == src)	// if tank is current internal
 			mask_check = 1
+			data["valveOpen"] = 1
 		else if(src in location)		// or if tank is in the mobs possession
 			if(!location.internal)		// and they do not have any active internals
 				mask_check = 1
@@ -131,16 +133,7 @@
 		if(mask_check)
 			if(location.wear_mask && (location.wear_mask.flags & MASKINTERNALS))
 				data["maskConnected"] = 1
-
-	var/datum/nanoui/ui = SSnano.get_open_ui(user, src, ui_key)
-	if (!ui)
-		ui = new /datum/nanoui(user, src, ui_key, "tanks.tmpl", "Tank", 500, 300)
-		ui.set_initial_data(data)
-		ui.open()
-		ui.set_auto_update(1)
-	else
-		ui.push_data(data)
-
+	return data
 
 /obj/item/weapon/tank/Topic(href, href_list)
 	..()

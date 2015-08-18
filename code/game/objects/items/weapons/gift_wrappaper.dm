@@ -13,7 +13,7 @@
 	icon = 'icons/obj/storage.dmi'
 	icon_state = "giftcrate3"
 	item_state = "gift1"
-
+	burn_state = 0 //Burnable
 
 /obj/item/weapon/a_gift/New()
 	..()
@@ -21,7 +21,7 @@
 	pixel_y = rand(-10,10)
 	icon_state = "giftcrate[rand(1,5)]"
 
-/obj/item/weapon/a_gift/attack_self(mob/M as mob)
+/obj/item/weapon/a_gift/attack_self(mob/M)
 	if(M && M.mind && M.mind.special_role == "Santa")
 		M << "<span class='warning'>You're supposed to be spreading gifts, not opening them yourself!</span>"
 		return
@@ -30,7 +30,7 @@
 		/obj/item/weapon/storage/wallet,
 		/obj/item/weapon/storage/photo_album,
 		/obj/item/weapon/storage/box/snappops,
-		/obj/item/weapon/storage/fancy/crayons,
+		/obj/item/weapon/storage/crayons,
 		/obj/item/weapon/storage/backpack/holding,
 		/obj/item/weapon/storage/belt/champion,
 		/obj/item/weapon/soap/deluxe,
@@ -55,6 +55,7 @@
 		/obj/item/weapon/storage/belt/utility/full,
 		/obj/item/clothing/tie/horrible,
 		/obj/item/clothing/suit/jacket/leather,
+		/obj/item/clothing/suit/jacket/leather/overcoat,
 		/obj/item/clothing/suit/poncho,
 		/obj/item/clothing/suit/poncho/green,
 		/obj/item/clothing/suit/poncho/red)
@@ -85,6 +86,7 @@
 	flags = NOBLUDGEON
 	amount = 25
 	max_amount = 25
+	burn_state = 0 //Burnable
 
 /obj/item/stack/wrapping_paper/attack_self(mob/user)
 	user << "<span class='warning'>You need to use it on a package that has already been wrapped!</span>"

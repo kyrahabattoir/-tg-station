@@ -42,7 +42,7 @@
 	if(istype(loc, /mob/living))
 		var/mob/living/L = loc
 		L.show_message("<span class='notice'>[drone] is trying to escape!</span>")
-		if(!do_after(L, 50) || loc != L)
+		if(!do_after(L, 50, target = L) || loc != L)
 			return
 		L.unEquip(src)
 
@@ -62,7 +62,7 @@
 	uncurl()
 
 
-/obj/item/clothing/head/drone_holder/proc/updateVisualAppearence(var/mob/living/simple_animal/drone/D)
+/obj/item/clothing/head/drone_holder/proc/updateVisualAppearence(mob/living/simple_animal/drone/D)
 	if(!D)
 		return
 	icon_state = "[D.visualAppearence]_hat"

@@ -9,11 +9,13 @@
 	icon = 'icons/obj/artstuff.dmi'
 	icon_state = "easel"
 	density = 1
+	burn_state = 0 //Burnable
+	burntime = 15
 	var/obj/item/weapon/canvas/painting = null
 
 
 //Adding canvases
-/obj/structure/easel/attackby(var/obj/item/I, var/mob/user, params)
+/obj/structure/easel/attackby(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/weapon/canvas))
 		var/obj/item/weapon/canvas/C = I
 		user.unEquip(C)
@@ -50,6 +52,7 @@ var/global/list/globalBlankCanvases[AMT_OF_CANVASES]
 	desc = "draw out your soul on this canvas!"
 	icon = 'icons/obj/artstuff.dmi'
 	icon_state = "11x11"
+	burn_state = 0 //Burnable
 	var/whichGlobalBackup = 1 //List index
 
 /obj/item/weapon/canvas/nineteenXnineteen
@@ -78,7 +81,7 @@ var/global/list/globalBlankCanvases[AMT_OF_CANVASES]
 
 
 //One pixel increments
-/obj/item/weapon/canvas/attackby(var/obj/item/I, var/mob/user, params)
+/obj/item/weapon/canvas/attackby(obj/item/I, mob/user, params)
 	//Click info
 	var/list/click_params = params2list(params)
 	var/pixX = text2num(click_params["icon-x"])
@@ -113,7 +116,7 @@ var/global/list/globalBlankCanvases[AMT_OF_CANVASES]
 	..()
 
 //Clean the whole canvas
-/obj/item/weapon/canvas/attack_self(var/mob/user)
+/obj/item/weapon/canvas/attack_self(mob/user)
 	if(!user)
 		return
 	var/icon/blank = getGlobalBackup()

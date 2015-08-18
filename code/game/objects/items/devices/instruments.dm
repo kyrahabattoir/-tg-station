@@ -1,6 +1,8 @@
 //copy pasta of the space piano, don't hurt me -Pete
 /obj/item/device/instrument
 	name = "generic instrument"
+	burn_state = 0 //Burnable
+	burntime = 20
 	var/datum/song/handheld/song
 	var/instrumentId = "generic"
 	var/instrumentExt = "ogg"
@@ -18,13 +20,13 @@
 	song.tempo = song.sanitize_tempo(song.tempo) // tick_lag isn't set when the map is loaded
 	..()
 
-/obj/item/device/instrument/attack_self(mob/user as mob)
+/obj/item/device/instrument/attack_self(mob/user)
 	if(!user.IsAdvancedToolUser())
 		user << "<span class='warning'>You don't have the dexterity to do this!</span>"
 		return 1
 	interact(user)
 
-/obj/item/device/instrument/interact(mob/user as mob)
+/obj/item/device/instrument/interact(mob/user)
 	if(!user)
 		return
 
@@ -52,6 +54,5 @@
 	item_state = "guitar"
 	force = 10
 	attack_verb = list("played metal on", "serenaded", "crashed", "smashed")
-	hitsound = "swing_hit"
+	hitsound = 'sound/weapons/stringsmash.ogg'
 	instrumentId = "guitar"
-

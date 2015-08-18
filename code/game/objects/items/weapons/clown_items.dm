@@ -40,7 +40,7 @@
 		var/mob/living/carbon/M = AM
 		M.slip(4, 2, src)
 
-/obj/item/weapon/soap/afterattack(atom/target, mob/user as mob, proximity)
+/obj/item/weapon/soap/afterattack(atom/target, mob/user, proximity)
 	if(!proximity || !check_allowed_items(target))
 		return
 	//I couldn't feasibly  fix the overlay bugs caused by cleaning items we are wearing.
@@ -49,7 +49,7 @@
 		user << "<span class='warning'>You need to take that [target.name] off before cleaning it!</span>"
 	else if(istype(target,/obj/effect/decal/cleanable))
 		user.visible_message("[user] begins to scrub \the [target.name] out with [src].", "<span class='warning'>You begin to scrub \the [target.name] out with [src]...</span>")
-		if(do_after(user, src.cleanspeed))
+		if(do_after(user, src.cleanspeed, target = target))
 			user << "<span class='notice'>You scrub \the [target.name] out.</span>"
 			qdel(target)
 	else if(ishuman(target) && user.zone_sel && user.zone_sel.selecting == "mouth")
@@ -57,7 +57,7 @@
 		return
 	else
 		user.visible_message("[user] begins to clean \the [target.name] with [src]...", "<span class='notice'>You begin to clean \the [target.name] with [src]...</span>")
-		if(do_after(user, src.cleanspeed))
+		if(do_after(user, src.cleanspeed, target = target))
 			user << "<span class='notice'>You clean \the [target.name].</span>"
 			var/obj/effect/decal/cleanable/C = locate() in target
 			qdel(C)
@@ -86,12 +86,12 @@
 	var/honksound = 'sound/items/bikehorn.ogg'
 	var/cooldowntime = 20
 
-/obj/item/weapon/bikehorn/attack(mob/living/carbon/M as mob, mob/living/carbon/user as mob)
+/obj/item/weapon/bikehorn/attack(mob/living/carbon/M, mob/living/carbon/user)
 	if(!spam_flag)
 		playsound(loc, honksound, 50, 1, -1) //plays instead of tap.ogg!
 	return ..()
 
-/obj/item/weapon/bikehorn/attack_self(mob/user as mob)
+/obj/item/weapon/bikehorn/attack_self(mob/user)
 	if(!spam_flag)
 		spam_flag = 1
 		playsound(src.loc, honksound, 50, 1)
@@ -99,6 +99,11 @@
 		spawn(cooldowntime)
 			spam_flag = 0
 	return
+
+/obj/item/weapon/bikehorn/Crossed(mob/living/L)
+	if(isliving(L))
+		playsound(loc, honksound, 50, 1, -1)
+	..()
 
 /obj/item/weapon/bikehorn/airhorn
 	name = "air horn"

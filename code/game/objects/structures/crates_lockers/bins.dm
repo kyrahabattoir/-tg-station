@@ -25,7 +25,7 @@
 	else
 		overlays += orangelight
 
-/obj/structure/closet/crate/bin/attackby(obj/item/weapon/W as obj, mob/user as mob, params)
+/obj/structure/closet/crate/bin/attackby(obj/item/weapon/W, mob/user, params)
 	if(istype(W, /obj/item/weapon/storage/bag/trash))
 		var/obj/item/weapon/storage/bag/trash/T = W
 		user << "<span class='notice'>You fill the bag.</span>"
@@ -43,14 +43,14 @@
 	else
 		..()
 
-/obj/structure/closet/crate/bin/MouseDrop_T(atom/movable/O as mob|obj, mob/user as mob)
+/obj/structure/closet/crate/bin/MouseDrop_T(atom/movable/O as mob|obj, mob/user)
 	. = ..(O, user, 0, 0, 0)
 	if(.)
 		if(O != user)
 			user.visible_message("<span class='warning'>[user] tries to stuff [O] into [src].</span>", \
 							 	 "<span class='danger'>You try to stuff [O] into [src].</span>", \
 							 	 "<span class='italics'>You hear clanging.</span>")
-			if (!do_after(user, 40))
+			if (!do_after(user, 40, target = src))
 				return
 			if(!..(O, user, 0, 0))
 				return
@@ -76,12 +76,12 @@
 		playsound(src.loc, sound_effect_close, 15, 1, -3)
 		update_icon()
 
-/obj/structure/closet/crate/bin/insert(var/obj/item/I, var/include_mobs = 0, var/animate = 0)
+/obj/structure/closet/crate/bin/insert(obj/item/I, include_mobs = 0, animate = 0)
 	. = ..(I, include_mobs)
 	if(animate && .)
 		do_animate()
 
-/obj/structure/closet/crate/bin/place(var/mob/user, var/obj/item/I)
+/obj/structure/closet/crate/bin/place(mob/user, obj/item/I)
 	if(contents.len >= storage_capacity)
 		return 1
 	if(!opened && user.drop_item())

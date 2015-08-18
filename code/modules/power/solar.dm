@@ -30,7 +30,7 @@
 	..()
 
 //set the control of the panel to a given computer if closer than SOLAR_MAX_DIST
-/obj/machinery/power/solar/proc/set_control(var/obj/machinery/power/solar_control/SC)
+/obj/machinery/power/solar/proc/set_control(obj/machinery/power/solar_control/SC)
 	if(!SC || (get_dist(src, SC) > SOLAR_MAX_DIST))
 		return 0
 	control = SC
@@ -43,7 +43,7 @@
 		control.connected_panels.Remove(src)
 	control = null
 
-/obj/machinery/power/solar/proc/Make(var/obj/item/solar_assembly/S)
+/obj/machinery/power/solar/proc/Make(obj/item/solar_assembly/S)
 	if(!S)
 		S = new /obj/item/solar_assembly(src)
 		S.glass_type = /obj/item/stack/sheet/glass
@@ -60,7 +60,7 @@
 	if(istype(W, /obj/item/weapon/crowbar))
 		playsound(src.loc, 'sound/machines/click.ogg', 50, 1)
 		user.visible_message("[user] begins to take the glass off the solar panel.", "<span class='notice'>You begin to take the glass off the solar panel...</span>")
-		if(do_after(user, 50))
+		if(do_after(user, 50, target = src))
 			var/obj/item/solar_assembly/S = locate() in src
 			if(S)
 				S.loc = src.loc
@@ -209,7 +209,7 @@
 	var/tracker = 0
 	var/glass_type = null
 
-/obj/item/solar_assembly/attack_hand(var/mob/user)
+/obj/item/solar_assembly/attack_hand(mob/user)
 	if(!anchored && isturf(loc)) // You can't pick it up
 		..()
 
@@ -221,35 +221,38 @@
 		glass_type = null
 
 
-/obj/item/solar_assembly/attackby(var/obj/item/weapon/W, var/mob/user, params)
+/obj/item/solar_assembly/attackby(obj/item/weapon/W, mob/user, params)
 
-	if(!anchored && isturf(loc))
-		if(istype(W, /obj/item/weapon/wrench))
-			anchored = 1
+	if(istype(W, /obj/item/weapon/wrench) && isturf(loc))
+		if(isinspace())
+			user << "<span class='warning'>You can't secure [src] here.</span>"
+			return
+		anchored = !anchored
+		if(anchored)
 			user.visible_message("[user] wrenches the solar assembly into place.", "<span class='notice'>You wrench the solar assembly into place.</span>")
 			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-			return 1
-	else
-		if(istype(W, /obj/item/weapon/wrench))
-			anchored = 0
+		else
 			user.visible_message("[user] unwrenches the solar assembly from its place.", "<span class='notice'>You unwrench the solar assembly from its place.</span>")
 			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
-			return 1
+		return 1
 
-		if(istype(W, /obj/item/stack/sheet/glass) || istype(W, /obj/item/stack/sheet/rglass))
-			var/obj/item/stack/sheet/S = W
-			if(S.use(2))
-				glass_type = W.type
-				playsound(src.loc, 'sound/machines/click.ogg', 50, 1)
-				user.visible_message("[user] places the glass on the solar assembly.", "<span class='notice'>You place the glass on the solar assembly.</span>")
-				if(tracker)
-					new /obj/machinery/power/tracker(get_turf(src), src)
-				else
-					new /obj/machinery/power/solar(get_turf(src), src)
+	if(istype(W, /obj/item/stack/sheet/glass) || istype(W, /obj/item/stack/sheet/rglass))
+		if(!anchored)
+			user << "<span class='warning'>You need to secure the assembly before you can add glass.</span>"
+			return
+		var/obj/item/stack/sheet/S = W
+		if(S.use(2))
+			glass_type = W.type
+			playsound(src.loc, 'sound/machines/click.ogg', 50, 1)
+			user.visible_message("[user] places the glass on the solar assembly.", "<span class='notice'>You place the glass on the solar assembly.</span>")
+			if(tracker)
+				new /obj/machinery/power/tracker(get_turf(src), src)
 			else
-				user << "<span class='warning'>You need two sheets of glass to put them into a solar panel!</span>"
-				return
-			return 1
+				new /obj/machinery/power/solar(get_turf(src), src)
+		else
+			user << "<span class='warning'>You need two sheets of glass to put them into a solar panel!</span>"
+			return
+		return 1
 
 	if(!tracker)
 		if(istype(W, /obj/item/weapon/tracker_electronics))
@@ -370,8 +373,10 @@
 	if(!..())
 		ui_interact(user)
 
-/obj/machinery/power/solar_control/ui_interact(mob/user, ui_key = "main")
+/obj/machinery/power/solar_control/ui_interact(mob/user, ui_key = "main", datum/nanoui/ui = null)
+	ui = SSnano.push_open_or_new_ui(user, src, ui_key, ui, "solar_control.tmpl", name, 490, 420, 1)
 
+/obj/machinery/power/solar_control/get_ui_data()
 	var/data = list()
 
 	data["generated"] = round(lastgen)
@@ -384,21 +389,12 @@
 
 	data["connected_panels"] = connected_panels.len
 	data["connected_tracker"] = (connected_tracker ? 1 : 0)
+	return data
 
-	var/datum/nanoui/ui = SSnano.get_open_ui(user, src, ui_key)
-	if (!ui)
-		ui = new(user, src, ui_key, "solar_control.tmpl", name, 490, 420)
-		ui.set_initial_data(data)
-		ui.open()
-		ui.set_auto_update(1)
-	else
-		ui.push_data(data)
-		return
-
-/obj/machinery/power/solar_control/attackby(I as obj, user as mob, params)
+/obj/machinery/power/solar_control/attackby(obj/I, mob/user, params)
 	if(istype(I, /obj/item/weapon/screwdriver))
 		playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
-		if(do_after(user, 20))
+		if(do_after(user, 20, target = src))
 			if (src.stat & BROKEN)
 				user << "<span class='notice'>The broken glass falls out.</span>"
 				var/obj/structure/computerframe/A = new /obj/structure/computerframe( src.loc )
@@ -476,7 +472,7 @@
 		set_panels(cdir)
 
 //rotates the panel to the passed angle
-/obj/machinery/power/solar_control/proc/set_panels(var/cdir)
+/obj/machinery/power/solar_control/proc/set_panels(cdir)
 
 	for(var/obj/machinery/power/solar/S in connected_panels)
 		S.adir = cdir //instantly rotates the panel

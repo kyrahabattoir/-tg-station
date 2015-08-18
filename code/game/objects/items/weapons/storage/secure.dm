@@ -31,17 +31,17 @@
 	..()
 	user << text("The service panel is [src.open ? "open" : "closed"].")
 
-/obj/item/weapon/storage/secure/attackby(obj/item/weapon/W as obj, mob/user as mob, params)
+/obj/item/weapon/storage/secure/attackby(obj/item/weapon/W, mob/user, params)
 	if(locked)
 		if (istype(W, /obj/item/weapon/screwdriver))
-			if (do_after(user, 20))
+			if (do_after(user, 20, target = src))
 				src.open =! src.open
 				user.show_message(text("<span class='notice'>You [] the service panel.</span>", (src.open ? "open" : "close")))
 			return
 		if ((istype(W, /obj/item/device/multitool)) && (src.open == 1)&& (!src.l_hacking))
 			user.show_message(text("<span class='danger'>Now attempting to reset internal memory, please hold.</span>"), 1)
 			src.l_hacking = 1
-			if (do_after(usr, 100))
+			if (do_after(usr, 100, target = src))
 				if (prob(40))
 					src.l_setshort = 1
 					src.l_set = 0
@@ -61,7 +61,7 @@
 	// -> storage/attackby() what with handle insertion, etc
 	..()
 
-/obj/item/weapon/storage/secure/emag_act(mob/user as mob)
+/obj/item/weapon/storage/secure/emag_act(mob/user)
 	if(locked)
 		if(!emagged)
 			emagged = 1
@@ -75,11 +75,11 @@
 /obj/item/weapon/storage/secure/MouseDrop(over_object, src_location, over_location)
 	if (locked)
 		src.add_fingerprint(usr)
-		return
+		usr << "<span class='warning'>It's locked!</span>"
+		return 0
 	..()
 
-
-/obj/item/weapon/storage/secure/attack_self(mob/user as mob)
+/obj/item/weapon/storage/secure/attack_self(mob/user)
 	user.set_machine(src)
 	var/dat = text("<TT><B>[]</B><BR>\n\nLock Status: []",src, (src.locked ? "LOCKED" : "UNLOCKED"))
 	var/message = "Code"
@@ -128,6 +128,12 @@
 			return
 	return
 
+/obj/item/weapon/storage/secure/storage_contents_dump_act(obj/item/weapon/storage/src_object, mob/user)
+	if(locked)
+		user << "<span class='warning'>It's locked!</span>"
+		return 0
+	return ..()
+
 /obj/item/weapon/storage/secure/can_be_inserted(obj/item/W, stop_messages = 0)
 	if(locked)
 		return 0
@@ -157,7 +163,7 @@
 	new /obj/item/weapon/pen(src)
 	return ..()
 
-/obj/item/weapon/storage/secure/briefcase/attack_hand(mob/user as mob)
+/obj/item/weapon/storage/secure/briefcase/attack_hand(mob/user)
 	if ((src.loc == user) && (src.locked == 1))
 		usr << "<span class='warning'>[src] is locked and cannot be opened!</span>"
 	else if ((src.loc == user) && (!src.locked))
@@ -207,7 +213,7 @@
 	new /obj/item/weapon/paper(src)
 	new /obj/item/weapon/pen(src)
 
-/obj/item/weapon/storage/secure/safe/attack_hand(mob/user as mob)
+/obj/item/weapon/storage/secure/safe/attack_hand(mob/user)
 	return attack_self(user)
 
 /obj/item/weapon/storage/secure/safe/HoS/New()

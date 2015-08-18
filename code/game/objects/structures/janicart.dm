@@ -80,7 +80,7 @@
 		mybag.attackby(I, user)
 	else if(istype(I, /obj/item/weapon/crowbar))
 		user.visible_message("[user] begins to empty the contents of [src].", "<span class='notice'>You begin to empty the contents of [src]...</span>")
-		if(do_after(user, 30))
+		if(do_after(user, 30, target = src))
 			usr << "<span class='notice'>You empty the contents of [src]'s bucket onto the floor.</span>"
 			reagents.reaction(src.loc)
 			src.reagents.clear_reagents()
@@ -233,7 +233,7 @@
 	if(user.stat || user.stunned || user.weakened || user.paralysis)
 		unbuckle_mob()
 	if(istype(user.l_hand, keytype) || istype(user.r_hand, keytype))
-		if(!Process_Spacemove(direction) || !has_gravity(src.loc) || move_delay)
+		if(!Process_Spacemove(direction) || !has_gravity(src.loc) || move_delay || !isturf(loc))
 			return
 		step(src, direction)
 		update_mob()
@@ -301,7 +301,7 @@
 				buckled_mob.pixel_y = 7
 
 
-/obj/structure/stool/bed/chair/janicart/bullet_act(var/obj/item/projectile/Proj)
+/obj/structure/stool/bed/chair/janicart/bullet_act(obj/item/projectile/Proj)
 	if(buckled_mob)
 		buckled_mob.bullet_act(Proj)
 

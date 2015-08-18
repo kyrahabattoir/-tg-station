@@ -25,7 +25,7 @@
 	if(!broken && !burnt)
 		icon_state = icon_plating //Because asteroids are 'platings' too.
 
-/turf/simulated/floor/plating/attackby(obj/item/C as obj, mob/user as mob, params)
+/turf/simulated/floor/plating/attackby(obj/item/C, mob/user, params)
 	if(..())
 		return
 	if(istype(C, /obj/item/stack/rods))
@@ -38,7 +38,7 @@
 			return
 		else
 			user << "<span class='notice'>You begin reinforcing the floor...</span>"
-			if(do_after(user, 30))
+			if(do_after(user, 30, target = src))
 				if (R.get_amount() >= 2)
 					ChangeTurf(/turf/simulated/floor/engine)
 					playsound(src, 'sound/items/Deconstruct.ogg', 80, 1)
@@ -87,18 +87,18 @@
 /turf/simulated/floor/engine/burn_tile()
 	return //unburnable
 
-/turf/simulated/floor/engine/make_plating(var/force = 0)
+/turf/simulated/floor/engine/make_plating(force = 0)
 	if(force)
 		..()
 	return //unplateable
 
-/turf/simulated/floor/engine/attackby(obj/item/weapon/C as obj, mob/user as mob, params)
+/turf/simulated/floor/engine/attackby(obj/item/weapon/C, mob/user, params)
 	if(!C || !user)
 		return
 	if(istype(C, /obj/item/weapon/wrench))
 		user << "<span class='notice'>You begin removing rods...</span>"
 		playsound(src, 'sound/items/Ratchet.ogg', 80, 1)
-		if(do_after(user, 30))
+		if(do_after(user, 30, target = src))
 			if(!istype(src, /turf/simulated/floor/engine))
 				return
 			new /obj/item/stack/rods(src, 2)
@@ -161,6 +161,11 @@
 
 /turf/simulated/floor/plating/lava
 	icon_state = "lava"
+
+/turf/simulated/floor/plating/lava/airless
+	oxygen = 0
+	nitrogen = 0
+	temperature = TCMB
 
 /turf/simulated/floor/plating/abductor
 	name = "alien floor"

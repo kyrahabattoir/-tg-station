@@ -16,6 +16,7 @@
 	blood_overlay_type = "armor"
 	body_parts_covered = CHEST
 	allowed = list (/obj/item/weapon/gun/energy/laser/bluetag)
+	burn_state = -1 //Won't burn in fires
 
 /obj/item/clothing/suit/redtag
 	name = "red laser tag armor"
@@ -25,6 +26,7 @@
 	blood_overlay_type = "armor"
 	body_parts_covered = CHEST
 	allowed = list (/obj/item/weapon/gun/energy/laser/redtag)
+	burn_state = -1 //Won't burn in fires
 
 /*
  * Costume
@@ -88,7 +90,7 @@
 	w_class = 3
 	allowed = list(/obj/item/device/flashlight,/obj/item/weapon/tank/internals/emergency_oxygen,/obj/item/toy)
 	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
-
+	burn_state = -1 //Won't burn in fires
 
 /obj/item/clothing/suit/hastur
 	name = "\improper Hastur's robe"
@@ -195,6 +197,49 @@
 	body_parts_covered = CHEST|GROIN|LEGS|FEET
 	flags_inv = HIDEJUMPSUIT|HIDESHOES
 
+/obj/item/clothing/suit/hooded/carp_costume
+	name = "carp costume"
+	desc = "A costume made from 'synthetic' carp scales, it smells."
+	icon_state = "carp_casual"
+	item_state = "labcoat"
+	body_parts_covered = CHEST|GROIN|ARMS
+	cold_protection = CHEST|GROIN|ARMS
+	min_cold_protection_temperature = FIRE_SUIT_MIN_TEMP_PROTECT	//Space carp like space, so you should too
+	allowed = list(/obj/item/weapon/tank/internals/emergency_oxygen, /obj/item/weapon/gun/projectile/automatic/speargun)
+	hooded = 1
+	action_button_name = "Toggle Carp Hood"
+	hoodtype = /obj/item/clothing/head/carp_hood
+
+/obj/item/clothing/head/carp_hood
+	name = "carp hood"
+	desc = "A hood attached to a carp costume."
+	icon_state = "carp_casual"
+	body_parts_covered = HEAD
+	cold_protection = HEAD
+	min_cold_protection_temperature = FIRE_SUIT_MIN_TEMP_PROTECT
+	flags = NODROP
+
+/obj/item/clothing/suit/hooded/ian_costume	//It's Ian, rub his bell- oh god what happened to his inside parts?
+	name = "corgi costume"
+	desc = "A costume that looks like someone made a human-like corgi, it won't guarantee belly rubs."
+	icon_state = "ian"
+	item_state = "labcoat"
+	body_parts_covered = CHEST|GROIN|ARMS
+	//cold_protection = CHEST|GROIN|ARMS
+	//min_cold_protection_temperature = FIRE_SUIT_MIN_TEMP_PROTECT
+	allowed = list(,)
+	hooded = 1
+	action_button_name = "Toggle Ian Hood"
+	hoodtype = /obj/item/clothing/head/ian_hood
+
+/obj/item/clothing/head/ian_hood
+	name = "corgi hood"
+	desc = "A hood that looks just like a corgi's head, it won't guarantee dog biscuits."
+	icon_state = "ian"
+	body_parts_covered = HEAD
+	//cold_protection = HEAD
+	//min_cold_protection_temperature = FIRE_SUIT_MIN_TEMP_PROTECT
+	flags = NODROP
 
 /*
  * Misc
@@ -235,6 +280,40 @@
 	name = "leather jacket"
 	desc = "Pompadour not included."
 	icon_state = "leatherjacket"
+	item_state = "hostrench"
+	burn_state = -1 //Not Burnable
+	max_heat_protection_temperature = ARMOR_MAX_TEMP_PROTECT
+	allowed = list(/obj/item/device/flashlight,/obj/item/weapon/tank/internals/emergency_oxygen,/obj/item/toy,/obj/item/weapon/storage/fancy/cigarettes,/obj/item/weapon/lighter,/obj/item/weapon/gun/projectile/automatic/pistol,/obj/item/weapon/gun/projectile/revolver,/obj/item/weapon/gun/projectile/revolver/detective)
+
+/obj/item/clothing/suit/jacket/leather/overcoat
+	name = "leather overcoat"
+	desc = "That's a damn fine coat."
+	icon_state = "leathercoat"
+	body_parts_covered = CHEST|GROIN|ARMS|LEGS
+	cold_protection = CHEST|GROIN|ARMS|LEGS
+
+/obj/item/clothing/suit/jacket/puffer
+	name = "puffer jacket"
+	desc = "A thick jacket with a rubbery, water-resistant shell."
+	icon_state = "pufferjacket"
+	item_state = "hostrench"
+	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 50, rad = 0)
+
+/obj/item/clothing/suit/jacket/puffer/vest
+	name = "puffer vest"
+	desc = "A thick vest with a rubbery, water-resistant shell."
+	icon_state = "puffervest"
+	item_state = "armor"
+	body_parts_covered = CHEST|GROIN
+	cold_protection = CHEST|GROIN
+	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 30, rad = 0)
+
+/obj/item/clothing/suit/jacket/miljacket
+	name = "military jacket"
+	desc = "A canvas jacket styled after classical American military garb. Feels sturdy, yet comfortable."
+	icon_state = "militaryjacket"
+	item_state = "militaryjacket"
+	allowed = list(/obj/item/device/flashlight,/obj/item/weapon/tank/internals/emergency_oxygen,/obj/item/toy,/obj/item/weapon/storage/fancy/cigarettes,/obj/item/weapon/lighter,/obj/item/weapon/gun/projectile/automatic/pistol,/obj/item/weapon/gun/projectile/revolver,/obj/item/weapon/gun/projectile/revolver/detective)
 
 /obj/item/clothing/suit/xenos
 	name = "xenos suit"
@@ -243,6 +322,8 @@
 	item_state = "xenos_helm"
 	body_parts_covered = CHEST|GROIN|LEGS|ARMS|HANDS
 	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
+
+
 
 // WINTER COATS
 
@@ -316,3 +397,5 @@
 	icon_state = "coatminer"
 	allowed = list(/obj/item/weapon/pickaxe,/obj/item/device/flashlight,/obj/item/weapon/tank/internals/emergency_oxygen,/obj/item/toy,/obj/item/weapon/storage/fancy/cigarettes,/obj/item/weapon/lighter)
 	armor = list(melee = 10, bullet = 0, laser = 0, energy = 0, bomb = 0, bio = 0, rad = 0)
+
+//

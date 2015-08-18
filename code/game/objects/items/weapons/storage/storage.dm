@@ -1,14 +1,15 @@
-// To clarify:
-// For use_to_pickup and allow_quick_gather functionality,
-// see item/attackby() (/game/objects/items.dm)
-// Do not remove this functionality without good reason, cough reagent_containers cough.
-// -Sayu
+// External storage-related logic:
+// /mob/proc/ClickOn() in /_onclick/click.dm - clicking items in storages
+// /mob/living/Move() in /modules/mob/living/living.dm - hiding storage boxes on mob movement
+// /item/attackby() in /game/objects/items.dm - use_to_pickup and allow_quick_gather functionality
+// -- c0
 
 
 /obj/item/weapon/storage
 	name = "storage"
 	icon = 'icons/obj/storage.dmi'
 	w_class = 3.0
+	var/silent = 0 // No message on putting items in
 	var/list/can_hold = new/list() //List of objects which this item can store (if set, it can't store anything else)
 	var/list/cant_hold = new/list() //List of objects which this item can't store (in effect only if can_hold isn't set)
 	var/list/is_seeing = new/list() //List of mobs which are currently seeing the contents of this item's storage
@@ -25,9 +26,12 @@
 	var/preposition = "in" // You put things 'in' a bag, but trays need 'on'.
 
 
-/obj/item/weapon/storage/MouseDrop(obj/over_object)
+/obj/item/weapon/storage/MouseDrop(atom/over_object)
 	if(iscarbon(usr) || isdrone(usr)) //all the check for item manipulation are in other places, you can safely open any storages as anything and its not buggy, i checked
 		var/mob/M = usr
+
+		if(!over_object)
+			return
 
 		if (istype(usr.loc,/obj/mecha)) // stops inventory actions in a mech
 			return
@@ -39,13 +43,14 @@
 			show_to(M)
 			return
 
-		if(!( istype(over_object, /obj/screen) ))
-			return ..()
+		if(!M.restrained() && !M.stat)
+			if(!istype(over_object, /obj/screen))
+				return content_can_dump(over_object, M)
 
-		if(!(loc == usr) || (loc && loc.loc == usr))
-			return
-		playsound(loc, "rustle", 50, 1, -5)
-		if(!( M.restrained() ) && !( M.stat ))
+			if(loc != usr || (loc && loc.loc == usr))
+				return
+
+			playsound(loc, "rustle", 50, 1, -5)
 			switch(over_object.name)
 				if("r_hand")
 					if(!M.unEquip(src))
@@ -56,8 +61,26 @@
 						return
 					M.put_in_l_hand(src)
 			add_fingerprint(usr)
-			return
 
+//Check if this storage can dump the items
+/obj/item/weapon/storage/proc/content_can_dump(atom/dest_object, mob/user)
+	if(Adjacent(user) && dest_object.Adjacent(user))
+		if(dest_object.storage_contents_dump_act(src, user))
+			playsound(loc, "rustle", 50, 1, -5)
+			return 1
+	return 0
+
+//Object behaviour on storage dump
+/obj/item/weapon/storage/storage_contents_dump_act(obj/item/weapon/storage/src_object, mob/user)
+	for(var/obj/item/I in src_object)
+		if(can_be_inserted(I,0,user))
+			src_object.remove_from_storage(I, src)
+	orient2hud(user)
+	src_object.orient2hud(user)
+	if(user.s_active) //refresh the HUD to show the transfered contents
+		user.s_active.close(user)
+		user.s_active.show_to(user)
+	return 1
 
 /obj/item/weapon/storage/proc/return_inv()
 	var/list/L = list()
@@ -85,7 +108,7 @@
 	is_seeing |= user
 
 
-/obj/item/weapon/storage/throw_at(atom/target, range, speed)
+/obj/item/weapon/storage/throw_at(atom/target, range, speed, mob/thrower, spin)
 	close_all()
 	return ..()
 
@@ -146,6 +169,7 @@
 
 	if(display_contents_with_number)
 		for(var/datum/numbered_display/ND in display_contents)
+			ND.sample_object.mouse_opacity = 2
 			ND.sample_object.screen_loc = "[cx]:16,[cy]:16"
 			ND.sample_object.maptext = "<font color='white'>[(ND.number > 1)? "[ND.number]" : ""]</font>"
 			ND.sample_object.layer = 20
@@ -155,6 +179,7 @@
 				cy--
 	else
 		for(var/obj/O in contents)
+			O.mouse_opacity = 2 //This is here so storage items that spawn with contents correctly have the "click around item to equip"
 			O.screen_loc = "[cx]:16,[cy]:16"
 			O.maptext = ""
 			O.layer = 20
@@ -268,6 +293,8 @@
 	if(usr)
 		if(!usr.unEquip(W))
 			return 0
+	if(silent)
+		prevent_warning = 1
 	W.loc = src
 	W.on_enter_storage(src)
 	if(usr)
@@ -288,6 +315,7 @@
 		orient2hud(usr)
 		for(var/mob/M in can_see_contents())
 			show_to(M)
+	W.mouse_opacity = 2 //So you can click on the area around the item to equip it, instead of having to pixel hunt
 	update_icon()
 	return 1
 
@@ -317,6 +345,7 @@
 		W.maptext = ""
 	W.on_exit_storage(src)
 	update_icon()
+	W.mouse_opacity = initial(W.mouse_opacity)
 	return 1
 
 
@@ -428,6 +457,9 @@
 
 
 /obj/item/weapon/storage/Destroy()
+	for(var/obj/O in contents)
+		O.mouse_opacity = initial(O.mouse_opacity)
+
 	close_all()
 	qdel(boxes)
 	qdel(closer)
@@ -447,3 +479,6 @@
 		if(verbs.Find(/obj/item/weapon/storage/verb/quick_empty))
 			quick_empty()
 
+/obj/item/weapon/storage/handle_atom_del(atom/A)
+	if(A in contents)
+		remove_from_storage(A,null)

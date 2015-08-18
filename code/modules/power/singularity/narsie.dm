@@ -42,7 +42,7 @@
 		user << "Your soul is too far away."
 		return
 	makeNewConstruct(/mob/living/simple_animal/construct/harvester, user, null, 1)
-	PoolOrNew(/obj/effect/effect/sleep_smoke, user.loc)
+	PoolOrNew(/obj/effect/effect/smoke/sleeping, user.loc)
 
 
 /obj/singularity/narsie/process()
@@ -62,7 +62,7 @@
 	godsmack(A)
 	return
 
-/obj/singularity/narsie/proc/godsmack(var/atom/A)
+/obj/singularity/narsie/proc/godsmack(atom/A)
 	if(istype(A,/obj/))
 		var/obj/O = A
 		O.ex_act(1.0)
@@ -81,7 +81,7 @@
 				M.apply_effect(3, STUN)
 
 
-/obj/singularity/narsie/consume(var/atom/A)
+/obj/singularity/narsie/consume(atom/A)
 	A.narsie_act()
 
 
@@ -123,7 +123,7 @@
 		return
 
 
-/obj/singularity/narsie/proc/acquire(var/mob/food)
+/obj/singularity/narsie/proc/acquire(mob/food)
 	target << "<span class='notice'>NAR-SIE HAS LOST INTEREST IN YOU</span>"
 	target = food
 	if(ishuman(target))

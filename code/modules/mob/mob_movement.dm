@@ -1,18 +1,16 @@
 /mob/CanPass(atom/movable/mover, turf/target, height=0)
-	if(height==0) return 1
-
-	if(istype(mover) && mover.checkpass(PASSMOB))
+	if(height==0)
 		return 1
-	if(istype(mover, /obj/item/projectile))
+	if(istype(mover, /obj/item/projectile) || mover.throwing)
 		return (!density || lying)
+	if(mover.checkpass(PASSMOB))
+		return 1
 	if(ismob(mover))
 		var/mob/moving_mob = mover
 		if ((other_mobs && moving_mob.other_mobs))
 			return 1
-		return (!mover.density || !density || lying)
-	else
-		return (!mover.density || !density || lying)
-	return
+	return (!mover.density || !density || lying)
+
 
 
 /client/Northeast()
@@ -103,8 +101,6 @@
 	if(mob.stat == DEAD)
 		mob.ghostize()
 		return 0
-	if(isAI(mob))
-		return AIMove(n,direct,mob)
 	if(moving)
 		return 0
 	if(isliving(mob))
@@ -120,6 +116,9 @@
 
 	if(mob.remote_control)					//we're controlling something, our movement is relayed to it
 		return mob.remote_control.relaymove(mob, direct)
+
+	if(isAI(mob))
+		return AIMove(n,direct,mob)
 
 	if(!mob.canmove)
 		return 0
@@ -137,7 +136,11 @@
 
 	if(isturf(mob.loc))
 
+
+		var/turf/T = mob.loc
 		move_delay = world.time//set move delay
+
+		move_delay += T.slowdown
 
 		if(mob.restrained())	//Why being pulled while cuffed prevents you from moving
 			for(var/mob/M in range(mob, 1))
@@ -175,7 +178,6 @@
 					var/mob/M = L[1]
 					if(M)
 						if ((get_dist(mob, M) <= 1 || M.loc == mob.loc))
-							var/turf/T = mob.loc
 							. = ..()
 							if (isturf(M.loc))
 								var/diag = get_dir(mob, M)
@@ -297,6 +299,16 @@
 					anim(mobloc,mob,'icons/mob/mob.dmi',,"shadow",,L.dir)
 				L.loc = get_step(L, direct)
 			L.dir = direct
+		if(3) //Incorporeal move, but blocked by holy-watered tiles
+			var/turf/simulated/floor/stepTurf = get_step(L, direct)
+			if(stepTurf.flags & NOJAUNT)
+				L << "<span class='warning'>Holy energies block your path.</span>"
+				L.notransform = 1
+				spawn(2)
+					L.notransform = 0
+			else
+				L.loc = get_step(L, direct)
+				L.dir = direct
 	return 1
 
 
@@ -304,7 +316,7 @@
 ///Called by /client/Move()
 ///For moving in space
 ///Return 1 for movement 0 for none
-/mob/Process_Spacemove(var/movement_dir = 0)
+/mob/Process_Spacemove(movement_dir = 0)
 
 	if(..())
 		return 1
@@ -330,8 +342,6 @@
 				continue
 			if(AM.density)
 				if(AM.anchored)
-					if(istype(AM, /obj/item/projectile)) //"You grab the bullet and push off of it!" No
-						continue
 					return 1
 				if(pulling == AM)
 					continue
@@ -351,7 +361,7 @@
 /mob/proc/mob_negates_gravity()
 	return 0
 
-/mob/proc/Move_Pulled(var/atom/A)
+/mob/proc/Move_Pulled(atom/A)
 	if (!canmove || restrained() || !pulling)
 		return
 	if (pulling.anchored)
@@ -373,7 +383,7 @@
 		step(pulling, get_dir(pulling.loc, A))
 	return
 
-/mob/proc/slip(var/s_amount, var/w_amount, var/obj/O, var/lube)
+/mob/proc/slip(s_amount, w_amount, obj/O, lube)
 	return
 
 /mob/proc/update_gravity()

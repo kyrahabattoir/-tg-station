@@ -1,7 +1,6 @@
 	////////////
 	//SECURITY//
 	////////////
-#define TOPIC_SPAM_DELAY	2		//2 ticks is about 2/10ths of a second; it was 4 ticks, but that caused too many clicks to be lost due to lag
 #define UPLOAD_LIMIT		1048576	//Restricts client uploads to the server to 1MB //Could probably do with being lower.
 #define MIN_CLIENT_VERSION	0		//Just an ambiguously low version for now, I don't want to suddenly stop people playing.
 									//I would just like the code ready should it ever need to be used.
@@ -24,15 +23,11 @@
 	if(!usr || usr != mob)	//stops us calling Topic for somebody else's client. Also helps prevent usr=null
 		return
 
-	//Reduces spamming of links by dropping calls that happen during the delay period
-	if(next_allowed_topic_time > world.time)
-		return
-	next_allowed_topic_time = world.time + TOPIC_SPAM_DELAY
-
 	//Admin PM
 	if(href_list["priv_msg"])
-		src << "message to src"
-		usr << "message to usr"
+		if (href_list["ahelp_reply"])
+			cmd_ahelp_reply(href_list["priv_msg"])
+			return
 		cmd_admin_pm(href_list["priv_msg"],null)
 		return
 
@@ -54,7 +49,7 @@
 		return 0
 	return 1
 
-/client/proc/handle_spam_prevention(var/message, var/mute_type)
+/client/proc/handle_spam_prevention(message, mute_type)
 	if(config.automute_on && !holder && src.last_message == message)
 		src.last_message_count++
 		if(src.last_message_count >= SPAM_TRIGGER_AUTOMUTE)
@@ -133,7 +128,7 @@ var/next_external_rsc = 0
 
 	if(holder)
 		add_admin_verbs()
-		admin_memo_show()
+		admin_memo_output("Show")
 		if((global.comms_key == "default_pwd" || length(global.comms_key) <= 6) && global.comms_allowed) //It's the default value or less than 6 characters long, but it somehow didn't disable comms.
 			src << "<span class='danger'>The server's API key is either too short or is the default value! Consider changing it immediately!</span>"
 
@@ -167,6 +162,11 @@ var/next_external_rsc = 0
 		sync_client_with_db()
 
 	send_resources()
+
+	if(!void)
+		void = new()
+
+	screen += void
 
 	if(prefs.lastchangelog != changelog_hash) //bolds the changelog button on the interface so we know there are updates.
 		src << "<span class='info'>You have unread updates in the changelog.</span>"
@@ -231,6 +231,11 @@ var/next_external_rsc = 0
 	while (query_cid.NextRow())
 		related_accounts_cid += "[query_cid.item[1]], "
 
+	var/DBQuery/query_watch = dbcon.NewQuery("SELECT ckey, reason FROM [format_table_name("watch")] WHERE (ckey = '[sql_ckey]')")
+	query_watch.Execute()
+	if(query_watch.NextRow())
+		message_admins("<font color='red'><B>Notice: </B></font><font color='blue'>[key_name_admin(src)] is flagged for watching and has just connected - Reason: [query_watch.item[2]]</font>")
+		send2irc_adminless_only("Watchlist", "[key_name(src)] is flagged for watching and has just connected - Reason: [query_watch.item[2]]")
 
 	var/admin_rank = "Player"
 	if (src.holder && src.holder.rank)
@@ -266,6 +271,19 @@ var/next_external_rsc = 0
 
 //send resources to the client. It's here in its own proc so we can move it around easiliy if need be
 /client/proc/send_resources()
+
+	spawn
+		// Preload the HTML interface. This needs to be done due to BYOND bug http://www.byond.com/forum/?post=1487244
+		var/datum/html_interface/hi
+		for (var/type in typesof(/datum/html_interface))
+			hi = new type(null)
+			hi.sendResources(src)
+
+	// Preload the crew monitor. This needs to be done due to BYOND bug http://www.byond.com/forum/?post=1487244
+	spawn
+		if (crewmonitor && crewmonitor.initialized)
+			crewmonitor.sendResources(src)
+
 	//Send nanoui files to client
 	SSnano.send_resources(src)
 	getFiles(

@@ -7,6 +7,7 @@
 	max_heat_protection_temperature = ARMOR_MAX_TEMP_PROTECT
 	strip_delay = 60
 	put_on_delay = 40
+	burn_state = -1 //Won't burn in fires
 
 /obj/item/clothing/suit/armor/vest
 	name = "armor"
@@ -45,11 +46,21 @@
 	cold_protection = CHEST|GROIN|ARMS|HANDS
 	heat_protection = CHEST|GROIN|ARMS|HANDS
 	strip_delay = 70
+	burn_state = 0 //Burnable
 
 /obj/item/clothing/suit/armor/vest/warden/alt
 	name = "warden's armored jacket"
 	desc = "A navy-blue armored jacket with blue shoulder designations and '/Warden/' stitched into one of the chest pockets."
 	icon_state = "warden_alt"
+
+/obj/item/clothing/suit/armor/vest/leather
+	name = "security overcoat"
+	desc = "Lightly armored leather overcoat meant as casual wear for high-ranking officers. Bears the crest of Nanotrasen Security."
+	icon_state = "leathercoat-sec"
+	item_state = "hostrench"
+	body_parts_covered = CHEST|GROIN|ARMS|LEGS
+	cold_protection = CHEST|GROIN|LEGS|ARMS
+	heat_protection = CHEST|GROIN|LEGS|ARMS
 
 /obj/item/clothing/suit/armor/vest/capcarapace
 	name = "captain's carapace"
@@ -92,7 +103,7 @@
 	armor = list(melee = 10, bullet = 10, laser = 60, energy = 50, bomb = 0, bio = 0, rad = 0)
 	var/hit_reflect_chance = 40
 
-/obj/item/clothing/suit/armor/laserproof/IsReflect(var/def_zone)
+/obj/item/clothing/suit/armor/laserproof/IsReflect(def_zone)
 	if(!(def_zone in list("chest", "groin"))) //If not shot where ablative is covering you, you don't get the reflection bonus!
 		hit_reflect_chance = 0
 	if (prob(hit_reflect_chance))
@@ -103,7 +114,7 @@
 	desc = "An armored vest with a detective's badge on it."
 	icon_state = "detective-armor"
 	allowed = list(/obj/item/weapon/tank/internals/emergency_oxygen,/obj/item/weapon/reagent_containers/spray/pepper,/obj/item/device/flashlight,/obj/item/weapon/gun/energy,/obj/item/weapon/gun/projectile,/obj/item/ammo_box,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/restraints/handcuffs,/obj/item/weapon/storage/fancy/cigarettes,/obj/item/weapon/lighter,/obj/item/device/detective_scanner,/obj/item/device/taperecorder)
-
+	burn_state = 0 //Burnable
 
 
 //Reactive armor
@@ -124,7 +135,7 @@
 		return 1
 	return 0
 
-/obj/item/clothing/suit/armor/reactive/attack_self(mob/user as mob)
+/obj/item/clothing/suit/armor/reactive/attack_self(mob/user)
 	src.active = !( src.active )
 	if (src.active)
 		user << "<span class='notice'>[src] is now active.</span>"

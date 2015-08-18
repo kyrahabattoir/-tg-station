@@ -44,14 +44,6 @@
 
 /obj/structure/closet/secure_closet/medical3/New()
 	..()
-	if(prob(50))
-		new /obj/item/weapon/storage/backpack/medic(src)
-	else
-		new /obj/item/weapon/storage/backpack/satchel_med(src)
-	new /obj/item/weapon/storage/backpack/dufflebag/med(src)
-	new /obj/item/clothing/under/rank/medical(src)
-	new /obj/item/clothing/suit/toggle/labcoat(src)
-	new /obj/item/clothing/shoes/sneakers/white(src)
 	new /obj/item/device/radio/headset/headset_med(src)
 	new /obj/item/weapon/defibrillator/loaded(src)
 	new /obj/item/clothing/gloves/color/latex/nitrile(src)
@@ -66,11 +58,6 @@
 
 /obj/structure/closet/secure_closet/CMO/New()
 	..()
-	new /obj/item/clothing/suit/hooded/wintercoat/medical(src)
-	if(prob(50))
-		new /obj/item/weapon/storage/backpack/medic(src)
-	else
-		new /obj/item/weapon/storage/backpack/satchel_med(src)
 	new /obj/item/clothing/cloak/cmo(src)
 	new /obj/item/weapon/storage/backpack/dufflebag/med(src)
 	new /obj/item/clothing/suit/bio_suit/cmo(src)
@@ -85,7 +72,7 @@
 	new /obj/item/weapon/storage/belt/medical(src)
 	new /obj/item/device/flash/handheld(src)
 	new /obj/item/weapon/reagent_containers/hypospray/CMO(src)
-	new /obj/item/cybernetic_implant/eyes/hud/medical(src)
+	new /obj/item/organ/internal/cyberimp/eyes/hud/medical(src)
 
 /obj/structure/closet/secure_closet/animal
 	name = "animal control"

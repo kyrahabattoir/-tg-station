@@ -65,9 +65,9 @@
 
 /obj/structure/mineral_door/proc/TryToSwitchState(atom/user)
 	if(isSwitchingStates) return
-	if(ismob(user))
-		var/mob/M = user
-		if(world.time - user.last_bumped <= 60) return //NOTE do we really need that?
+	if(isliving(user))
+		var/mob/living/M = user
+		if(world.time - M.last_bumped <= 60) return //NOTE do we really need that?
 		if(M.client)
 			if(iscarbon(M))
 				var/mob/living/carbon/C = M
@@ -126,7 +126,7 @@
 	if(istype(W,/obj/item/weapon/pickaxe))
 		var/obj/item/weapon/pickaxe/digTool = W
 		user << "<span class='notice'>You start digging the [name]...</span>"
-		if(do_after(user,digTool.digspeed*hardness) && src)
+		if(do_after(user,digTool.digspeed*hardness, target = src) && src)
 			user << "<span class='notice'>You finish digging.</span>"
 			Dismantle()
 	else if(istype(W,/obj/item/weapon)) //not sure, can't not just weapons get passed to this proc?
@@ -242,6 +242,8 @@
 	hardness = 1
 	openSound = 'sound/effects/doorcreaky.ogg'
 	closeSound = 'sound/effects/doorcreaky.ogg'
+	burn_state = 0 //Burnable
+	burntime = 30
 
 /obj/structure/mineral_door/wood/Dismantle(devastated = 0)
 	if(!devastated)

@@ -13,6 +13,8 @@
 	icon_state = "bed"
 	can_buckle = 1
 	buckle_lying = 1
+	burn_state = 0 //Burnable
+	burntime = 30
 
 /obj/structure/stool/bed/alien
 	name = "resting contraption"
@@ -31,7 +33,7 @@
 			. = 0
 		buckled_mob.buckled = src
 
-/obj/structure/stool/bed/Process_Spacemove(var/movement_dir = 0)
+/obj/structure/stool/bed/Process_Spacemove(movement_dir = 0)
 	if(buckled_mob)
 		return buckled_mob.Process_Spacemove(movement_dir)
 	return ..()
@@ -41,10 +43,10 @@
 		return 1
 	return ..()
 
-/obj/structure/stool/bed/attack_paw(mob/user as mob)
+/obj/structure/stool/bed/attack_paw(mob/user)
 	return src.attack_hand(user)
 
-/obj/structure/stool/bed/attack_animal(var/mob/living/simple_animal/M)//No more buckling hostile mobs to chairs to render them immobile forever
+/obj/structure/stool/bed/attack_animal(mob/living/simple_animal/M)//No more buckling hostile mobs to chairs to render them immobile forever
 	if(M.environment_smash)
 		new /obj/item/stack/sheet/metal(src.loc)
 		qdel(src)
@@ -59,6 +61,7 @@
 	icon = 'icons/obj/rollerbed.dmi'
 	icon_state = "down"
 	anchored = 0
+	burn_state = -1 //Not Burnable
 
 /obj/structure/stool/bed/roller/post_buckle_mob(mob/living/M)
 	if(M == buckled_mob)
@@ -135,4 +138,17 @@
 		target.loc = src
 		user.visible_message("[user] collects [loaded].", "<span class='notice'>You collect [loaded].</span>")
 	..()
+
+/obj/structure/stool/bed/dogbed
+	name = "dog bed"
+	icon_state = "dogbed"
+	desc = "A comfy-looking dog bed. You can even strap your pet in, in case the gravity turns off."
+	anchored = 0
+
+/obj/structure/stool/bed/dogbed/attackby(obj/item/weapon/W, mob/user, params)
+	if(istype(W, /obj/item/weapon/wrench))
+		playsound(loc, 'sound/items/Ratchet.ogg', 50, 1)
+		new /obj/item/stack/sheet/mineral/wood(loc, 10)
+		qdel(src)
+
 

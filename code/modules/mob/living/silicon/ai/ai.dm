@@ -30,6 +30,7 @@ var/list/ai_list = list()
 	var/alarms = list("Motion"=list(), "Fire"=list(), "Atmosphere"=list(), "Power"=list(), "Camera"=list(), "Burglar"=list())
 	var/viewalerts = 0
 	var/icon/holo_icon//Default is assigned when AI is created.
+	var/obj/mecha/controlled_mech //For controlled_mech a mech, to determine whether to relaymove or use the AI eye.
 	var/radio_enabled = 1 //Determins if a carded AI can speak with its built in radio or not.
 	radiomod = ";" //AIs will, by default, state their laws on the internal radio.
 	var/obj/item/device/pda/ai/aiPDA = null
@@ -42,6 +43,7 @@ var/list/ai_list = list()
 	var/processing_time = 100
 	var/list/datum/AI_Module/current_modules = list()
 	var/fire_res_on_core = 0
+	var/can_dominate_mechs = 0
 
 	var/control_disabled = 0 // Set to 1 to stop AI from interacting via Click()
 	var/malfhacking = 0 // More or less a copy of the above var, so that malf AIs can hack and still get new cyborgs -- NeoFite
@@ -111,6 +113,10 @@ var/list/ai_list = list()
 		else
 			if (B.brainmob.mind)
 				B.brainmob.mind.transfer_to(src)
+				if(mind.special_role)
+					mind.store_memory("As an AI, you must obey your silicon laws above all else. Your objectives will consider you to be dead.")
+					src << "<span class='userdanger'>You have been installed as an AI! </span>"
+					src << "<span class='danger'>You must obey your silicon laws above all else. Your objectives will consider you to be dead.</span>"
 
 			src << "<B>You are playing the station's AI. The AI cannot move, but can interact with many objects while viewing them (through cameras).</B>"
 			src << "<B>To look at other parts of the station, click on yourself to get a camera menu.</B>"
@@ -303,7 +309,7 @@ var/list/ai_list = list()
 			usr << "Wireless control is disabled!"
 			return
 
-	var/reason = input(src, "What is the nature of your emergency? ([CALL_SHUTTLE_REASON_LENGTH] characters required.)", "Confirm Shuttle Call") as text
+	var/reason = input(src, "What is the nature of your emergency? ([CALL_SHUTTLE_REASON_LENGTH] characters required.)", "Confirm Shuttle Call") as null|text
 
 	if(trim(reason))
 		SSshuttle.requestEvac(src, reason)
@@ -345,7 +351,7 @@ var/list/ai_list = list()
 	SSshuttle.cancelEvac(src)
 	return
 
-/mob/living/silicon/ai/check_eye(var/mob/user as mob)
+/mob/living/silicon/ai/check_eye(mob/user)
 	if (!current)
 		return null
 	user.reset_view(current)
@@ -449,13 +455,21 @@ var/list/ai_list = list()
 		botcall()
 		return
 
-/mob/living/silicon/ai/bullet_act(var/obj/item/projectile/Proj)
+	if (href_list["ai_take_control"]) //Mech domination
+		var/obj/mecha/M = locate(href_list["ai_take_control"])
+		if(controlled_mech)
+			src << "You are already loaded into an onboard computer!"
+			return
+		if(M)
+			M.transfer_ai(AI_MECH_HACK,src, usr) //Called om the mech itself.
+
+/mob/living/silicon/ai/bullet_act(obj/item/projectile/Proj)
 	..(Proj)
 	updatehealth()
 	return 2
 
 
-/mob/living/silicon/ai/attack_alien(mob/living/carbon/alien/humanoid/M as mob)
+/mob/living/silicon/ai/attack_alien(mob/living/carbon/alien/humanoid/M)
 	if (!ticker)
 		M << "You cannot attack people before the game has started."
 		return
@@ -471,7 +485,7 @@ var/list/ai_list = list()
 	..()
 
 
-/mob/living/silicon/ai/proc/switchCamera(var/obj/machinery/camera/C)
+/mob/living/silicon/ai/proc/switchCamera(obj/machinery/camera/C)
 
 	if(!tracking)
 		cameraFollow = null
@@ -522,7 +536,7 @@ var/list/ai_list = list()
 	popup.set_content(d)
 	popup.open()
 
-/mob/living/silicon/ai/proc/set_waypoint(var/atom/A)
+/mob/living/silicon/ai/proc/set_waypoint(atom/A)
 	var/turf/turf_check = get_turf(A)
 		//The target must be in view of a camera or near the core.
 	if(turf_check in range(get_turf(src)))
@@ -532,7 +546,7 @@ var/list/ai_list = list()
 	else
 		src << "<span class='danger'>Selected location is not visible.</span>"
 
-/mob/living/silicon/ai/proc/call_bot(var/turf/waypoint)
+/mob/living/silicon/ai/proc/call_bot(turf/waypoint)
 
 	if(!Bot)
 		return
@@ -543,7 +557,7 @@ var/list/ai_list = list()
 
 	Bot.call_bot(src, waypoint)
 
-/mob/living/silicon/ai/triggerAlarm(var/class, area/A, var/O, var/obj/alarmsource)
+/mob/living/silicon/ai/triggerAlarm(class, area/A, O, obj/alarmsource)
 	if(alarmsource.z != z)
 		return
 	if (stat == 2)
@@ -582,7 +596,7 @@ var/list/ai_list = list()
 	if (viewalerts) ai_alerts()
 	return 1
 
-/mob/living/silicon/ai/cancelAlarm(var/class, area/A as area, obj/origin)
+/mob/living/silicon/ai/cancelAlarm(class, area/A, obj/origin)
 	var/list/L = alarms[class]
 	var/cleared = 0
 	for (var/I in L)
@@ -792,3 +806,23 @@ var/list/ai_list = list()
 /mob/living/silicon/ai/attack_slime(mob/living/simple_animal/slime/user)
 	return
 
+/mob/living/silicon/ai/transfer_ai(interaction, mob/user, mob/living/silicon/ai/AI, obj/item/device/aicard/card)
+	if(!..())
+		return
+	if(interaction == AI_TRANS_TO_CARD)//The only possible interaction. Upload AI mob to a card.
+		if(!mind)
+			user << "<span class='warning'>No intelligence patterns detected.</span>"    //No more magical carding of empty cores, AI RETURN TO BODY!!!11
+			return
+		if (mind.special_role == "malfunction") //AI MALF!!
+			user << "<span class='boldannounce'>ERROR</span>: Remote transfer interface disabled."//Do ho ho ho~
+			return
+		new /obj/structure/AIcore/deactivated(loc)//Spawns a deactivated terminal at AI location.
+		aiRestorePowerRoutine = 0//So the AI initially has power.
+		control_disabled = 1//Can't control things remotely if you're stuck in a card!
+		radio_enabled = 0 	//No talking on the built-in radio for you either!
+		loc = card//Throw AI into the card.
+		src << "You have been downloaded to a mobile storage device. Remote device connection severed."
+		user << "<span class='boldnotice'>Transfer successful</span>: [name] ([rand(1000,9999)].exe) removed from host terminal and stored within local memory."
+
+/mob/living/silicon/ai/flash_eyes(intensity = 1, override_blindness_check = 0, affect_silicon = 0)
+	return // no eyes, no flashing

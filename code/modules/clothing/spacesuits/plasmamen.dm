@@ -17,7 +17,7 @@
 	user << "<span class='notice'>There are [extinguishes_left] extinguisher canisters left in this suit.</span>"
 
 
-/obj/item/clothing/suit/space/eva/plasmaman/proc/Extinguish(var/mob/living/carbon/human/H)
+/obj/item/clothing/suit/space/eva/plasmaman/proc/Extinguish(mob/living/carbon/human/H)
 	if(!istype(H))
 		return
 
@@ -39,9 +39,10 @@
 	icon_state = "plasmaman_helmet0-plasma"
 	item_color = "plasma" //needed for the helmet lighting
 	item_state = "plasmaman_helmet0"
-	flags = HEADCOVERSEYES | BLOCKHAIR | HEADCOVERSMOUTH | STOPSPRESSUREDMAGE | THICKMATERIAL
+	flags = BLOCKHAIR | STOPSPRESSUREDMAGE | THICKMATERIAL
 	//Removed the NODROP from /helmet/space/hardsuit.
 	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES
 	//Removed the HIDEFACE from /helmet/space/hardsuit
 	basestate = "plasmaman_helmet"
+	flags_cover = HEADCOVERSEYES | HEADCOVERSMOUTH
 

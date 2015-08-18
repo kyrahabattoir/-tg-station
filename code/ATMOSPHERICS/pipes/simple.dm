@@ -5,7 +5,7 @@ The regular pipe you see everywhere, including bent ones.
 */
 
 /obj/machinery/atmospherics/pipe/simple
-	icon = 'icons/obj/pipes.dmi'
+	icon = 'icons/obj/atmospherics/pipes/simple.dmi'
 	icon_state = "intact"
 
 	name = "pipe"
@@ -104,7 +104,7 @@ The regular pipe you see everywhere, including bent ones.
 		var/have_node2 = node2?1:0
 		icon_state = "exposed[have_node1][have_node2][invisibility ? "-f" : "" ]"
 
-/obj/machinery/atmospherics/pipe/simple/hide(var/i)
+/obj/machinery/atmospherics/pipe/simple/hide(i)
 	if(level == 1 && istype(loc, /turf/simulated))
 		invisibility = i ? 101 : 0
 	update_icon()

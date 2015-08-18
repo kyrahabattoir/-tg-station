@@ -8,7 +8,7 @@
 	action_button_name = "Toggle Magboots"
 	strip_delay = 70
 	put_on_delay = 70
-
+	burn_state = -1 //Won't burn in fires
 
 /obj/item/clothing/shoes/magboots/verb/toggle()
 	set name = "Toggle Magboots"
@@ -29,7 +29,7 @@
 	magpulse = !magpulse
 	icon_state = "[magboot_state][magpulse]"
 	user << "<span class='notice'>You [magpulse ? "enable" : "disable"] the mag-pulse traction system.</span>"
-	user.update_inv_shoes(0)	//so our mob-overlays update
+	user.update_inv_shoes()	//so our mob-overlays update
 	user.update_gravity(user.mob_has_gravity())
 
 /obj/item/clothing/shoes/magboots/negates_gravity()

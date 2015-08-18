@@ -79,7 +79,7 @@
 		icon_state = "emitter"
 
 
-/obj/machinery/power/emitter/attack_hand(mob/user as mob)
+/obj/machinery/power/emitter/attack_hand(mob/user)
 	src.add_fingerprint(user)
 	if(state == 2)
 		if(!powernet)
@@ -106,7 +106,7 @@
 		return 1
 
 
-/obj/machinery/power/emitter/emp_act(var/severity)//Emitters are hardened but still might have issues
+/obj/machinery/power/emitter/emp_act(severity)//Emitters are hardened but still might have issues
 //	add_load(1000)
 /*	if((severity == 1)&&prob(1)&&prob(1))
 		if(src.active)
@@ -213,7 +213,7 @@
 					user.visible_message("[user.name] starts to weld the [src.name] to the floor.", \
 						"<span class='notice'>You start to weld \the [src] to the floor...</span>", \
 						"<span class='italics'>You hear welding.</span>")
-					if (do_after(user,20))
+					if (do_after(user,20, target = src))
 						if(!src || !WT.isOn()) return
 						state = 2
 						user << "<span class='notice'>You weld \the [src] to the floor.</span>"
@@ -224,7 +224,7 @@
 					user.visible_message("[user.name] starts to cut the [src.name] free from the floor.", \
 						"<span class='notice'>You start to cut \the [src] free from the floor...</span>", \
 						"<span class='italics'>You hear welding.</span>")
-					if (do_after(user,20))
+					if (do_after(user,20, target = src))
 						if(!src || !WT.isOn()) return
 						state = 1
 						user << "<span class='notice'>You cut \the [src] free from the floor.</span>"
@@ -260,7 +260,7 @@
 	..()
 	return
 
-/obj/machinery/power/emitter/emag_act(mob/user as mob)
+/obj/machinery/power/emitter/emag_act(mob/user)
 	if(!emagged)
 		locked = 0
 		emagged = 1

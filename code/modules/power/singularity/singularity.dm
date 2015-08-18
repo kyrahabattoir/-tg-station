@@ -26,7 +26,7 @@
 	var/last_failed_movement = 0//Will not move in the same dir if it couldnt before, will help with the getting stuck on fields thing
 	var/last_warning
 	var/consumedSupermatter = 0 //If the singularity has eaten a supermatter shard and can go to stage six
-	allow_spin = 0
+
 /obj/singularity/New(loc, var/starting_energy = 50, var/temp = 0)
 	//CARN: admin-alert for chuckle-fuckery.
 	admin_investigate_setup()
@@ -53,7 +53,7 @@
 		return 0
 
 
-/obj/singularity/attack_hand(mob/user as mob)
+/obj/singularity/attack_hand(mob/user)
 	consume(user)
 	return 1
 
@@ -126,7 +126,7 @@
 		dissipate_track++
 
 
-/obj/singularity/proc/expand(var/force_size = 0)
+/obj/singularity/proc/expand(force_size = 0)
 	var/temp_allowed_size = src.allowed_size
 	if(force_size)
 		temp_allowed_size = force_size
@@ -243,7 +243,7 @@
 	return
 
 
-/obj/singularity/proc/consume(var/atom/A)
+/obj/singularity/proc/consume(atom/A)
 	var/gain = A.singularity_act(current_size)
 	src.energy += gain
 	if(istype(A, /obj/machinery/power/supermatter_shard) && !consumedSupermatter)
@@ -254,7 +254,7 @@
 	return
 
 
-/obj/singularity/proc/move(var/force_move = 0)
+/obj/singularity/proc/move(force_move = 0)
 	if(!move_self)
 		return 0
 
@@ -269,7 +269,7 @@
 	step(src, movement_dir)
 
 
-/obj/singularity/proc/check_turfs_in(var/direction = 0, var/step = 0)
+/obj/singularity/proc/check_turfs_in(direction = 0, step = 0)
 	if(!direction)
 		return 0
 	var/steps = 0
@@ -322,7 +322,7 @@
 	return 1
 
 
-/obj/singularity/proc/can_move(var/turf/T)
+/obj/singularity/proc/can_move(turf/T)
 	if(!T)
 		return 0
 	if((locate(/obj/machinery/field/containment) in T)||(locate(/obj/machinery/shieldwall) in T))
@@ -358,18 +358,13 @@
 
 /obj/singularity/proc/toxmob()
 	var/toxrange = 10
-	var/toxdamage = 4
 	var/radiation = 15
 	var/radiationmin = 3
-	if (src.energy>200)
-		toxdamage = round(((src.energy-150)/50)*4,1)
-		radiation = round(((src.energy-150)/50)*5,1)
-		radiationmin = round((radiation/5),1)//
+	if (energy>200)
+		radiation += round((energy-150)/10,1)
+		radiationmin = round((radiation/5),1)
 	for(var/mob/living/M in view(toxrange, src.loc))
 		M.irradiate(rand(radiationmin,radiation))
-		toxdamage = (toxdamage - (toxdamage*M.getarmor(null, "rad")))
-		M.apply_effect(toxdamage, TOX)
-	return
 
 
 /obj/singularity/proc/combust_mobs()

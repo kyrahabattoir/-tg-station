@@ -35,7 +35,7 @@
 			diary << "a [src] didn't find an input plate."
 			return
 
-/obj/machinery/gibber/autogibber/Bumped(var/atom/A)
+/obj/machinery/gibber/autogibber/Bumped(atom/A)
 	if(!input_plate) return
 
 	if(ismob(A))
@@ -78,14 +78,14 @@
 	else
 		src.overlays += image('icons/obj/kitchen.dmi', "gridle")
 
-/obj/machinery/gibber/attack_paw(mob/user as mob)
+/obj/machinery/gibber/attack_paw(mob/user)
 	return src.attack_hand(user)
 
 /obj/machinery/gibber/container_resist()
 	src.go_out()
 	return
 
-/obj/machinery/gibber/attack_hand(mob/user as mob)
+/obj/machinery/gibber/attack_hand(mob/user)
 	if(stat & (NOPOWER|BROKEN))
 		return
 	if(operating)
@@ -94,7 +94,7 @@
 	else
 		src.startgibbing(user)
 
-/obj/machinery/gibber/attackby(obj/item/P as obj, mob/user as mob, params)
+/obj/machinery/gibber/attackby(obj/item/P, mob/user, params)
 	if (istype(P, /obj/item/weapon/grab))
 		var/obj/item/weapon/grab/G = P
 		if(!istype(G.affecting, /mob/living/carbon/))
@@ -106,7 +106,7 @@
 
 		user.visible_message("<span class='danger'>[user] starts to put [G.affecting] into the gibber!</span>")
 		src.add_fingerprint(user)
-		if(do_after(user, gibtime) && G && G.affecting && !occupant)
+		if(do_after(user, gibtime, target = src) && G && G.affecting && !occupant)
 			user.visible_message("<span class='danger'>[user] stuffs [G.affecting] into the gibber!</span>")
 			var/mob/M = G.affecting
 			if(M.client)
@@ -148,7 +148,7 @@
 	dropContents()
 	update_icon()
 
-/obj/machinery/gibber/proc/startgibbing(mob/user as mob)
+/obj/machinery/gibber/proc/startgibbing(mob/user)
 	if(src.operating)
 		return
 	if(!src.occupant)

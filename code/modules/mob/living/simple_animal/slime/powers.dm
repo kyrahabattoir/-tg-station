@@ -16,7 +16,7 @@
 		Feedon(M)
 		return 1
 
-/mob/living/simple_animal/slime/proc/CanFeedon(var/mob/living/M)
+/mob/living/simple_animal/slime/proc/CanFeedon(mob/living/M)
 	if(!Adjacent(M))
 		return 0
 
@@ -46,7 +46,7 @@
 			return 0
 	return 1
 
-/mob/living/simple_animal/slime/proc/Feedon(var/mob/living/M)
+/mob/living/simple_animal/slime/proc/Feedon(mob/living/M)
 
 	src << "<span class='notice'><i>I have latched onto the subject and begun feeding...</i></span>"
 	M << "<span class='userdanger'>The [name] has latched onto [M.name]!</span>"
@@ -138,7 +138,7 @@
 			Victim << "[src] has let go of your head!"
 		Victim = null
 
-/mob/living/simple_animal/slime/proc/UpdateFeed(var/mob/M)
+/mob/living/simple_animal/slime/proc/UpdateFeed(mob/M)
 	if(Victim)
 		if(Victim == M)
 			loc = M.loc // simple "attach to head" effect!
@@ -182,7 +182,9 @@
 			var/new_powerlevel = round(powerlevel / 4)
 			for(var/i=1,i<=4,i++)
 				var/mob/living/simple_animal/slime/M = new /mob/living/simple_animal/slime/(loc)
-				if(prob(mutation_chance))
+				if(mutation_chance >= 100)
+					M.colour = "rainbow"
+				else if(prob(mutation_chance))
 					M.colour = slime_mutation[rand(1,4)]
 				else
 					M.colour = colour

@@ -6,12 +6,12 @@ emp_act
 */
 
 
-/mob/living/carbon/human/getarmor(var/def_zone, var/type)
+/mob/living/carbon/human/getarmor(def_zone, type)
 	var/armorval = 0
 	var/organnum = 0
 
 	if(def_zone)
-		if(isorgan(def_zone))
+		if(islimb(def_zone))
 			return checkarmor(def_zone, type)
 		var/obj/item/organ/limb/affecting = get_organ(ran_zone(def_zone))
 		return checkarmor(affecting, type)
@@ -24,7 +24,7 @@ emp_act
 	return (armorval/max(organnum, 1))
 
 
-/mob/living/carbon/human/proc/checkarmor(var/obj/item/organ/limb/def_zone, var/type)
+/mob/living/carbon/human/proc/checkarmor(obj/item/organ/limb/def_zone, type)
 	if(!type)	return 0
 	var/protection = 0
 	var/list/body_parts = list(head, wear_mask, wear_suit, w_uniform)
@@ -41,7 +41,7 @@ emp_act
 		dna.species.on_hit(proj_type, src)
 	return
 
-/mob/living/carbon/human/bullet_act(var/obj/item/projectile/P, var/def_zone)
+/mob/living/carbon/human/bullet_act(obj/item/projectile/P, def_zone)
 	if(istype(P, /obj/item/projectile/energy) || istype(P, /obj/item/projectile/beam))
 		if(check_reflect(def_zone)) // Checks if you've passed a reflection% check
 			visible_message("<span class='danger'>The [P.name] gets reflected by [src]!</span>", \
@@ -67,7 +67,7 @@ emp_act
 		return 2
 	return (..(P , def_zone))
 
-/mob/living/carbon/human/proc/check_reflect(var/def_zone) //Reflection checks for anything in your l_hand, r_hand, or wear_suit based on the reflection chance of the object
+/mob/living/carbon/human/proc/check_reflect(def_zone) //Reflection checks for anything in your l_hand, r_hand, or wear_suit based on the reflection chance of the object
 	if(wear_suit && istype(wear_suit, /obj/item/))
 		var/obj/item/I = wear_suit
 		if(I.IsReflect(def_zone) == 1)
@@ -85,7 +85,7 @@ emp_act
 
 //End Here
 
-/mob/living/carbon/human/proc/check_shields(var/damage = 0, var/attack_text = "the attack", var/obj/item/O)
+/mob/living/carbon/human/proc/check_shields(damage = 0, attack_text = "the attack", obj/item/O)
 	if(O)
 		if(O.flags & NOSHIELD) //weapon ignores shields altogether
 			return 0
@@ -108,7 +108,6 @@ emp_act
 							"<span class='userdanger'>The reactive teleport system flings [src] clear of [attack_text]!</span>")
 			var/list/turfs = new/list()
 			for(var/turf/T in orange(6, src))
-				if(istype(T,/turf/space)) continue
 				if(T.density) continue
 				if(T.x>world.maxx-6 || T.x<6)	continue
 				if(T.y>world.maxy-6 || T.y<6)	continue
@@ -118,12 +117,12 @@ emp_act
 			if(!isturf(picked)) return
 			if(buckled)
 				buckled.unbuckle_mob()
-			src.loc = picked
+			forceMove(picked)
 			return 1
 	return 0
 
 
-/mob/living/carbon/human/attacked_by(var/obj/item/I, var/mob/living/user, var/def_zone)
+/mob/living/carbon/human/attacked_by(obj/item/I, mob/living/user, def_zone)
 	if(!I || !user)	return 0
 
 	var/obj/item/organ/limb/target_limb = get_organ(check_zone(user.zone_sel.selecting))
@@ -151,8 +150,9 @@ emp_act
 		else
 			return 0
 
-		var/armor = run_armor_check(affecting, "melee", "<span class='notice'>Your armor has protected your [hit_area].</span>", "<span class='notice'>Your armor has softened a hit to your [hit_area].</span>")
-		if(armor >= 100)	return 0
+		var/armor = run_armor_check(affecting, "melee", "<span class='notice'>Your armor has protected your [hit_area].</span>", "<span class='notice'>Your armor has softened a hit to your [hit_area].</span>", I.armour_penetration)
+		armor = min(90,armor) //cap damage reduction at 90%
+
 		var/Iforce = I.force //to avoid runtimes on the forcesay checks at the bottom. Some items might delete themselves if you drop them. (stunning yourself, ninja swords)
 
 		apply_damage(I.force, I.damtype, affecting, armor , I)
@@ -170,10 +170,10 @@ emp_act
 						if(get_dist(H, src) <= 1)	//people with TK won't get smeared with blood
 							if(H.wear_suit)
 								H.wear_suit.add_blood(src)
-								H.update_inv_wear_suit(0)	//updates mob overlays to show the new blood (no refresh)
+								H.update_inv_wear_suit()	//updates mob overlays to show the new blood (no refresh)
 							else if(H.w_uniform)
 								H.w_uniform.add_blood(src)
-								H.update_inv_w_uniform(0)	//updates mob overlays to show the new blood (no refresh)
+								H.update_inv_w_uniform()	//updates mob overlays to show the new blood (no refresh)
 							if (H.gloves)
 								var/obj/item/clothing/gloves/G = H.gloves
 								G.add_blood(H)
@@ -188,19 +188,18 @@ emp_act
 							visible_message("<span class='danger'>[src] has been knocked unconscious!</span>", \
 											"<span class='userdanger'>[src] has been knocked unconscious!</span>")
 							apply_effect(20, PARALYZE, armor)
-						if(prob(I.force + ((100 - src.health)/2)) && src != user && I.damtype == BRUTE)
+						if(prob(I.force + min(100,100 - src.health)) && src != user && I.damtype == BRUTE)
 							ticker.mode.remove_revolutionary(mind)
-							ticker.mode.remove_gangster(mind, exclude_bosses=1)
 					if(bloody)	//Apply blood
 						if(wear_mask)
 							wear_mask.add_blood(src)
-							update_inv_wear_mask(0)
+							update_inv_wear_mask()
 						if(head)
 							head.add_blood(src)
-							update_inv_head(0)
+							update_inv_head()
 						if(glasses && prob(33))
 							glasses.add_blood(src)
-							update_inv_glasses(0)
+							update_inv_glasses()
 
 				if("chest")	//Easier to score a stun but lasts less time
 					if(stat == CONSCIOUS && I.force && prob(I.force + 10))
@@ -211,10 +210,10 @@ emp_act
 					if(bloody)
 						if(wear_suit)
 							wear_suit.add_blood(src)
-							update_inv_wear_suit(0)
+							update_inv_wear_suit()
 						if(w_uniform)
 							w_uniform.add_blood(src)
-							update_inv_w_uniform(0)
+							update_inv_w_uniform()
 
 			if(Iforce > 10 || Iforce >= 5 && prob(33))
 				forcesay(hit_appends)	//forcesay checks stat already
@@ -235,9 +234,12 @@ emp_act
 					src.Stun(5)
 	..()
 
-/mob/living/carbon/human/acid_act(var/acidpwr, var/toxpwr, var/acid_volume)
+/mob/living/carbon/human/acid_act(acidpwr, toxpwr, acid_volume)
 	var/list/damaged = list()
 	var/list/inventory_items_to_kill = list()
+	var/acidity = min(acidpwr*acid_volume/200, toxpwr)
+	var/acid_volume_left = acid_volume
+	var/acid_decay = 100/acidpwr // how much volume we lose per item we try to melt. 5 for fluoro, 10 for sulphuric
 
 	//HEAD//
 	var/obj/item/clothing/head_clothes = null
@@ -249,7 +251,8 @@ emp_act
 		head_clothes = head
 	if(head_clothes)
 		if(!head_clothes.unacidable)
-			head_clothes.acid_act(acidpwr)
+			head_clothes.acid_act(acidpwr, acid_volume_left)
+			acid_volume_left = max(acid_volume_left - acid_decay, 0) //We remove some of the acid volume.
 			update_inv_glasses()
 			update_inv_wear_mask()
 			update_inv_head()
@@ -270,7 +273,8 @@ emp_act
 		chest_clothes = wear_suit
 	if(chest_clothes)
 		if(!chest_clothes.unacidable)
-			chest_clothes.acid_act(acidpwr)
+			chest_clothes.acid_act(acidpwr, acid_volume_left)
+			acid_volume_left = max(acid_volume_left - acid_decay, 0)
 			update_inv_w_uniform()
 			update_inv_wear_suit()
 		else
@@ -299,7 +303,8 @@ emp_act
 		arm_clothes = wear_suit
 	if(arm_clothes)
 		if(!arm_clothes.unacidable)
-			arm_clothes.acid_act(acidpwr)
+			arm_clothes.acid_act(acidpwr, acid_volume_left)
+			acid_volume_left = max(acid_volume_left - acid_decay, 0)
 			update_inv_gloves()
 			update_inv_w_uniform()
 			update_inv_wear_suit()
@@ -324,7 +329,8 @@ emp_act
 		leg_clothes = wear_suit
 	if(leg_clothes)
 		if(!leg_clothes.unacidable)
-			leg_clothes.acid_act(acidpwr)
+			leg_clothes.acid_act(acidpwr, acid_volume_left)
+			acid_volume_left = max(acid_volume_left - acid_decay, 0)
 			update_inv_shoes()
 			update_inv_w_uniform()
 			update_inv_wear_suit()
@@ -341,11 +347,11 @@ emp_act
 
 	//DAMAGE//
 	for(var/obj/item/organ/limb/affecting in damaged)
-		affecting.take_damage(2*toxpwr, toxpwr)
+		affecting.take_damage(acidity, 2*acidity)
 
 		if(affecting.name == "head")
-			affecting.take_damage(2*toxpwr, toxpwr)
-			if(prob(2*acidpwr)) //Applies disfigurement
+			if(prob(min(acidpwr*acid_volume/10, 90))) //Applies disfigurement
+				affecting.take_damage(acidity, 2*acidity)
 				emote("scream")
 				facial_hair_style = "Shaved"
 				hair_style = "Bald"
@@ -366,7 +372,8 @@ emp_act
 		inventory_items_to_kill += l_hand
 
 	for(var/obj/item/I in inventory_items_to_kill)
-		I.acid_act(acidpwr)
+		I.acid_act(acidpwr, acid_volume_left)
+		acid_volume_left = max(acid_volume_left - acid_decay, 0)
 
 /mob/living/carbon/human/grabbedby(mob/living/user)
 	if(w_uniform)
@@ -374,7 +381,7 @@ emp_act
 	..()
 
 
-/mob/living/carbon/human/attack_animal(mob/living/simple_animal/M as mob)
+/mob/living/carbon/human/attack_animal(mob/living/simple_animal/M)
 	if(..())
 		var/damage = rand(M.melee_damage_lower, M.melee_damage_upper)
 		if(check_shields(damage, "the [M.name]"))
@@ -384,11 +391,9 @@ emp_act
 		var/armor = run_armor_check(affecting, "melee")
 		apply_damage(damage, BRUTE, affecting, armor)
 		updatehealth()
-/*		if(armor >= 2) //why is this here?
-		return */
 
 
-/mob/living/carbon/human/attack_larva(mob/living/carbon/alien/larva/L as mob)
+/mob/living/carbon/human/attack_larva(mob/living/carbon/alien/larva/L)
 
 	if(..()) //successful larva bite.
 		var/damage = rand(1, 3)
@@ -402,7 +407,7 @@ emp_act
 			updatehealth()
 
 
-/mob/living/carbon/human/attack_slime(mob/living/simple_animal/slime/M as mob)
+/mob/living/carbon/human/attack_slime(mob/living/simple_animal/slime/M)
 	if(..()) //successful slime attack
 		var/damage = rand(5, 25)
 		if(M.is_adult)
@@ -444,9 +449,26 @@ emp_act
 
 		visible_message("<span class='danger'>[M.name] has hit [src]!</span>", \
 								"<span class='userdanger'>[M.name] has hit [src]!</span>")
-		add_logs(M.occupant, src, "attacked", object=M, addition="(INTENT: [uppertext(M.occupant.a_intent)]) (DAMTYPE: [uppertext(M.damtype)])")
+		add_logs(M.occupant, src, "attacked", M, "(INTENT: [uppertext(M.occupant.a_intent)]) (DAMTYPE: [uppertext(M.damtype)])")
 
 	else
 		..()
 
-	return
+/mob/living/carbon/human/hitby(atom/movable/AM)
+	var/hitpush = 1
+	var/skipcatch = 0
+	if(AM.throw_speed >= EMBED_THROWSPEED_THRESHOLD)
+		if(istype(AM, /obj/item))
+			var/obj/item/I = AM
+			if(can_embed(I))
+				if(prob(I.embed_chance) && !(dna && (PIERCEIMMUNE in dna.species.specflags)))
+					throw_alert("embeddedobject")
+					var/obj/item/organ/limb/L = pick(organs)
+					L.embedded_objects |= I
+					I.add_blood(src)//it embedded itself in you, of course it's bloody!
+					I.loc = src
+					L.take_damage(I.w_class*I.embedded_impact_pain_multiplier)
+					visible_message("<span class='danger'>\the [I.name] embeds itself in [src]'s [L.getDisplayName()]!</span>","<span class='userdanger'>\the [I.name] embeds itself in your [L.getDisplayName()]!</span>")
+					hitpush = 0
+					skipcatch = 1 //can't catch the now embedded item
+	return ..(AM, skipcatch, hitpush)

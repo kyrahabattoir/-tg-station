@@ -7,6 +7,7 @@
 	icon = 'icons/obj/hydroponics/seeds.dmi'
 	icon_state = "seed"				//Unknown plant seed - these shouldn't exist in-game.
 	w_class = 1						//Pocketable.
+	burn_state = 0 //Burnable
 	var/plantname = "Plants"		//Name of plant when planted.
 	var/product						//A type path. The thing that is created when the plant is harvested.
 	var/species = ""				//Used to update icons. Should match the name in the sprites.
@@ -30,10 +31,10 @@
 /obj/item/seeds/proc/get_analyzer_text()  //in case seeds have something special to tell to the analyzer
 	return
 
-/obj/item/seeds/proc/on_chem_reaction(var/datum/reagents/S)  //in case seeds have some special interaction with special chems
+/obj/item/seeds/proc/on_chem_reaction(datum/reagents/S)  //in case seeds have some special interaction with special chems
 	return
 
-/obj/item/seeds/attackby(var/obj/item/O as obj, var/mob/user as mob, params)
+/obj/item/seeds/attackby(obj/item/O, mob/user, params)
 	if (istype(O, /obj/item/device/analyzer/plant_analyzer))
 		user << "*** <B>[plantname]</B> ***"
 		user << "-Plant Endurance: <span class='notice'>[endurance]</span>"
@@ -94,7 +95,7 @@
 	var/factions = null
 	var/contains_sample = 0
 
-/obj/item/seeds/replicapod/attackby(obj/item/weapon/W as obj, mob/user as mob, params)
+/obj/item/seeds/replicapod/attackby(obj/item/weapon/W, mob/user, params)
 	if(istype(W,/obj/item/weapon/reagent_containers/syringe))
 		if(!contains_sample)
 			for(var/datum/reagent/blood/bloodSample in W.reagents.reagent_list)
@@ -1343,7 +1344,7 @@
 	for(var/obj/item/weapon/reagent_containers/food/snacks/grown/kudzupod/K in prod)
 		K.mutations = mutations
 
-/obj/item/seeds/kudzuseed/attack_self(mob/user as mob)
+/obj/item/seeds/kudzuseed/attack_self(mob/user)
 	if(istype(user.loc,/turf/space))
 		return
 	var/turf/T = get_turf(src)
@@ -1361,7 +1362,7 @@
 	mut_text += "-Plant Mutations: [(text_string == "") ? "None" : text_string]"
 	return mut_text
 
-/obj/item/seeds/kudzuseed/on_chem_reaction(var/datum/reagents/S)
+/obj/item/seeds/kudzuseed/on_chem_reaction(datum/reagents/S)
 
 	var/list/temp_mut_list = list()
 
