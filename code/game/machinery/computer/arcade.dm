@@ -35,6 +35,7 @@
 							/obj/item/toy/griffin									= 2,
 							/obj/item/weapon/coin/antagtoken						= 2,
 							/obj/item/stack/tile/fakespace/loaded					= 2,
+							/obj/item/toy/toy_xeno									= 2,
 							)
 
 /obj/machinery/computer/arcade/New()
@@ -423,7 +424,6 @@
 			name = "The Orion Trail"
 			desc = "Learn how our ancestors got to Orion, and have fun in the process!"
 
-
 	else if(event)
 		dat = eventdat
 	else if(playing)
@@ -453,7 +453,8 @@
 	return
 
 /obj/machinery/computer/arcade/orion_trail/Topic(href, href_list)
-	if(..())
+	. = ..()
+	if(.)
 		return
 	if(href_list["close"])
 		usr.unset_machine()
@@ -477,7 +478,7 @@
 				if(lings_aboard)
 					if(event == ORION_TRAIL_LING || prob(55))
 						event = ORION_TRAIL_LING_ATTACK
-						event()
+				event()
 			turns += 1
 		if(emagged)
 			var/mob/living/carbon/M = usr //for some vars
@@ -568,13 +569,13 @@
 		turns += 1
 		event = null
 	else if(href_list["useengine"]) //use parts
-		engine -= 1
+		engine = max(0, --engine)
 		event = null
 	else if(href_list["useelec"]) //use parts
-		electronics -= 1
+		electronics = max(0, --electronics)
 		event = null
 	else if(href_list["usehull"]) //use parts
-		hull -= 1
+		hull = max(0, --hull)
 		event = null
 	else if(href_list["wait"]) //wait 3 days
 		food -= ((alive+lings_aboard)*2)*3
@@ -639,8 +640,8 @@
 	else if(href_list["sellcrew"]) //sell a crewmember
 		var/sold = remove_crewmember()
 		last_spaceport_action = "You sold your crewmember, [sold]!"
-		fuel += 15
-		food += 15
+		fuel += 7
+		food += 7
 		event()
 
 	else if(href_list["leave_spaceport"])
@@ -789,7 +790,7 @@
 
 		if(ORION_TRAIL_LING)
 			eventdat += "Strange reports warn of changelings infiltrating crews on trips to Orion..."
-			if(settlers.len <= 1)
+			if(settlers.len <= 2)
 				eventdat += "<br>Your crew's chance of reaching Orion is so slim the changelings likely avoided your ship..."
 				eventdat += "<P ALIGN=Right><a href='byond://?src=\ref[src];eventclose=1'>Continue</a></P>"
 				eventdat += "<P ALIGN=Right><a href='byond://?src=\ref[src];close=1'>Close</a></P>"
@@ -978,6 +979,7 @@
 
 /obj/machinery/computer/arcade/orion_trail/proc/win()
 	playing = 0
+	turns = 1
 	say("Congratulations, you made it to Orion!")
 	if(emagged)
 		new /obj/item/weapon/orion_ship(src.loc)

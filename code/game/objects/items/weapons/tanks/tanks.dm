@@ -10,8 +10,8 @@
 
 	pressure_resistance = ONE_ATMOSPHERE*5
 
-	force = 5.0
-	throwforce = 10.0
+	force = 5
+	throwforce = 10
 	throw_speed = 1
 	throw_range = 4
 
@@ -33,11 +33,11 @@
 
 /obj/item/weapon/tank/Destroy()
 	if(air_contents)
-		del(air_contents)
+		qdel(air_contents)
 
 	SSobj.processing.Remove(src)
 
-	..()
+	return ..()
 
 /obj/item/weapon/tank/examine(mob/user)
 	var/obj/icon = src
