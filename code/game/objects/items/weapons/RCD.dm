@@ -21,7 +21,7 @@ RCD
 	materials = list(MAT_METAL=100000)
 	origin_tech = "engineering=4;materials=2"
 	req_access_txt = "11"
-	var/datum/effect/effect/system/spark_spread/spark_system
+	var/datum/effect_system/spark_spread/spark_system
 	var/matter = 0
 	var/max_matter = 160
 	var/working = 0
@@ -34,8 +34,6 @@ RCD
 
 	var/list/conf_access = null
 	var/use_one_access = 0 //If the airlock should require ALL or only ONE of the listed accesses.
-	var/last_configurator = null
-	var/locked = 1
 
 	/* Construction costs */
 
@@ -72,7 +70,7 @@ RCD
 	set category = "Object"
 	set src in usr
 
-	if (!ishuman(usr) && !isrobot(usr))
+	if (!ishuman(usr) && !usr.has_unlimited_silicon_privilege)
 		return ..(usr)
 
 	var/mob/living/carbon/human/H = usr
@@ -82,39 +80,32 @@ RCD
 	var/t1 = text("")
 
 
-	if (last_configurator)
-		t1 += "Operator: [last_configurator]<br>"
 
-	if (locked)
-		t1 += "<a href='?src=\ref[src];login=1'>Swipe ID</a><hr>"
+	if(use_one_access)
+		t1 += "Restriction Type: <a href='?src=\ref[src];access=one'>At least one access required</a><br>"
 	else
-		t1 += "<a href='?src=\ref[src];logout=1'>Lock Interface</a><hr>"
+		t1 += "Restriction Type: <a href='?src=\ref[src];access=one'>All accesses required</a><br>"
 
-		if(use_one_access)
-			t1 += "Restriction Type: <a href='?src=\ref[src];access=one'>At least one access required</a><br>"
-		else
-			t1 += "Restriction Type: <a href='?src=\ref[src];access=one'>All accesses required</a><br>"
+	t1 += "<a href='?src=\ref[src];access=all'>Remove All</a><br>"
 
-		t1 += "<a href='?src=\ref[src];access=all'>Remove All</a><br>"
-
-		var/accesses = ""
-		accesses += "<div align='center'><b>Access</b></div>"
-		accesses += "<table style='width:100%'>"
-		accesses += "<tr>"
-		for(var/i = 1; i <= 7; i++)
-			accesses += "<td style='width:14%'><b>[get_region_accesses_name(i)]:</b></td>"
-		accesses += "</tr><tr>"
-		for(var/i = 1; i <= 7; i++)
-			accesses += "<td style='width:14%' valign='top'>"
-			for(var/A in get_region_accesses(i))
-				if(A in conf_access)
-					accesses += "<a href='?src=\ref[src];access=[A]'><font color=\"red\">[replacetext(get_access_desc(A), " ", "&nbsp")]</font></a> "
-				else
-					accesses += "<a href='?src=\ref[src];access=[A]'>[replacetext(get_access_desc(A), " ", "&nbsp")]</a> "
-				accesses += "<br>"
-			accesses += "</td>"
-		accesses += "</tr></table>"
-		t1 += "<tt>[accesses]</tt>"
+	var/accesses = ""
+	accesses += "<div align='center'><b>Access</b></div>"
+	accesses += "<table style='width:100%'>"
+	accesses += "<tr>"
+	for(var/i = 1; i <= 7; i++)
+		accesses += "<td style='width:14%'><b>[get_region_accesses_name(i)]:</b></td>"
+	accesses += "</tr><tr>"
+	for(var/i = 1; i <= 7; i++)
+		accesses += "<td style='width:14%' valign='top'>"
+		for(var/A in get_region_accesses(i))
+			if(A in conf_access)
+				accesses += "<a href='?src=\ref[src];access=[A]'><font color=\"red\">[replacetext(get_access_desc(A), " ", "&nbsp")]</font></a> "
+			else
+				accesses += "<a href='?src=\ref[src];access=[A]'>[replacetext(get_access_desc(A), " ", "&nbsp")]</a> "
+			accesses += "<br>"
+		accesses += "</td>"
+	accesses += "</tr></table>"
+	t1 += "<tt>[accesses]</tt>"
 
 	t1 += text("<p><a href='?src=\ref[];close=1'>Close</a></p>\n", src)
 
@@ -126,22 +117,11 @@ RCD
 
 /obj/item/weapon/rcd/Topic(href, href_list)
 	..()
-	if (usr.stat || usr.restrained() || (!ishuman(usr) && !isrobot(usr)))
+	if (usr.stat || usr.restrained())
 		return
 	if (href_list["close"])
 		usr << browse(null, "window=airlock")
 		return
-
-	if (href_list["login"])
-		if(allowed(usr))
-			src.locked = 0
-			src.last_configurator = usr.name
-
-	if (locked)
-		return
-
-	if (href_list["logout"])
-		locked = 1
 
 	if (href_list["access"])
 		toggle_access(href_list["access"])
@@ -229,8 +209,9 @@ RCD
 
 
 /obj/item/weapon/rcd/New()
+	..()
 	desc = "An RCD. It currently holds [matter]/[max_matter] matter-units."
-	src.spark_system = new /datum/effect/effect/system/spark_spread
+	src.spark_system = new /datum/effect_system/spark_spread
 	spark_system.set_up(5, 0, src)
 	spark_system.attach(src)
 	rcd_list += src
@@ -363,15 +344,13 @@ RCD
 							T.electronics = new/obj/item/weapon/electronics/airlock( src.loc )
 
 							if(conf_access)
-								T.electronics.conf_access = conf_access.Copy()
-							T.electronics.use_one_access = use_one_access
-							T.electronics.last_configurator = last_configurator
-							T.electronics.locked = locked
+								T.electronics.accesses = conf_access.Copy()
+							T.electronics.one_access = use_one_access
 
-							if(T.electronics.use_one_access)
-								T.req_one_access = T.electronics.conf_access
+							if(T.electronics.one_access)
+								T.req_one_access = T.electronics.accesses
 							else
-								T.req_access = T.electronics.conf_access
+								T.req_access = T.electronics.accesses
 
 							if(!T.checkForMultipleDoors())
 								qdel(T)
@@ -496,12 +475,12 @@ RCD
 /obj/item/weapon/rcd/borg/useResource(amount, mob/user)
 	if(!isrobot(user))
 		return 0
-	return user:cell:use(amount * 160)
+	return user:cell:use(amount * 72) //borgs get 1.3x the use of their RCDs
 
 /obj/item/weapon/rcd/borg/checkResource(amount, mob/user)
 	if(!isrobot(user))
 		return 0
-	return user:cell:charge >= (amount * 160)
+	return user:cell:charge >= (amount * 72)
 
 /obj/item/weapon/rcd/borg/New()
 	..()

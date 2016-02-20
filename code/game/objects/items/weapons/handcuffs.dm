@@ -1,6 +1,5 @@
-
 /obj/item/weapon/restraints
-	var/breakouttime = 600
+	breakouttime = 600
 
 //Handcuffs
 
@@ -47,19 +46,26 @@
 		else
 			user << "<span class='warning'>You fail to handcuff [C]!</span>"
 
-/obj/item/weapon/restraints/handcuffs/proc/apply_cuffs(mob/living/carbon/target, mob/user)
-	if(!target.handcuffed)
-		if(!user.drop_item())
-			return
-		//target.throw_alert("handcuffed", src) // Can't do this because escaping cuffs isn't standardized. Also zipties.
-		if(trashtype)
-			target.handcuffed = new trashtype(target)
-			qdel(src)
-		else
-			loc = target
-			target.handcuffed = src
-		target.update_inv_handcuffed(0)
+/obj/item/weapon/restraints/handcuffs/proc/apply_cuffs(mob/living/carbon/target, mob/user, var/dispense = 0)
+	if(target.handcuffed)
 		return
+
+	if(!user.drop_item() && !dispense)
+		return
+
+	var/obj/item/weapon/restraints/handcuffs/cuffs = src
+	if(trashtype)
+		cuffs = new trashtype()
+	else if(dispense)
+		cuffs = new type()
+
+	cuffs.loc = target
+	target.handcuffed = cuffs
+
+	target.update_handcuffed()
+	if(trashtype && !dispense)
+		qdel(src)
+	return
 
 /obj/item/weapon/restraints/handcuffs/cable
 	name = "cable restraints"
@@ -68,6 +74,24 @@
 	item_state = "coil_red"
 	breakouttime = 300 //Deciseconds = 30s
 	cuffsound = 'sound/weapons/cablecuff.ogg'
+	var/datum/robot_energy_storage/wirestorage = null
+
+/obj/item/weapon/restraints/handcuffs/cable/attack(mob/living/carbon/C, mob/living/carbon/human/user)
+	if(!istype(C))
+		return
+	if(wirestorage && wirestorage.energy < 15)
+		user << "<span class='warning'>You need at least 15 wire to restrain [C]!</span>"
+		return
+	return ..()
+
+/obj/item/weapon/restraints/handcuffs/cable/apply_cuffs(mob/living/carbon/target, mob/user, var/dispense = 0)
+	if(wirestorage)
+		if(!wirestorage.use_charge(15))
+			user << "<span class='warning'>You need at least 15 wire to restrain [target]!</span>"
+			return
+		return ..(target, user, 1)
+
+	return ..()
 
 /obj/item/weapon/restraints/handcuffs/cable/red
 	icon_state = "cuff_red"
@@ -97,6 +121,16 @@
 /obj/item/weapon/restraints/handcuffs/alien
 	icon_state = "handcuffAlien"
 
+/obj/item/weapon/restraints/handcuffs/fake
+	name = "fake handcuffs"
+	desc = "Fake handcuffs meant for gag purposes."
+	breakouttime = 10 //Deciseconds = 1s
+
+/obj/item/weapon/restraints/handcuffs/fake/kinky
+	name = "kinky handcuffs"
+	desc = "Fake handcuffs meant for erotic roleplay."
+	icon_state = "handcuffGag"
+
 /obj/item/weapon/restraints/handcuffs/cable/attackby(obj/item/I, mob/user, params)
 	..()
 	if(istype(I, /obj/item/stack/rods))
@@ -121,7 +155,7 @@
 			if(do_mob(user, C, 30))
 				if(!C.handcuffed)
 					C.handcuffed = new /obj/item/weapon/restraints/handcuffs/cable/zipties/used(C)
-					C.update_inv_handcuffed(0)
+					C.update_handcuffed()
 					user << "<span class='notice'>You handcuff [C].</span>"
 					add_logs(user, C, "handcuffed")
 			else
@@ -221,7 +255,7 @@
 	..()
 	spawn(100)
 		if(!istype(loc, /mob))
-			var/datum/effect/effect/system/spark_spread/sparks = new /datum/effect/effect/system/spark_spread
+			var/datum/effect_system/spark_spread/sparks = new /datum/effect_system/spark_spread
 			sparks.set_up(1, 1, src)
 			sparks.start()
 			qdel(src)

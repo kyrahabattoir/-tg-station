@@ -3,13 +3,13 @@
 	desc = "A face-covering mask that can be connected to an air supply. While good for concealing your identity, it isn't good for blocking gas flow." //More accurate
 	icon_state = "gas_alt"
 	flags = BLOCK_GAS_SMOKE_EFFECT | MASKINTERNALS
-	flags_inv = HIDEEARS|HIDEEYES|HIDEFACE
+	flags_inv = HIDEEARS|HIDEEYES|HIDEFACE|HIDEFACIALHAIR
 	w_class = 3
 	item_state = "gas_alt"
 	gas_transfer_coefficient = 0.01
 	permeability_coefficient = 0.01
 	flags_cover = MASKCOVERSEYES | MASKCOVERSMOUTH
-	burn_state = -1 //Won't burn in fires
+	burn_state = FIRE_PROOF
 
 // **** Welding gas mask ****
 
@@ -23,6 +23,7 @@
 	armor = list(melee = 10, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
 	origin_tech = "materials=2;engineering=2"
 	action_button_name = "Toggle Welding Mask"
+	flags_inv = HIDEEARS|HIDEEYES|HIDEFACE
 	flags_cover = MASKCOVERSEYES
 	visor_flags_inv = HIDEEYES
 
@@ -73,9 +74,9 @@
 	icon_state = "clown"
 	item_state = "clown_hat"
 	flags_cover = MASKCOVERSEYES
-	burn_state = 0 //Burnable
+	burn_state = FLAMMABLE
 
-/obj/item/clothing/mask/gas/clown_hat/attack_self(mob/user)
+/obj/item/clothing/mask/gas/clown_hat/AltClick(mob/user)
 
 	var/mob/M = usr
 	var/list/options = list()
@@ -88,7 +89,7 @@
 
 	if(src && choice && !M.stat && in_range(M,src))
 		icon_state = options[choice]
-		M << "Your Clown Mask has now morphed into [choice], all praise the Honk Mother!"
+		M << "<span class='notice'>Your Clown Mask has now morphed into [choice], all praise the Honkmother!</span>"
 		return 1
 
 /obj/item/clothing/mask/gas/sexyclown
@@ -98,7 +99,7 @@
 	icon_state = "sexyclown"
 	item_state = "sexyclown"
 	flags_cover = MASKCOVERSEYES
-	burn_state = 0 //Burnable
+	burn_state = FLAMMABLE
 
 /obj/item/clothing/mask/gas/mime
 	name = "mime mask"
@@ -107,7 +108,28 @@
 	icon_state = "mime"
 	item_state = "mime"
 	flags_cover = MASKCOVERSEYES
-	burn_state = 0 //Burnable
+	burn_state = FLAMMABLE
+	action_button_name = "Adjust Mask"
+
+/obj/item/clothing/mask/gas/mime/ui_action_click()
+	cycle_mask(usr)
+
+/obj/item/clothing/mask/gas/mime/AltClick(mob/user)
+	cycle_mask(user)
+
+/obj/item/clothing/mask/gas/mime/proc/cycle_mask(mob/user)
+	switch(icon_state)
+		if("mime")
+			icon_state = "sadmime"
+		if("sadmime")
+			icon_state = "scaredmime"
+		if("scaredmime")
+			icon_state = "sexymime"
+		if("sexymime")
+			icon_state = "mime"
+	user.update_inv_wear_mask()
+	user << "<span class='notice'>You adjust your mask to portray a different emotion.</span>"
+	return 1
 
 /obj/item/clothing/mask/gas/monkeymask
 	name = "monkey mask"
@@ -116,7 +138,7 @@
 	icon_state = "monkeymask"
 	item_state = "monkeymask"
 	flags_cover = MASKCOVERSEYES
-	burn_state = 0 //Burnable
+	burn_state = FLAMMABLE
 
 /obj/item/clothing/mask/gas/sexymime
 	name = "sexy mime mask"
@@ -125,7 +147,7 @@
 	icon_state = "sexymime"
 	item_state = "sexymime"
 	flags_cover = MASKCOVERSEYES
-	burn_state = 0 //Burnable
+	burn_state = FLAMMABLE
 
 /obj/item/clothing/mask/gas/death_commando
 	name = "Death Commando Mask"
@@ -136,7 +158,7 @@
 	name = "cyborg visor"
 	desc = "Beep boop."
 	icon_state = "death"
-	burn_state = 0 //Burnable
+	burn_state = FLAMMABLE
 
 /obj/item/clothing/mask/gas/owl_mask
 	name = "owl mask"
@@ -144,7 +166,7 @@
 	icon_state = "owl"
 	flags = MASKINTERNALS
 	flags_cover = MASKCOVERSEYES
-	burn_state = 0 //Burnable
+	burn_state = FLAMMABLE
 
 /obj/item/clothing/mask/gas/carp
 	name = "carp mask"

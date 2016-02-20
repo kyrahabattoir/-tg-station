@@ -15,7 +15,6 @@
 		<a href='?src=\ref[src];makeAntag=2'>Make Changelings</a><br>
 		<a href='?src=\ref[src];makeAntag=3'>Make Revs</a><br>
 		<a href='?src=\ref[src];makeAntag=4'>Make Cult</a><br>
-		<a href='?src=\ref[src];makeAntag=5'>Make Malf AI</a><br>
 		<a href='?src=\ref[src];makeAntag=11'>Make Blob</a><br>
 		<a href='?src=\ref[src];makeAntag=12'>Make Gangsters</a><br>
 		<a href='?src=\ref[src];makeAntag=16'>Make Shadowling</a><br>
@@ -30,28 +29,6 @@
 	popup.set_content(dat)
 	popup.open()
 
-
-/datum/admins/proc/makeMalfAImode()
-
-	var/list/mob/living/silicon/AIs = list()
-	var/mob/living/silicon/malfAI = null
-	var/datum/mind/themind = null
-
-	for(var/mob/living/silicon/ai/ai in player_list)
-		if(ai.client)
-			AIs += ai
-
-	if(AIs.len)
-		malfAI = pick(AIs)
-
-	if(malfAI)
-		themind = malfAI.mind
-		themind.make_AI_Malf()
-		return 1
-
-	return 0
-
-
 /datum/admins/proc/makeTraitors()
 	var/datum/game_mode/traitor/temp = new
 
@@ -65,11 +42,11 @@
 	var/mob/living/carbon/human/H = null
 
 	for(var/mob/living/carbon/human/applicant in player_list)
-		if(applicant.client.prefs.be_special & BE_TRAITOR)
+		if(ROLE_TRAITOR in applicant.client.prefs.be_special)
 			if(!applicant.stat)
 				if(applicant.mind)
 					if (!applicant.mind.special_role)
-						if(!jobban_isbanned(applicant, "traitor") && !jobban_isbanned(applicant, "Syndicate"))
+						if(!jobban_isbanned(applicant, ROLE_TRAITOR) && !jobban_isbanned(applicant, "Syndicate"))
 							if(temp.age_check(applicant.client))
 								if(!(applicant.job in temp.restricted_jobs))
 									candidates += applicant
@@ -101,11 +78,11 @@
 	var/mob/living/carbon/human/H = null
 
 	for(var/mob/living/carbon/human/applicant in player_list)
-		if(applicant.client.prefs.be_special & BE_CHANGELING)
+		if(ROLE_CHANGELING in applicant.client.prefs.be_special)
 			if(!applicant.stat)
 				if(applicant.mind)
 					if (!applicant.mind.special_role)
-						if(!jobban_isbanned(applicant, "changeling") && !jobban_isbanned(applicant, "Syndicate"))
+						if(!jobban_isbanned(applicant, ROLE_CHANGELING) && !jobban_isbanned(applicant, "Syndicate"))
 							if(temp.age_check(applicant.client))
 								if(!(applicant.job in temp.restricted_jobs))
 									candidates += applicant
@@ -135,14 +112,16 @@
 	var/mob/living/carbon/human/H = null
 
 	for(var/mob/living/carbon/human/applicant in player_list)
-		if(applicant.client.prefs.be_special & BE_REV)
+		if(ROLE_REV in applicant.client.prefs.be_special)
 			if(applicant.stat == CONSCIOUS)
-				if(applicant.mind)
-					if(!applicant.mind.special_role)
-						if(!jobban_isbanned(applicant, "revolutionary") && !jobban_isbanned(applicant, "Syndicate"))
-							if(temp.age_check(applicant.client))
-								if(!(applicant.job in temp.restricted_jobs))
-									candidates += applicant
+				var/turf/T = get_turf(applicant)
+				if(T.z == ZLEVEL_STATION)
+					if(applicant.mind)
+						if(!applicant.mind.special_role)
+							if(!jobban_isbanned(applicant, ROLE_REV) && !jobban_isbanned(applicant, "Syndicate"))
+								if(temp.age_check(applicant.client))
+									if(!(applicant.job in temp.restricted_jobs))
+										candidates += applicant
 
 	if(candidates.len)
 		var/numRevs = min(candidates.len, 3)
@@ -194,7 +173,6 @@
 
 
 /datum/admins/proc/makeCult()
-
 	var/datum/game_mode/cult/temp = new
 	if(config.protect_roles_from_antagonist)
 		temp.restricted_jobs += temp.protected_jobs
@@ -206,17 +184,17 @@
 	var/mob/living/carbon/human/H = null
 
 	for(var/mob/living/carbon/human/applicant in player_list)
-		if(applicant.client.prefs.be_special & BE_CULTIST)
+		if(ROLE_CULTIST in applicant.client.prefs.be_special)
 			if(applicant.stat == CONSCIOUS)
 				if(applicant.mind)
 					if(!applicant.mind.special_role)
-						if(!jobban_isbanned(applicant, "cultist") && !jobban_isbanned(applicant, "Syndicate"))
+						if(!jobban_isbanned(applicant, ROLE_CULTIST) && !jobban_isbanned(applicant, "Syndicate"))
 							if(temp.age_check(applicant.client))
 								if(!(applicant.job in temp.restricted_jobs))
 									candidates += applicant
 
 	if(candidates.len)
-		var/numCultists = min(candidates.len, 4)
+		var/numCultists = min(candidates.len, 5)
 
 		for(var/i = 0, i<numCultists, i++)
 			H = pick(candidates)
@@ -256,16 +234,11 @@
 		if(agentcount < 3)
 			return 0
 
-		var/obj/effect/landmark/nuke_spawn = locate("landmark*Nuclear-Bomb")
-		var/obj/effect/landmark/closet_spawn = locate("landmark*Syndicate-Uplink")
 		var/nuke_code = "[rand(10000, 99999)]"
 
-		if(nuke_spawn)
-			var/obj/machinery/nuclearbomb/the_bomb = new /obj/machinery/nuclearbomb(nuke_spawn.loc)
-			the_bomb.r_code = nuke_code
-
-		if(closet_spawn)
-			new /obj/structure/closet/syndicate/nuclear(closet_spawn.loc)
+		var/obj/machinery/nuclearbomb/nuke = locate("syndienuke") in nuke_list
+		if(nuke)
+			nuke.r_code = nuke_code
 
 		//Let's find the spawn locations
 		var/list/turf/synd_spawn = list()
@@ -358,6 +331,9 @@
 			missiondesc += "<BR><B>Your Mission</B>: [mission]"
 			Commando << missiondesc
 
+			if(config.enforce_human_authority)
+				Commando.set_species("human")
+
 			//Logging and cleanup
 			if(numagents == 1)
 				message_admins("The deathsquad has spawned with the mission: [mission].")
@@ -386,11 +362,11 @@
 	var/mob/living/carbon/human/H = null
 
 	for(var/mob/living/carbon/human/applicant in player_list)
-		if(applicant.client.prefs.be_special & BE_GANG)
+		if(ROLE_GANG in applicant.client.prefs.be_special)
 			if(!applicant.stat)
 				if(applicant.mind)
 					if(!applicant.mind.special_role)
-						if(!jobban_isbanned(applicant, "gangster") && !jobban_isbanned(applicant, "Syndicate"))
+						if(!jobban_isbanned(applicant, ROLE_GANG) && !jobban_isbanned(applicant, "Syndicate"))
 							if(temp.age_check(applicant.client))
 								if(!(applicant.job in temp.restricted_jobs))
 									candidates += applicant
@@ -412,7 +388,7 @@
 
 /datum/admins/proc/makeOfficial()
 	var/mission = input("Assign a task for the official", "Assign Task", "Conduct a routine preformance review of [station_name()] and its Captain.")
-	var/list/mob/dead/observer/candidates = pollCandidates("Do you wish to be considered to be a Centcom Official?", "pAI")
+	var/list/mob/dead/observer/candidates = pollCandidates("Do you wish to be considered to be a Centcom Official?", "deathsquad")
 
 	if(candidates.len)
 		var/mob/dead/observer/chosen_candidate = pick(candidates)
@@ -542,6 +518,9 @@
 			missiondesc += "<BR><B>Your Mission</B>: [mission]"
 			ERTOperative << missiondesc
 
+			if(config.enforce_human_authority)
+				ERTOperative.set_species("human")
+
 			//Logging and cleanup
 			if(numagents == 1)
 				message_admins("A Code [alert] emergency response team has spawned with the mission: [mission]")
@@ -575,6 +554,7 @@
 	else
 		return
 
+//Shadowling
 /datum/admins/proc/makeShadowling()
 	var/datum/game_mode/shadowling/temp = new
 	if(config.protect_roles_from_antagonist)
@@ -584,14 +564,15 @@
 	var/list/mob/living/carbon/human/candidates = list()
 	var/mob/living/carbon/human/H = null
 	for(var/mob/living/carbon/human/applicant in player_list)
-		if(applicant.client.prefs.be_special & BE_SHADOWLING)
+		if(ROLE_SHADOWLING in applicant.client.prefs.be_special)
 			if(!applicant.stat)
 				if(applicant.mind)
 					if(!applicant.mind.special_role)
-						if(temp.age_check(applicant.client))
-							if(!(applicant.job in temp.restricted_jobs))
-								if(!(is_shadow_or_thrall(applicant)))
-									candidates += applicant
+						if(!jobban_isbanned(applicant, "shadowling") && !jobban_isbanned(applicant, "Syndicate"))
+							if(temp.age_check(applicant.client))
+								if(!(applicant.job in temp.restricted_jobs))
+									if(!(is_shadow_or_thrall(applicant)))
+										candidates += applicant
 
 	if(candidates.len)
 		H = pick(candidates)

@@ -14,11 +14,10 @@
 	var/disabled = 0
 	var/shocked = 0
 	var/obj/machinery/computer/rdconsole/linked_console
-	var/datum/wires/r_n_d/wires
 
 /obj/machinery/r_n_d/New()
 	..()
-	wires = new(src)
+	wires = new /datum/wires/r_n_d(src)
 
 /obj/machinery/r_n_d/Destroy()
 	qdel(wires)
@@ -30,7 +29,7 @@
 		return 0
 	if(!prob(prb))
 		return 0
-	var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
+	var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
 	s.set_up(5, 1, src)
 	s.start()
 	if (electrocute_mob(user, get_area(src), src, 0.7))
@@ -42,7 +41,7 @@
 	if(shocked)
 		shock(user,50)
 	if(panel_open)
-		wires.Interact(user)
+		wires.interact(user)
 
 
 

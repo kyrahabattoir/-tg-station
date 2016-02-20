@@ -12,6 +12,13 @@
 	var/alert = 0
 	var/open = 0
 	var/obj/item/weapon/electronics/airlock/electronics
+	var/start_showpiece_type = null //add type for items on display
+
+/obj/structure/displaycase/New()
+	..()
+	if(start_showpiece_type)
+		showpiece = new start_showpiece_type (src)
+	update_icon()
 
 /obj/structure/displaycase/ex_act(severity, target)
 	switch(severity)
@@ -119,15 +126,26 @@
 			qdel(src)
 			return
 		user << "<span class='notice'>You start to [open ? "close":"open"] the [src]</span>"
-		if(do_after(user, 20, target = src))
+		if(do_after(user, 20/W.toolspeed, target = src))
 			user <<  "<span class='notice'>You [open ? "close":"open"] the [src]</span>"
 			open = !open
 			update_icon()
-	else if(open)
+	else if(open && !showpiece)
 		if(user.unEquip(W))
 			W.loc = src
 			showpiece = W
 			user << "<span class='notice'>You put [W] on display</span>"
+			update_icon()
+	else if(istype(W, /obj/item/stack/sheet/glass) && destroyed)
+		var/obj/item/stack/sheet/glass/G = W
+		if(G.get_amount() < 2)
+			user << "<span class='warning'>You need two glass sheets to fix the case!</span>"
+			return
+		user << "<span class='notice'>You start fixing the [src]...</span>"
+		if(do_after(user, 20, target = src))
+			G.use(2)
+			destroyed = 0
+			health = initial(health)
 			update_icon()
 	else
 		user.changeNext_move(CLICK_CD_MELEE)
@@ -169,7 +187,7 @@
 	if(istype(I, /obj/item/weapon/wrench))
 		user << "<span class='notice'>You start disassembling [src]...</span>"
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-		if(do_after(user, 30, target = src))
+		if(do_after(user, 30/I.toolspeed, target = src))
 			playsound(src.loc, 'sound/items/Deconstruct.ogg', 50, 1)
 			new /obj/item/stack/sheet/mineral/wood(get_turf(src))
 			qdel(src)
@@ -177,7 +195,7 @@
 	if(istype(I, /obj/item/weapon/electronics/airlock))
 		user << "<span class='notice'>You start installing the electronics into [src]...</span>"
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-		if(user.unEquip(I) && do_after(user, 30, target = src)) 
+		if(user.unEquip(I) && do_after(user, 30, target = src))
 			I.loc = src
 			electronics = I
 			user << "<span class='notice'>You install the airlock electronics.</span>"
@@ -194,10 +212,10 @@
 			if(electronics)
 				electronics.loc = display
 				display.electronics = electronics
-				if(electronics.use_one_access)
-					display.req_one_access = electronics.conf_access
+				if(electronics.one_access)
+					display.req_one_access = electronics.accesses
 				else
-					display.req_access = electronics.conf_access
+					display.req_access = electronics.accesses
 			qdel(src)
 		return
 	return
@@ -205,11 +223,7 @@
 
 /obj/structure/displaycase/captain
 	alert = 1
-
-/obj/structure/displaycase/captain/New()
-	..()
-	showpiece = new /obj/item/weapon/gun/energy/laser/captain (src)
-	update_icon()
+	start_showpiece_type = /obj/item/weapon/gun/energy/laser/captain
 
 /obj/structure/displaycase/labcage
 	name = "lab cage"

@@ -131,7 +131,7 @@
 
 		for(var/a=0, a<5, a++)
 			spawn(0)
-				var/obj/effect/effect/water/W = PoolOrNew( /obj/effect/effect/water, get_turf(src) )
+				var/obj/effect/particle_effect/water/W = PoolOrNew( /obj/effect/particle_effect/water, get_turf(src) )
 				var/turf/my_target = pick(the_targets)
 				if(precision)
 					the_targets -= my_target
@@ -145,15 +145,9 @@
 					step_towards(W,my_target)
 					if(!W || !W.reagents) return
 					W.reagents.reaction(get_turf(W))
-					for(var/atom/atm in get_turf(W))
+					for(var/A in get_turf(W))
 						if(!W) return
-						W.reagents.reaction(atm)
-						if(isliving(atm)) //For extinguishing mobs on fire
-							var/mob/living/M = atm
-							M.ExtinguishMob()
-						if(istype(atm,/obj/item))
-							var/obj/item/Item = atm
-							Item.extinguish()
+						W.reagents.reaction(A)
 					if(W.loc == my_target) break
 					sleep(2)
 

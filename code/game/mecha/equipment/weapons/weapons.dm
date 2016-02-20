@@ -109,7 +109,7 @@
 	icon_state = "mecha_plasmacutter"
 	item_state = "plasmacutter"
 	energy_drain = 60
-	origin_tech = "materials=3;combat=2;powerstorage=3;plasma=3"
+	origin_tech = "materials=3;combat=2;powerstorage=3;plasmatech=3"
 	projectile = /obj/item/projectile/plasma/adv/mech
 	fire_sound = 'sound/weapons/Laser.ogg'
 
@@ -170,7 +170,7 @@
 			if(istype(H.ears, /obj/item/clothing/ears/earmuffs))
 				continue
 		M << "<font color='red' size='7'>HONK</font>"
-		M.sleeping = 0
+		M.SetSleeping(0)
 		M.stuttering += 20
 		M.adjustEarDamage(0, 30)
 		M.Weaken(3)
@@ -207,7 +207,8 @@
 /obj/item/mecha_parts/mecha_equipment/weapon/ballistic/get_equip_info()
 	return "[..()]\[[src.projectiles]\][(src.projectiles < initial(src.projectiles))?" - <a href='?src=\ref[src];rearm=1'>Rearm</a>":null]"
 
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/proc/rearm()
+
+/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/rearm()
 	if(projectiles < initial(projectiles))
 		var/projectiles_to_add = initial(projectiles) - projectiles
 		while(chassis.get_charge() >= projectile_energy_cost && projectiles_to_add)
@@ -216,7 +217,13 @@
 			chassis.use_power(projectile_energy_cost)
 	send_byjax(chassis.occupant,"exosuit.browser","\ref[src]",src.get_equip_info())
 	log_message("Rearmed [src.name].")
-	return
+	return 1
+
+
+/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/needs_rearm()
+	. = !(projectiles > 0)
+
+
 
 /obj/item/mecha_parts/mecha_equipment/weapon/ballistic/Topic(href, href_list)
 	..()
@@ -285,8 +292,7 @@
 	log_message("Launched a [O.name] from [name], targeting [target].")
 	projectiles--
 	proj_init(O)
-	spawn(0)
-		O.throw_at(target, missile_range, missile_speed, spin = 0)
+	O.throw_at_fast(target, missile_range, missile_speed, spin = 0)
 	return 1
 
 //used for projectile initilisation (priming flashbang) and additional logging

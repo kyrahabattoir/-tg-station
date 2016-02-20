@@ -6,7 +6,7 @@ var/list/forbidden_varedit_object_types = list(
 									)
 
 var/list/VVlocked = list("vars", "client", "virus", "viruses", "cuffed", "last_eaten", "unlock_content", "step_x", "step_y", "force_ending")
-var/list/VVicon_edit_lock = list("icon", "icon_state", "overlays", "underlays")
+var/list/VVicon_edit_lock = list("icon", "icon_state", "overlays", "underlays", "resize")
 var/list/VVckey_edit = list("key", "ckey")
 
 /*
@@ -143,13 +143,16 @@ var/list/VVckey_edit = list("key", "ckey")
 	switch(alert("Would you like to associate a var with the list entry?",,"Yes","No"))
 		if("Yes")
 			L[var_value] = mod_list_add_ass(O) //haha
+	O.on_varedit(objectvar)
 	world.log << "### ListVarEdit by [src]: [O.type] [objectvar]: ADDED=[var_value]"
 	log_admin("[key_name(src)] modified [original_name]'s [objectvar]: ADDED=[var_value]")
 	message_admins("[key_name_admin(src)] modified [original_name]'s [objectvar]: ADDED=[var_value]")
 
 /client/proc/mod_list(list/L, atom/O, original_name, objectvar)
-	if(!check_rights(R_VAREDIT))	return
-	if(!istype(L,/list)) src << "Not a List."
+	if(!check_rights(R_VAREDIT))
+		return
+	if(!istype(L,/list))
+		src << "Not a List."
 
 	if(L.len > 1000)
 		var/confirm = alert(src, "The list you're trying to edit is very long, continuing may crash the server.", "Warning", "Continue", "Abort")
@@ -190,11 +193,14 @@ var/list/VVckey_edit = list("key", "ckey")
 	var/dir
 
 	if(variable in VVlocked)
-		if(!check_rights(R_DEBUG))	return
+		if(!check_rights(R_DEBUG))
+			return
 	if(variable in VVckey_edit)
-		if(!check_rights(R_SPAWN|R_DEBUG)) return
+		if(!check_rights(R_SPAWN|R_DEBUG))
+			return
 	if(variable in VVicon_edit_lock)
-		if(!check_rights(R_FUN|R_DEBUG)) return
+		if(!check_rights(R_FUN|R_DEBUG))
+			return
 
 	if(isnull(variable))
 		usr << "Unable to determine variable type."
@@ -299,6 +305,7 @@ var/list/VVckey_edit = list("key", "ckey")
 			log_admin("[key_name(src)] modified [original_name]'s [objectvar]: REMOVED=[variable]")
 			message_admins("[key_name_admin(src)] modified [original_name]'s [objectvar]: REMOVED=[variable]")
 			L -= variable
+			O.on_varedit(objectvar)
 			return
 
 		if("text")
@@ -365,12 +372,14 @@ var/list/VVckey_edit = list("key", "ckey")
 			else
 				L[L.Find(variable)] = new_var
 
+	O.on_varedit(objectvar)
 	world.log << "### ListVarEdit by [src]: [O.type] [objectvar]: [original_var]=[new_var]"
 	log_admin("[key_name(src)] modified [original_name]'s [objectvar]: [original_var]=[new_var]")
 	message_admins("[key_name_admin(src)] modified [original_name]'s varlist [objectvar]: [original_var]=[new_var]")
 
 /client/proc/modify_variables(atom/O, param_var_name = null, autodetect_class = 0)
-	if(!check_rights(R_VAREDIT))	return
+	if(!check_rights(R_VAREDIT))
+		return
 
 	for(var/p in forbidden_varedit_object_types)
 		if( istype(O,p) )
@@ -391,11 +400,14 @@ var/list/VVckey_edit = list("key", "ckey")
 			return
 
 		if(param_var_name in VVlocked)
-			if(!check_rights(R_DEBUG))	return
+			if(!check_rights(R_DEBUG))
+				return
 		if(param_var_name in VVckey_edit)
-			if(!check_rights(R_SPAWN|R_DEBUG)) return
+			if(!check_rights(R_SPAWN|R_DEBUG))
+				return
 		if(param_var_name in VVicon_edit_lock)
-			if(!check_rights(R_FUN|R_DEBUG)) return
+			if(!check_rights(R_FUN|R_DEBUG))
+				return
 
 		variable = param_var_name
 
@@ -449,15 +461,19 @@ var/list/VVckey_edit = list("key", "ckey")
 		names = sortList(names)
 
 		variable = input("Which var?","Var") as null|anything in names
-		if(!variable)	return
+		if(!variable)
+			return
 		var_value = O.vars[variable]
 
 		if(variable in VVlocked)
-			if(!check_rights(R_DEBUG)) return
+			if(!check_rights(R_DEBUG))
+				return
 		if(variable in VVckey_edit)
-			if(!check_rights(R_SPAWN|R_DEBUG)) return
+			if(!check_rights(R_SPAWN|R_DEBUG))
+				return
 		if(variable in VVicon_edit_lock)
-			if(!check_rights(R_FUN|R_DEBUG)) return
+			if(!check_rights(R_FUN|R_DEBUG))
+				return
 
 	if(!autodetect_class)
 
@@ -617,6 +633,7 @@ var/list/VVckey_edit = list("key", "ckey")
 		if("marked datum")
 			O.vars[variable] = holder.marked_datum
 
+	O.on_varedit(variable)
 	world.log << "### VarEdit by [src]: [O.type] [variable]=[html_encode("[O.vars[variable]]")]"
 	log_admin("[key_name(src)] modified [original_name]'s [variable] to [O.vars[variable]]")
 	message_admins("[key_name_admin(src)] modified [original_name]'s [variable] to [O.vars[variable]]")

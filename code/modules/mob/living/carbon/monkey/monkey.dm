@@ -17,7 +17,8 @@
 	verbs += /mob/living/proc/mob_sleep
 	verbs += /mob/living/proc/lay_down
 
-	gender = pick(MALE, FEMALE)
+	if(unique_name) //used to exclude pun pun
+		gender = pick(MALE, FEMALE)
 	real_name = name
 	if(good_mutations.len) //genetic mutations have been set up.
 		initialize()
@@ -39,22 +40,25 @@
 	//Prepare our med HUD...
 	..()
 	//...and display it.
-	for(var/datum/atom_hud/data/medical/hud in huds)
+	for(var/datum/atom_hud/data/human/medical/hud in huds)
 		hud.add_to_hud(src)
 
 /mob/living/carbon/monkey/movement_delay()
-	var/tally = 0
 	if(reagents)
-		if(reagents.has_reagent("morphine")) return -1
+		if(reagents.has_reagent("morphine"))
+			return -1
 
-		if(reagents.has_reagent("nuka_cola")) return -1
+		if(reagents.has_reagent("nuka_cola"))
+			return -1
 
+	. = ..()
 	var/health_deficiency = (100 - health)
-	if(health_deficiency >= 45) tally += (health_deficiency / 25)
+	if(health_deficiency >= 45)
+		. += (health_deficiency / 25)
 
 	if (bodytemperature < 283.222)
-		tally += (283.222 - bodytemperature) / 10 * 1.75
-	return tally+config.monkey_delay
+		. += (283.222 - bodytemperature) / 10 * 1.75
+	return . + config.monkey_delay
 
 /mob/living/carbon/monkey/attack_paw(mob/living/M)
 	if(..()) //successful monkey bite.
@@ -93,10 +97,8 @@
 					damage = rand(10, 15)
 					if ( (paralysis < 5)  && (health > 0) )
 						Paralyse(rand(10, 15))
-						spawn( 0 )
-							visible_message("<span class='danger'>[M] has knocked out [name]!</span>", \
+						visible_message("<span class='danger'>[M] has knocked out [name]!</span>", \
 									"<span class='userdanger'>[M] has knocked out [name]!</span>")
-							return
 				adjustBruteLoss(damage)
 				add_logs(M, src, "attacked")
 				updatehealth()
@@ -104,7 +106,6 @@
 				playsound(loc, 'sound/weapons/punchmiss.ogg', 25, 1, -1)
 				visible_message("<span class='danger'>[M] has attempted to punch [name]!</span>", \
 						"<span class='userdanger'>[M] has attempted to punch [name]!</span>")
-
 		if("disarm")
 			if (!( paralysis ))
 				M.do_attack_animation(src)
@@ -119,7 +120,6 @@
 						playsound(loc, 'sound/weapons/thudswoosh.ogg', 50, 1, -1)
 						visible_message("<span class='danger'>[M] has disarmed [src]!</span>", \
 								"<span class='userdanger'>[M] has disarmed [src]!</span>")
-	return
 
 /mob/living/carbon/monkey/attack_alien(mob/living/carbon/alien/humanoid/M)
 	if(..()) //if harm or disarm intent.
@@ -233,7 +233,7 @@
 /mob/living/carbon/monkey/canBeHandcuffed()
 	return 1
 
-/mob/living/carbon/monkey/assess_threat(obj/machinery/bot/secbot/judgebot, lasercolor)
+/mob/living/carbon/monkey/assess_threat(mob/living/simple_animal/bot/secbot/judgebot, lasercolor)
 	if(judgebot.emagged == 2)
 		return 10 //Everyone is a criminal!
 	var/threatcount = 0

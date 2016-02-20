@@ -24,7 +24,8 @@
 	return "The infrared trigger is [on?"on":"off"]."
 
 /obj/item/device/assembly/infra/activate()
-	if(!..())	return 0//Cooldown check
+	if(!..())
+		return 0//Cooldown check
 	on = !on
 	update_icon()
 	return 1
@@ -89,7 +90,8 @@
 	return
 
 /obj/item/device/assembly/infra/holder_movement()
-	if(!holder)	return 0
+	if(!holder)
+		return 0
 //	dir = holder.dir
 	qdel(first)
 	return 1
@@ -146,7 +148,7 @@
 
 /obj/item/device/assembly/infra/AltClick(mob/user)
 	..()
-	if(!user.canUseTopic(user))
+	if(user.incapacitated())
 		user << "<span class='warning'>You can't do that right now!</span>"
 		return
 	if(!in_range(src, user))
@@ -159,7 +161,7 @@
 /***************************IBeam*********************************/
 
 /obj/effect/beam/i_beam
-	name = "i beam"
+	name = "infrared beam"
 	icon = 'icons/obj/projectiles.dmi'
 	icon_state = "ibeam"
 	var/obj/effect/beam/i_beam/next = null

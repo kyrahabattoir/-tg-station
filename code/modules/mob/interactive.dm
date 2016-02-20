@@ -88,8 +88,9 @@
 	//this is here because this has no client/prefs/brain whatever.
 	age = rand(AGE_MIN,AGE_MAX)
 	//job handling
-	var/list/jobs = SSjob.occupations
-	for(var/datum/job/J in jobs)
+	var/list/jobs = SSjob.occupations.Copy()
+	for(var/job in jobs)
+		var/datum/job/J = job
 		if(J.title == "Cyborg" || J.title == "AI" || J.title == "Chaplain" || J.title == "Mime")
 			jobs -= J
 	myjob = pick(jobs)
@@ -124,8 +125,7 @@
 	MYPDA.ownjob = "Crew"
 	MYPDA.name = "PDA-[real_name] ([myjob.title])"
 	equip_to_slot_or_del(MYPDA, slot_belt)
-	zone_sel = new /obj/screen/zone_sel()
-	zone_sel.selecting = "chest"
+	zone_selected = "chest"
 	if(prob(10)) //my x is augmented
 		//arms
 		if(prob((FUZZY_CHANCE_LOW+FUZZY_CHANCE_HIGH)/2))
@@ -182,7 +182,7 @@
 	if(TRAITS & TRAIT_THIEVING)
 		slyness = 75
 
-	SSbp.insertBot(src)
+	SSnpc.insertBot(src)
 
 
 /mob/living/carbon/human/interactive/attack_hand(mob/living/carbon/human/M)
@@ -324,8 +324,8 @@
 	//proc functions
 	for(var/Proc in functions)
 		if(!isnotfunc())
-			spawn(1)
-				call(src,Proc)(src)
+			callfunction(Proc)
+
 
 	//target interaction stays hardcoded
 
@@ -395,22 +395,25 @@
 		doing |= TRAVEL
 		if(nearby.len > 4)
 			//i'm crowded, time to leave
-			TARGET = pick(target_filter(orange(MAX_RANGE_FIND,src)))
+			TARGET = pick(target_filter(urange(MAX_RANGE_FIND,src,1)))
 		else if(prob((FUZZY_CHANCE_LOW+FUZZY_CHANCE_HIGH)/2))
 			//chance to chase an item
-			TARGET = locate(/obj/item) in orange(MIN_RANGE_FIND,src)
+			TARGET = locate(/obj/item) in urange(MIN_RANGE_FIND,src,1)
 		else if(prob((FUZZY_CHANCE_LOW+FUZZY_CHANCE_HIGH)/2))
 			//chance to leave
-			TARGET = locate(/obj/machinery/door) in orange(MIN_RANGE_FIND,src) // this is a sort of fix for the current pathing.
+			TARGET = locate(/obj/machinery/door) in urange(MIN_RANGE_FIND,src,1) // this is a sort of fix for the current pathing.
 		else
 			//else, target whatever, or go to our department
 			if(prob((FUZZY_CHANCE_LOW+FUZZY_CHANCE_HIGH)/2))
-				TARGET = pick(target_filter(orange(MIN_RANGE_FIND,src)))
+				TARGET = pick(target_filter(urange(MIN_RANGE_FIND,src,1)))
 			else
-				TARGET = pick(get_area_turfs(job2area(myjob)))
+				TARGET = safepick(get_area_turfs(job2area(myjob)))
 		tryWalk(TARGET)
 	LAST_TARGET = TARGET
 
+/mob/living/carbon/human/interactive/proc/callfunction(Proc)
+	set waitfor = 0
+	call(src,Proc)(src)
 /mob/living/carbon/human/interactive/proc/tryWalk(turf/TARGET)
 	if(!isnotfunc())
 		if(!walk2derpless(TARGET))
@@ -421,6 +424,8 @@
 
 /mob/living/carbon/human/interactive/proc/walk2derpless(target)
 	set background = 1
+	if(!target)
+		return 0
 	var/turf/T = get_turf(target)
 	var/turf/D = get_step(src,dir)
 	if(D)
@@ -551,7 +556,7 @@
 	if(canmove)
 		if(prob(attitude) && (graytide || (TRAITS & TRAIT_MEAN)) || retal)
 			a_intent = "harm"
-			zone_sel.selecting = pick("chest","r_leg","l_leg","r_arm","l_arm","head")
+			zone_selected = pick("chest","r_leg","l_leg","r_arm","l_arm","head")
 			doing |= FIGHTING
 			if(retal)
 				TARGET = retal_target
@@ -631,26 +636,23 @@
 			nearby += M
 
 //END OF MODULES
-/mob/living/carbon/human/interactive/angry
-	New()
-		TRAITS |= TRAIT_ROBUST
-		TRAITS |= TRAIT_MEAN
-		faction = list("bot_angry")
-		..()
+/mob/living/carbon/human/interactive/angry/New()
+	TRAITS |= TRAIT_ROBUST
+	TRAITS |= TRAIT_MEAN
+	faction = list("bot_angry")
+	..()
 
-/mob/living/carbon/human/interactive/friendly
-	New()
-		TRAITS |= TRAIT_FRIENDLY
-		TRAITS |= TRAIT_UNROBUST
-		faction = list("bot_friendly")
-		..()
+/mob/living/carbon/human/interactive/friendly/New()
+	TRAITS |= TRAIT_FRIENDLY
+	TRAITS |= TRAIT_UNROBUST
+	faction = list("bot_friendly")
+	..()
 
-/mob/living/carbon/human/interactive/greytide
-	New()
-		TRAITS |= TRAIT_ROBUST
-		TRAITS |= TRAIT_MEAN
-		TRAITS |= TRAIT_THIEVING
-		TRAITS |= TRAIT_DUMB
-		faction = list("bot_grey")
-		graytide = 1
-		..()
+/mob/living/carbon/human/interactive/greytide/New()
+	TRAITS |= TRAIT_ROBUST
+	TRAITS |= TRAIT_MEAN
+	TRAITS |= TRAIT_THIEVING
+	TRAITS |= TRAIT_DUMB
+	faction = list("bot_grey")
+	graytide = 1
+	..()

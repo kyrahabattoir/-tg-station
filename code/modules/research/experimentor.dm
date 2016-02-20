@@ -170,28 +170,25 @@
 	if(!linked_console)
 		dat += "<b><a href='byond://?src=\ref[src];function=search'>Scan for R&D Console</A></b><br>"
 	if(loaded_item)
-		if(recentlyExperimented)
-			dat += "<b>The [src] is still resetting!</b>"
-		else
-			dat += "<b>Loaded Item:</b> [loaded_item]<br>"
-			dat += "<b>Technology</b>:<br>"
-			var/list/D = ConvertReqString2List(loaded_item.origin_tech)
-			for(var/T in D)
-				dat += "[T]<br>"
-			dat += "<br><br>Available tests:"
-			dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_POKE]'>Poke</A></b>"
-			dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_IRRADIATE];'>Irradiate</A></b>"
-			dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_GAS]'>Gas</A></b>"
-			dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_HEAT]'>Burn</A></b>"
-			dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_COLD]'>Freeze</A></b>"
-			dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_OBLITERATE]'>Destroy</A></b><br>"
-			if(istype(loaded_item,/obj/item/weapon/relic))
-				dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_DISCOVER]'>Discover</A></b><br>"
-			dat += "<br><b><a href='byond://?src=\ref[src];function=eject'>Eject</A>"
+		dat += "<b>Loaded Item:</b> [loaded_item]<br>"
+		dat += "<b>Technology</b>:<br>"
+		var/list/D = ConvertReqString2List(loaded_item.origin_tech)
+		for(var/T in D)
+			dat += "[T]<br>"
+		dat += "<br><br>Available tests:"
+		dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_POKE]'>Poke</A></b>"
+		dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_IRRADIATE];'>Irradiate</A></b>"
+		dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_GAS]'>Gas</A></b>"
+		dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_HEAT]'>Burn</A></b>"
+		dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_COLD]'>Freeze</A></b>"
+		dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_OBLITERATE]'>Destroy</A></b><br>"
+		if(istype(loaded_item,/obj/item/weapon/relic))
+			dat += "<br><b><a href='byond://?src=\ref[src];item=\ref[loaded_item];function=[SCANTYPE_DISCOVER]'>Discover</A></b><br>"
+		dat += "<br><b><a href='byond://?src=\ref[src];function=eject'>Eject</A>"
 	else
 		dat += "<b>Nothing loaded.</b>"
 	dat += "<br><a href='byond://?src=\ref[src];function=refresh'>Refresh</A><br>"
-	dat += "<br><a href='byond://?src=\ref[src];function=close'>Close</A><br></center>"
+	dat += "<br><a href='byond://?src=\ref[src];close=1'>Close</A><br></center>"
 	var/datum/browser/popup = new(user, "experimentor","Experimentor", 700, 400, src)
 	popup.set_content(dat)
 	popup.open()
@@ -229,8 +226,8 @@
 		loaded_item = null
 
 /obj/machinery/r_n_d/experimentor/proc/throwSmoke(turf/where)
-	var/datum/effect/effect/system/smoke_spread/smoke = new
-	smoke.set_up(1,0, where, 0)
+	var/datum/effect_system/smoke_spread/smoke = new
+	smoke.set_up(0, where)
 	smoke.start()
 
 /obj/machinery/r_n_d/experimentor/proc/pickWeighted(list/from)
@@ -319,8 +316,8 @@
 			R.my_atom = src
 			R.add_reagent(chosenchem , 50)
 			investigate_log("Experimentor has released [chosenchem] smoke.", "experimentor")
-			var/datum/effect/effect/system/smoke_spread/chem/smoke = new
-			smoke.set_up(R, 1, 0, src, 0, silent = 1)
+			var/datum/effect_system/smoke_spread/chem/smoke = new
+			smoke.set_up(R, 0, src, silent = 1)
 			playsound(src.loc, 'sound/effects/smoke.ogg', 50, 1, -3)
 			smoke.start()
 			qdel(R)
@@ -331,8 +328,8 @@
 			var/datum/reagents/R = new/datum/reagents(50)
 			R.my_atom = src
 			R.add_reagent(chosenchem , 50)
-			var/datum/effect/effect/system/smoke_spread/chem/smoke = new
-			smoke.set_up(R, 1, 0, src, 0, silent = 1)
+			var/datum/effect_system/smoke_spread/chem/smoke = new
+			smoke.set_up(R, 0, src, silent = 1)
 			playsound(src.loc, 'sound/effects/smoke.ogg', 50, 1, -3)
 			smoke.start()
 			qdel(R)
@@ -340,7 +337,7 @@
 			warn_admins(usr, "[chosenchem] smoke")
 			investigate_log("Experimentor has released <font color='red'>[chosenchem]</font> smoke!", "experimentor")
 		if(prob(EFFECT_PROB_LOW-badThingCoeff))
-			visible_message("[src] malfunctions, spewing harmless gas.>")
+			visible_message("[src] malfunctions, spewing harmless gas.")
 			throwSmoke(src.loc)
 		if(prob(EFFECT_PROB_MEDIUM-badThingCoeff))
 			visible_message("<span class='warning'>[src] melts [exp_on], ionizing the air around it!</span>")
@@ -418,8 +415,8 @@
 			R.my_atom = src
 			R.add_reagent("frostoil" , 50)
 			investigate_log("Experimentor has released frostoil gas.", "experimentor")
-			var/datum/effect/effect/system/smoke_spread/chem/smoke = new
-			smoke.set_up(R, 1, 0, src, 0, silent = 1)
+			var/datum/effect_system/smoke_spread/chem/smoke = new
+			smoke.set_up(R, 0, src, silent = 1)
 			playsound(src.loc, 'sound/effects/smoke.ogg', 50, 1, -3)
 			smoke.start()
 			qdel(R)
@@ -440,8 +437,8 @@
 			ejectItem(TRUE)
 		if(prob(EFFECT_PROB_MEDIUM-badThingCoeff))
 			visible_message("<span class='warning'>[src] malfunctions, releasing a flurry of chilly air as [exp_on] pops out!</span>")
-			var/datum/effect/effect/system/smoke_spread/smoke = new
-			smoke.set_up(1,0, src.loc, 0)
+			var/datum/effect_system/smoke_spread/smoke = new
+			smoke.set_up(0, src.loc)
 			smoke.start()
 			ejectItem()
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -457,27 +454,21 @@
 			visible_message("<span class='danger'>[src]'s crusher goes way too many levels too high, crushing right through space-time!</span>")
 			playsound(src.loc, 'sound/effects/supermatter.ogg', 50, 1, -3)
 			investigate_log("Experimentor has triggered the 'throw things' reaction.", "experimentor")
-			var/list/throwAt = list()
-			for(var/i in oview(7,src))
-				if(istype(i,/obj/item) || istype(i,/mob/living))
-					throwAt.Add(i)
-			var/counter
-			for(counter = 1, counter < throwAt.len, ++counter)
-				var/cast = throwAt[counter]
-				cast:throw_at(src,10,1)
+			for(var/atom/movable/AM in oview(7,src))
+				if(!AM.anchored)
+					AM.throw_at_fast(src,10,1)
+
 		if(prob(EFFECT_PROB_LOW-badThingCoeff))
 			visible_message("<span class='danger'>[src]'s crusher goes one level too high, crushing right into space-time!</span>")
 			playsound(src.loc, 'sound/effects/supermatter.ogg', 50, 1, -3)
 			investigate_log("Experimentor has triggered the 'minor throw things' reaction.", "experimentor")
-			var/list/oViewStuff = oview(7,src)
 			var/list/throwAt = list()
-			for(var/i in oViewStuff)
-				if(istype(i,/obj/item) || istype(i,/mob/living))
-					throwAt.Add(i)
-			var/counter
-			for(counter = 1, counter < throwAt.len, ++counter)
-				var/cast = throwAt[counter]
-				cast:throw_at(pick(throwAt),10,1)
+			for(var/atom/movable/AM in oview(7,src))
+				if(!AM.anchored)
+					throwAt.Add(AM)
+			for(var/counter = 1, counter < throwAt.len, ++counter)
+				var/atom/movable/cast = throwAt[counter]
+				cast.throw_at_fast(pick(throwAt),10,1)
 		ejectItem(TRUE)
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	if(exp == FAIL)
@@ -550,8 +541,9 @@
 	var/scantype = href_list["function"]
 	var/obj/item/process = locate(href_list["item"]) in src
 
-	if(scantype == "close")
+	if(href_list["close"])
 		usr << browse(null, "window=experimentor")
+		return
 	else if(scantype == "search")
 		var/obj/machinery/computer/rdconsole/D = locate(/obj/machinery/computer/rdconsole) in oview(3,src)
 		if(D)
@@ -563,6 +555,14 @@
 	else
 		if(recentlyExperimented)
 			usr << "<span class='warning'>[src] has been used too recently!</span>"
+			return
+		else if(!loaded_item)
+			updateUsrDialog() //Set the interface to unloaded mode
+			usr << "<span class='warning'>[src] is not currently loaded!</span>"
+			return
+		else if(!process || process != loaded_item) //Interface exploit protection (such as hrefs or swapping items with interface set to old item)
+			updateUsrDialog() //Refresh interface to update interface hrefs
+			usr << "<span class='danger'>Interface failure detected in [src]. Please try again.</span>"
 			return
 		var/dotype
 		if(text2num(scantype) == SCANTYPE_DISCOVER)
@@ -577,8 +577,7 @@
 				for(var/T in temp_tech)
 					linked_console.files.UpdateTech(T, temp_tech[T])
 				linked_console.files.UpdateDesigns(process,process.type)
-	if(scantype != "close")
-		src.updateUsrDialog()
+	src.updateUsrDialog()
 	return
 
 //~~~~~~~~Admin logging proc, aka the Powergamer Alarm~~~~~~~~
@@ -646,8 +645,8 @@
 //////////////// RELIC PROCS /////////////////////////////
 
 /obj/item/weapon/relic/proc/throwSmoke(turf/where)
-	var/datum/effect/effect/system/smoke_spread/smoke = new
-	smoke.set_up(1,0, where, 0)
+	var/datum/effect_system/smoke_spread/smoke = new
+	smoke.set_up(0, where)
 	smoke.start()
 
 /obj/item/weapon/relic/proc/corgicannon(mob/user)
@@ -675,7 +674,7 @@
 	user << message
 	var/animals = rand(1,25)
 	var/counter
-	var/list/valid_animals = list(/mob/living/simple_animal/parrot,/mob/living/simple_animal/butterfly,/mob/living/simple_animal/pet/cat,/mob/living/simple_animal/pet/dog/corgi,/mob/living/simple_animal/crab,/mob/living/simple_animal/pet/fox,/mob/living/simple_animal/lizard,/mob/living/simple_animal/mouse,/mob/living/simple_animal/pet/dog/pug,/mob/living/simple_animal/hostile/bear,/mob/living/simple_animal/hostile/poison/bees,/mob/living/simple_animal/hostile/carp)
+	var/list/valid_animals = list(/mob/living/simple_animal/parrot,/mob/living/simple_animal/butterfly,/mob/living/simple_animal/pet/cat,/mob/living/simple_animal/pet/dog/corgi,/mob/living/simple_animal/crab,/mob/living/simple_animal/pet/fox,/mob/living/simple_animal/hostile/lizard,/mob/living/simple_animal/mouse,/mob/living/simple_animal/pet/dog/pug,/mob/living/simple_animal/hostile/bear,/mob/living/simple_animal/hostile/poison/bees,/mob/living/simple_animal/hostile/carp)
 	for(counter = 1; counter < animals; counter++)
 		var/mobType = pick(valid_animals)
 		new mobType(get_turf(src))
@@ -697,8 +696,7 @@
 		R.realProc = realProc
 		R.revealed = TRUE
 		dupes |= R
-		spawn()
-			R.throw_at(pick(oview(7,get_turf(src))),10,1)
+		R.throw_at_fast(pick(oview(7,get_turf(src))),10,1)
 	counter = 0
 	spawn(rand(10,100))
 		for(counter = 1; counter <= dupes.len; counter++)

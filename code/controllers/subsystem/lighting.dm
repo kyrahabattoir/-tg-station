@@ -4,10 +4,11 @@ var/datum/subsystem/lighting/SSlighting
 
 /datum/subsystem/lighting
 	name = "Lighting"
-	wait = 5
 	priority = 1
+	wait = 5
 	dynamic_wait = 1
 	dwait_delta = 3
+	display = 5
 
 	var/list/changed_lights = list()		//list of all datum/light_source that need updating
 	var/changed_lights_workload = 0			//stats on the largest number of lights (max changed_lights.len)
@@ -49,6 +50,10 @@ var/datum/subsystem/lighting/SSlighting
 //Note: if we get additional z-levels at runtime (e.g. if the gateway thin ever gets finished) we can initialize specific
 //z-levels with the z_level argument
 /datum/subsystem/lighting/Initialize(timeofday, z_level)
+	for(var/area/A in world)
+		if (A.lighting_use_dynamic == DYNAMIC_LIGHTING_IFSTARLIGHT)
+			if (config.starlight)
+				A.SetDynamicLighting()
 
 
 	for(var/thing in changed_lights)
@@ -104,7 +109,8 @@ var/datum/subsystem/lighting/SSlighting
 	var/msg = "## DEBUG: [time2text(world.timeofday)] [name] subsystem restarted. Reports:\n"
 	for(var/varname in SSlighting.vars)
 		switch(varname)
-			if("tag","bestF","type","parent_type","vars")	continue
+			if("tag","bestF","type","parent_type","vars")
+				continue
 			else
 				var/varval1 = SSlighting.vars[varname]
 				var/varval2 = vars[varname]

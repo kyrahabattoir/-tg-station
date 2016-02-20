@@ -7,7 +7,16 @@
 	if (random_icon_states && length(src.random_icon_states) > 0)
 		src.icon_state = pick(src.random_icon_states)
 	create_reagents(300)
+	if(src.loc && isturf(src.loc))
+		for(var/obj/effect/decal/cleanable/C in src.loc)
+			if(C != src && C.type == src.type)
+				replace_decal(C)
 	..()
+
+
+
+/obj/effect/decal/cleanable/proc/replace_decal(obj/effect/decal/cleanable/C)
+	qdel(C)
 
 /obj/effect/decal/cleanable/attackby(obj/item/weapon/W, mob/user,)
 	if(istype(W, /obj/item/weapon/reagent_containers/glass) || istype(W, /obj/item/weapon/reagent_containers/food/drinks))
@@ -66,6 +75,7 @@
 
 
 /obj/effect/decal/cleanable/proc/can_bloodcrawl_in()
-	return bloodiness
-
-
+	if((blood_state != BLOOD_STATE_OIL) && (blood_state != BLOOD_STATE_NOT_BLOODY))
+		return bloodiness
+	else
+		return 0

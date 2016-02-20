@@ -17,6 +17,10 @@
 	update_icon()
 	return
 
+/obj/item/weapon/gun/projectile/update_icon()
+	..()
+	icon_state = "[initial(icon_state)][suppressed ? "-suppressed" : ""]"
+
 /obj/item/weapon/gun/projectile/process_chamber(eject_casing = 1, empty_chamber = 1)
 //	if(in_chamber)
 //		return 1
@@ -65,9 +69,6 @@
 		var/obj/item/weapon/suppressor/S = A
 		if(can_suppress)
 			if(!suppressed)
-				if(user.l_hand != src && user.r_hand != src)
-					user << "<span class='notice'>You'll need [src] in your hands to do that.</span>"
-					return
 				if(!user.unEquip(A))
 					return
 				user << "<span class='notice'>You screw [S] onto [src].</span>"
@@ -158,3 +159,11 @@
 	w_class = 2
 	var/oldsound = null
 	var/initial_w_class = null
+
+
+/obj/item/weapon/suppressor/specialoffer
+	name = "cheap suppressor"
+	desc = "A foreign knock-off suppressor, it feels flimsy, cheap, and brittle. Still fits all weapons."
+	icon = 'icons/obj/guns/projectile.dmi'
+	icon_state = "suppressor"
+

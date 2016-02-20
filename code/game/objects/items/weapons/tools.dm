@@ -27,6 +27,7 @@
 	materials = list(MAT_METAL=150)
 	origin_tech = "materials=1;engineering=1"
 	attack_verb = list("bashed", "battered", "bludgeoned", "whacked")
+	toolspeed = 1
 
 /obj/item/weapon/wrench/suicide_act(mob/user)
 	user.visible_message("<span class='suicide'>[user] is beating \himself to death with the [src.name]! It looks like \he's trying to commit suicide.</span>")
@@ -51,6 +52,7 @@
 	materials = list(MAT_METAL=75)
 	attack_verb = list("stabbed")
 	hitsound = 'sound/weapons/bladeslice.ogg'
+	toolspeed = 1
 
 /obj/item/weapon/screwdriver/suicide_act(mob/user)
 	user.visible_message(pick("<span class='suicide'>[user] is stabbing the [src.name] into \his temple! It looks like \he's trying to commit suicide.</span>", \
@@ -89,8 +91,9 @@
 	return
 
 /obj/item/weapon/screwdriver/attack(mob/living/carbon/M, mob/living/carbon/user)
-	if(!istype(M))	return ..()
-	if(user.zone_sel.selecting != "eyes" && user.zone_sel.selecting != "head")
+	if(!istype(M))
+		return ..()
+	if(user.zone_selected != "eyes" && user.zone_selected != "head")
 		return ..()
 	if(user.disabilities & CLUMSY && prob(50))
 		M = user
@@ -114,6 +117,7 @@
 	origin_tech = "materials=1;engineering=1"
 	attack_verb = list("pinched", "nipped")
 	hitsound = 'sound/items/Wirecutter.ogg'
+	toolspeed = 1
 
 /obj/item/weapon/wirecutters/New(loc, var/param_color = null)
 	..()
@@ -128,7 +132,7 @@
 		C.handcuffed = null
 		if(C.buckled && C.buckled.buckle_requires_restraints)
 			C.buckled.unbuckle_mob()
-		C.update_inv_handcuffed(0)
+		C.update_handcuffed()
 		return
 	else
 		..()
@@ -165,6 +169,7 @@
 	var/can_off_process = 0
 	var/light_intensity = 2 //how powerful the emitted light is when used.
 	heat = 3800
+	toolspeed = 1
 
 /obj/item/weapon/weldingtool/New()
 	..()
@@ -213,13 +218,14 @@
 	if(!istype(H))
 		return ..()
 
-	var/obj/item/organ/limb/affecting = H.get_organ(check_zone(user.zone_sel.selecting))
+	var/obj/item/organ/limb/affecting = H.get_organ(check_zone(user.zone_selected))
 
 	if(affecting.status == ORGAN_ROBOTIC && user.a_intent != "harm")
 		if(src.remove_fuel(1))
 			playsound(loc, 'sound/items/Welder.ogg', 50, 1)
 			user.visible_message("<span class='notice'>[user] starts to fix some of the dents on [H]'s [affecting.getDisplayName()].</span>", "<span class='notice'>You start fixing some of the dents on [H]'s [affecting.getDisplayName()].</span>")
-			if(!do_mob(user, H, 50))	return
+			if(!do_mob(user, H, 50))
+				return
 			item_heal_robotic(H, user, 5, 0)
 			return
 		else
@@ -429,6 +435,7 @@
 	change_icons = 0
 	can_off_process = 1
 	light_intensity = 1
+	toolspeed = 2
 
 
 //Proc to make the experimental welder generate fuel, optimized as fuck -Sieve
@@ -465,6 +472,7 @@
 	materials = list(MAT_METAL=50)
 	origin_tech = "engineering=1"
 	attack_verb = list("attacked", "bashed", "battered", "bludgeoned", "whacked")
+	toolspeed = 1
 
 /obj/item/weapon/crowbar/suicide_act(mob/user)
 	user.visible_message("<span class='suicide'>[user] is beating \himself to death with the [src.name]! It looks like \he's trying to commit suicide.</span>")
@@ -485,3 +493,4 @@
 	throw_range = 3
 	materials = list(MAT_METAL=70)
 	icon_state = "crowbar_large"
+	toolspeed = 2

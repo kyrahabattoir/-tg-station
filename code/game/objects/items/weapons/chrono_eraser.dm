@@ -44,6 +44,7 @@
 	w_class = 3
 	flags = NODROP
 	ammo_type = list(/obj/item/ammo_casing/energy/chrono_beam)
+	can_charge = 0
 	fire_delay = 50
 	var/obj/item/weapon/chrono_eraser/TED = null
 	var/obj/effect/chrono_field/field = null
@@ -238,8 +239,9 @@
 
 /obj/effect/chrono_field/return_air() //we always have nominal air and temperature
 	var/datum/gas_mixture/GM = new
-	GM.oxygen = MOLES_O2STANDARD
-	GM.nitrogen = MOLES_N2STANDARD
+	GM.assert_gases("o2","n2")
+	GM.gases["o2"][MOLES] = MOLES_O2STANDARD
+	GM.gases["n2"][MOLES] = MOLES_N2STANDARD
 	GM.temperature = T20C
 	return GM
 

@@ -14,8 +14,8 @@
 	..()
 	component_parts = list()
 	component_parts += new /obj/item/weapon/circuitboard/telesci_pad(null)
-	component_parts += new /obj/item/bluespace_crystal/artificial(null)
-	component_parts += new /obj/item/bluespace_crystal/artificial(null)
+	component_parts += new /obj/item/weapon/ore/bluespace_crystal/artificial(null)
+	component_parts += new /obj/item/weapon/ore/bluespace_crystal/artificial(null)
 	component_parts += new /obj/item/weapon/stock_parts/capacitor(null)
 	component_parts += new /obj/item/weapon/stock_parts/console_screen(null)
 	component_parts += new /obj/item/stack/cable_coil(null, 1)
@@ -86,7 +86,7 @@
 	desc = "Use to warp in a cargo telepad."
 	icon = 'icons/obj/radio.dmi'
 	icon_state = "beacon"
-	item_state = "signaler"
+	item_state = "beacon"
 	origin_tech = "bluespace=3"
 
 /obj/item/device/telepad_beacon/attack_self(mob/user)
@@ -151,7 +151,7 @@
 /obj/item/weapon/rcs/emag_act(mob/user)
 	if(!emagged)
 		emagged = 1
-		var/datum/effect/effect/system/spark_spread/s = new /datum/effect/effect/system/spark_spread
+		var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
 		s.set_up(5, 1, src)
 		s.start()
 		user << "<span class='caution'>You emag the RCS. Click on it to toggle between modes.</span>"

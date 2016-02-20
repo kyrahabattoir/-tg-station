@@ -24,6 +24,9 @@
 	has_limbs = 1
 	var/obj/item/weapon/reagent_containers/food/snacks/meat/slab/type_of_meat = /obj/item/weapon/reagent_containers/food/snacks/meat/slab/
 
-	var/remote_view = 0
 	var/list/obj/effect/proc_holder/alien/abilities = list()
 	var/gib_type = /obj/effect/decal/cleanable/blood/gibs
+
+	var/rotate_on_lying = 1
+
+	var/tinttotal = 0	// Total level of visualy impairing items

@@ -26,11 +26,9 @@
 
 /obj/effect/proc_holder/changeling/augmented_eyesight/on_refund(mob/user)
 	var/obj/item/organ/internal/cyberimp/eyes/O = user.getorganslot("eye_ling")
-	O.Remove(user)
-	qdel(O)
-
-
-
+	if(O)
+		O.Remove(user)
+		qdel(O)
 
 
 /obj/item/organ/internal/cyberimp/eyes/shield/ling
@@ -45,7 +43,7 @@
 
 /obj/item/organ/internal/cyberimp/eyes/shield/ling/on_life()
 	..()
-	if(owner.eye_blind || owner.eye_stat || owner.eye_blurry || (owner.disabilities & BLIND) || (owner.disabilities & NEARSIGHT))
+	if(owner.eye_blind>1 || (owner.eye_blind && owner.stat !=UNCONSCIOUS) || owner.eye_damage || owner.eye_blurry || (owner.disabilities & NEARSIGHT))
 		owner.reagents.add_reagent("oculine", 1)
 
 /obj/item/organ/internal/cyberimp/eyes/shield/ling/prepare_eat()

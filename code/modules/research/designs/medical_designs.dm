@@ -37,18 +37,6 @@
 	build_path = /obj/item/device/mmi
 	category = list("Misc","Medical Designs")
 
-/datum/design/mmi_radio
-	name = "Radio-enabled Man-Machine Interface"
-	desc = "The Warrior's bland acronym, MMI, obscures the true horror of this monstrosity. This one comes with a built-in radio."
-	id = "mmi_radio"
-	req_tech = list("programming" = 2, "biotech" = 4)
-	build_type = PROTOLATHE | MECHFAB
-	materials = list(MAT_METAL = 1200, MAT_GLASS = 500)
-	construction_time = 75
-	reliability = 74
-	build_path = /obj/item/device/mmi/radio_enabled
-	category = list("Misc","Medical Designs")
-
 /datum/design/posibrain
 	name = "Positronic Brain"
 	desc = "The latest in Artificial Intelligences."
@@ -107,6 +95,16 @@
 	build_path = /obj/item/bodybag/bluespace
 	category = list("Medical Designs")
 
+/datum/design/plasmarefiller
+	name = "Plasma-man jumpsuit refill"
+	desc = "A refill pack for the auto-extinguisher on Plasma-man suits."
+	id = "plasmarefiller"
+	req_tech = list("materials" = 2, "combat" = 2)
+	build_type = PROTOLATHE
+	materials = list(MAT_METAL = 4000, MAT_PLASMA = 1000)
+	reliability = 76
+	build_path = /obj/item/device/extinguisher_refill
+	category = list("Medical Designs")
 
 /////////////////////////////////////////
 //////////Cybernetic Implants////////////

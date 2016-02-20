@@ -7,7 +7,7 @@
 	w_class = 1
 	throw_speed = 3
 	throw_range = 7
-	burn_state = 0 //Burnable
+	burn_state = FLAMMABLE
 	burntime = 5
 	var/heal_brute = 0
 	var/heal_burn = 0
@@ -27,10 +27,6 @@
 
 	if(!istype(M, /mob/living/carbon) && !istype(M, /mob/living/simple_animal))
 		user << "<span class='danger'>You don't know how to apply \the [src] to [M]!</span>"
-		return 1
-
-	if(!user.IsAdvancedToolUser())
-		user << "<span class='warning'>You don't have the dexterity to do this!</span>"
 		return 1
 
 	if(ishuman(M))
@@ -68,13 +64,14 @@
 			else if(user.gender == FEMALE)
 				t_himself = "herself"
 			user.visible_message("<span class='notice'>[user] starts to apply [src] on [t_himself]...</span>", "<span class='notice'>You begin applying [src] on yourself...</span>")
-			if(!do_mob(user, M, self_delay))	return
+			if(!do_mob(user, M, self_delay))
+				return
 			user.visible_message("<span class='green'>[user] applies [src] on [t_himself].</span>", "<span class='green'>You apply [src] on yourself.</span>")
 
 
 	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
-		var/obj/item/organ/limb/affecting = H.get_organ(check_zone(user.zone_sel.selecting))
+		var/obj/item/organ/limb/affecting = H.get_organ(check_zone(user.zone_selected))
 		if(stop_bleeding)
 			if(!H.bleedsuppress) //so you can't stack bleed suppression
 				H.suppress_bloodloss(stop_bleeding)

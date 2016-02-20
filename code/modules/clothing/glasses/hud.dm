@@ -40,6 +40,21 @@
 	darkness_view = 8
 	invis_view = SEE_INVISIBLE_MINIMUM
 
+/obj/item/clothing/glasses/hud/diagnostic
+	name = "Diagnostic HUD"
+	desc = "A heads-up display capable of analyzing the integrity and status of robotics and exosuits."
+	icon_state = "diagnostichud"
+	hud_type = DATA_HUD_DIAGNOSTIC
+
+/obj/item/clothing/glasses/hud/diagnostic/night
+	name = "Night Vision Diagnostic HUD"
+	desc = "A robotics diagnostic HUD fitted with a light amplifier."
+	icon_state = "diagnostichudnight"
+	item_state = "glasses"
+	darkness_view = 8
+	invis_view = SEE_INVISIBLE_MINIMUM
+
+
 /obj/item/clothing/glasses/hud/security
 	name = "Security HUD"
 	desc = "A heads-up display that scans the humans in view and provides accurate data about their ID status and security records."
@@ -142,13 +157,5 @@
 	user.update_inv_glasses()
 
 /obj/item/clothing/glasses/hud/toggle/thermal/emp_act(severity)
-	if(istype(src.loc, /mob/living/carbon/human))
-		var/mob/living/carbon/human/M = src.loc
-		if(M.glasses == src)
-			M << "<span class='danger'>The [src] overloads and blinds you!</span>"
-			M.eye_blind = 3
-			M.eye_blurry = 5
-			M.disabilities |= NEARSIGHT
-			spawn(100)
-				M.disabilities &= ~NEARSIGHT
+	thermal_overload()
 	..()
