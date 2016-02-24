@@ -1,8 +1,8 @@
 ## Server name: This appears at the top of the screen in-game. Remove the # infront of SERVERNAME and replace 'tgstation' with the name of your choice
-# SERVERNAME tgstation
+SERVERNAME ministation
 
 ## Station name: The name of the station as it is referred to in-game. If commented out, the game will generate a random name instead.
-STATIONNAME Space Station 13
+#STATIONNAME Space Station 13
 
 # Lobby time: This is the amount of time between rounds that players have to setup their characters and be ready.
 LOBBY_COUNTDOWN 120
@@ -11,10 +11,10 @@ LOBBY_COUNTDOWN 120
 ROUND_END_COUNTDOWN 90
 
 ## Add a # infront of this if you want to use the SQL based admin system, the legacy system uses admins.txt. You need to set up your database to use the SQL based system.
-ADMIN_LEGACY_SYSTEM
+#ADMIN_LEGACY_SYSTEM
 
 ## Add a # infront of this if you want to use the SQL based banning system. The legacy systems use the files in the data folder. You need to set up your database to use the SQL based system.
-BAN_LEGACY_SYSTEM
+#BAN_LEGACY_SYSTEM
 
 ## Unhash this entry to have certain jobs require your account to be at least a certain number of days old to select. You can configure the exact age requirement for different jobs by editing
 ## the minimal_player_age variable in the files in folder /code/game/jobs/job/.. for the job you want to edit. Set minimal_player_age to 0 to disable age requirement for that job.
@@ -75,10 +75,10 @@ ALLOW_ADMIN_OOCCOLOR
 ALLOW_METADATA
 
 ## allow players to initiate a restart vote
-#ALLOW_VOTE_RESTART
+ALLOW_VOTE_RESTART
 
 ## allow players to initate a mode-change start
-#ALLOW_VOTE_MODE
+ALLOW_VOTE_MODE
 
 ## min delay (deciseconds) between voting sessions (default 10 minutes)
 VOTE_DELAY 6000
@@ -87,10 +87,10 @@ VOTE_DELAY 6000
 VOTE_PERIOD 600
 
 ## prevents dead players from voting or starting votes
-# NO_DEAD_VOTE
+NO_DEAD_VOTE
 
 ## players' votes default to "No vote" (otherwise,  default to "No change")
-# DEFAULT_NO_VOTE
+DEFAULT_NO_VOTE
 
 ## disable abandon mob
 NORESPAWN
@@ -99,7 +99,7 @@ NORESPAWN
 # DONT_DEL_NEWMOB
 
 ## set a hosted by name for unix platforms
-HOSTEDBY Yournamehere
+HOSTEDBY ss13.ethernia.net
 
 ## Set to jobban "Guest-" accounts from Captain, HoS, HoP, CE, RD, CMO, Warden, Security, Detective, and AI positions.
 ## Set to 1 to jobban them from those positions, set to 0 to allow them.
@@ -109,12 +109,12 @@ HOSTEDBY Yournamehere
 GUEST_BAN
 
 ## Uncomment to allow web client connections
-#ALLOW_WEBCLIENT
+ALLOW_WEBCLIENT
 
 ## Uncomment to restrict web client connections to byond members
 ## This makes for a nice pay gate to cut down on ban evading, as the webclient's cid system isn't that great
 ## byond membership starts at $10 for 3 months, so to use the webclient to evade, they would have sink 10 bucks in each evade.
-#WEBCLIENT_ONLY_BYOND_MEMBERS
+WEBCLIENT_ONLY_BYOND_MEMBERS
 
 ## Set to jobban everyone who's key is not listed in data/whitelist.txt from Captain, HoS, HoP, CE, RD, CMO, Warden, Security, Detective, and AI positions.
 ## Uncomment to 1 to jobban, leave commented out to allow these positions for everyone (but see GUEST_JOBBAN above and regular jobbans)
@@ -144,11 +144,11 @@ GUEST_BAN
 # LOAD_JOBS_FROM_TXT
 
 ##Remove the # mark infront of this to forbid admins from possessing the singularity.
-#FORBID_SINGULO_POSSESSION
+FORBID_SINGULO_POSSESSION
 
 ## Remove the # to show a popup 'reply to' window to every non-admin that recieves an adminPM.
 ## The intention is to make adminPMs more visible. (although I fnd popups annoying so this defaults to off)
-#POPUP_ADMIN_PM
+POPUP_ADMIN_PM
 
 ## Remove the # to allow special 'Easter-egg' events on special holidays such as seasonal holidays and stuff like 'Talk Like a Pirate Day' :3 YAARRR
 ALLOW_HOLIDAYS
@@ -166,7 +166,7 @@ TICKLAG 0.9
 #COMMS_KEY default_pwd
 
 ## Uncomment this to let players see their own notes (they can still be set by admins only)
-#SEE_OWN_NOTES
+SEE_OWN_NOTES
 
 ##Note: all population caps can be used with each other if desired.
 
@@ -210,7 +210,7 @@ NOTIFY_NEW_PLAYER_AGE 0
 AUTOCONVERT_NOTES
 
 ## Comment this out to stop admin messages sent anytime an admin disconnects from a round in play, you can edit the messages in admin.dm
-ANNOUNCE_ADMIN_LOGOUT
+#ANNOUNCE_ADMIN_LOGOUT
 
 ## Uncomment to have an admin message sent anytime an admin connects to a round in play, you can edit the messages in admin.dm
 #ANNOUNCE_ADMIN_LOGIN
