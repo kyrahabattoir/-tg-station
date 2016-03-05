@@ -29,7 +29,7 @@
 /obj/structure/mineral_door/Destroy()
 	density = 0
 	air_update_turf(1)
-	..()
+	return ..()
 
 /obj/structure/mineral_door/Move()
 	var/turf/T = loc
@@ -65,9 +65,9 @@
 
 /obj/structure/mineral_door/proc/TryToSwitchState(atom/user)
 	if(isSwitchingStates) return
-	if(ismob(user))
-		var/mob/M = user
-		if(world.time - user.last_bumped <= 60) return //NOTE do we really need that?
+	if(isliving(user))
+		var/mob/living/M = user
+		if(world.time - M.last_bumped <= 60) return //NOTE do we really need that?
 		if(M.client)
 			if(iscarbon(M))
 				var/mob/living/carbon/C = M
@@ -126,7 +126,7 @@
 	if(istype(W,/obj/item/weapon/pickaxe))
 		var/obj/item/weapon/pickaxe/digTool = W
 		user << "<span class='notice'>You start digging the [name]...</span>"
-		if(do_after(user,digTool.digspeed*hardness) && src)
+		if(do_after(user,digTool.digspeed*hardness, target = src) && src)
 			user << "<span class='notice'>You finish digging.</span>"
 			Dismantle()
 	else if(istype(W,/obj/item/weapon)) //not sure, can't not just weapons get passed to this proc?
@@ -218,9 +218,9 @@
 	mineralType = "plasma"
 
 /obj/structure/mineral_door/transparent/plasma/attackby(obj/item/weapon/W, mob/user, params)
-	if(is_hot(W))
-		message_admins("Plasma mineral door ignited by [key_name(user, user.client)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) in ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
-		log_game("Plasma mineral door ignited by [user.ckey]([user]) in ([x],[y],[z])")
+	if(W.is_hot())
+		message_admins("Plasma mineral door ignited by [key_name_admin(user)](<A HREF='?_src_=holder;adminmoreinfo=\ref[user]'>?</A>) (<A HREF='?_src_=holder;adminplayerobservefollow=\ref[user]'>FLW</A>) in ([x],[y],[z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[x];Y=[y];Z=[z]'>JMP</a>)",0,1)
+		log_game("Plasma mineral door ignited by [key_name(user)] in ([x],[y],[z])")
 		TemperatureAct(100)
 	..()
 
@@ -242,6 +242,8 @@
 	hardness = 1
 	openSound = 'sound/effects/doorcreaky.ogg'
 	closeSound = 'sound/effects/doorcreaky.ogg'
+	burn_state = FLAMMABLE
+	burntime = 30
 
 /obj/structure/mineral_door/wood/Dismantle(devastated = 0)
 	if(!devastated)

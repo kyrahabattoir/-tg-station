@@ -30,15 +30,15 @@
 	name = "cyborg torso"
 	desc = "A heavily reinforced case containing cyborg logic boards, with space for a standard power cell."
 	icon_state = "chest"
-	var/wires = 0.0
+	var/wired = 0
 	var/obj/item/weapon/stock_parts/cell/cell = null
 
 /obj/item/robot_parts/head
 	name = "cyborg head"
 	desc = "A standard reinforced braincase, with spine-plugged neural socket and sensor gimbals."
 	icon_state = "head"
-	var/obj/item/device/flash/handheld/flash1 = null
-	var/obj/item/device/flash/handheld/flash2 = null
+	var/obj/item/device/assembly/flash/handheld/flash1 = null
+	var/obj/item/device/assembly/flash/handheld/flash2 = null
 
 /obj/item/robot_parts/robot_suit
 	name = "cyborg endoskeleton"
@@ -85,7 +85,7 @@
 				return 1
 	return 0
 
-/obj/item/robot_parts/robot_suit/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/item/robot_parts/robot_suit/attackby(obj/item/W, mob/user, params)
 	..()
 	if(istype(W, /obj/item/stack/sheet/metal) && !l_arm && !r_arm && !l_leg && !r_leg && !chest && !head)
 		var/obj/item/stack/sheet/metal/M = W
@@ -101,49 +101,61 @@
 			user << "<span class='warning'>You need one sheet of metal to start building ED-209!</span>"
 			return
 	if(istype(W, /obj/item/robot_parts/l_leg))
-		if(src.l_leg)	return
-		user.drop_item()
+		if(src.l_leg)
+			return
+		if(!user.unEquip(W))
+			return
 		W.loc = src
 		src.l_leg = W
 		src.updateicon()
 
 	if(istype(W, /obj/item/robot_parts/r_leg))
-		if(src.r_leg)	return
-		user.drop_item()
+		if(src.r_leg)
+			return
+		if(!user.unEquip(W))
+			return
 		W.loc = src
 		src.r_leg = W
 		src.updateicon()
 
 	if(istype(W, /obj/item/robot_parts/l_arm))
-		if(src.l_arm)	return
-		user.drop_item()
+		if(src.l_arm)
+			return
+		if(!user.unEquip(W))
+			return
 		W.loc = src
 		src.l_arm = W
 		src.updateicon()
 
 	if(istype(W, /obj/item/robot_parts/r_arm))
-		if(src.r_arm)	return
-		user.drop_item()
+		if(src.r_arm)
+			return
+		if(!user.unEquip(W))
+			return
 		W.loc = src
 		src.r_arm = W
 		src.updateicon()
 
 	if(istype(W, /obj/item/robot_parts/chest))
-		if(src.chest)	return
-		if(W:wires && W:cell)
-			user.drop_item()
+		if(src.chest)
+			return
+		if(W:wired && W:cell)
+			if(!user.unEquip(W))
+				return
 			W.loc = src
 			src.chest = W
 			src.updateicon()
-		else if(!W:wires)
+		else if(!W:wired)
 			user << "<span class='warning'>You need to attach wires to it first!</span>"
 		else
 			user << "<span class='warning'>You need to attach a cell to it first!</span>"
 
 	if(istype(W, /obj/item/robot_parts/head))
-		if(src.head)	return
+		if(src.head)
+			return
 		if(W:flash2 && W:flash1)
-			user.drop_item()
+			if(!user.unEquip(W))
+				return
 			W.loc = src
 			src.head = W
 			src.updateicon()
@@ -175,12 +187,8 @@
 				user << "<span class='warning'>The mmi indicates that their mind is currently inactive; it might change!</span>"
 				return
 
-			if(BM.stat == DEAD)
+			if(BM.stat == DEAD || (M.brain && M.brain.damaged_brain))
 				user << "<span class='warning'>Sticking a dead brain into the frame would sort of defeat the purpose!</span>"
-				return
-
-			if((BM.mind in ticker.mode.head_revolutionaries) || (BM.mind in ticker.mode.A_bosses) || (BM.mind in ticker.mode.B_bosses))
-				user << "<span class='warning'>The frame's firmware lets out a shrill sound, and flashes 'Abnormal Memory Engram'. It refuses to accept the MMI!</span>"
 				return
 
 			if(jobban_isbanned(BM, "Cyborg"))
@@ -188,14 +196,20 @@
 				return
 
 			var/mob/living/silicon/robot/O = new /mob/living/silicon/robot(get_turf(loc))
-			if(!O)	return
+			if(!O)
+				return
 
-			user.drop_item()
+			if(!user.unEquip(W))
+				return
+
+			if(M.syndiemmi)
+				aisync = 0
+				lawsync = 0
+				O.laws = new /datum/ai_laws/syndicate_override
 
 			O.invisibility = 0
 			//Transfer debug settings to new mob
 			O.custom_name = created_name
-			O.updatename("Default")
 			O.locked = panel_locked
 			if(!aisync)
 				lawsync = 0
@@ -204,16 +218,17 @@
 				O.notify_ai(1)
 				if(forced_ai)
 					O.connected_ai = forced_ai
-			if(!lawsync)
+			if(!lawsync && !M.syndiemmi)
 				O.lawupdate = 0
 				O.make_laws()
-				if(ticker.mode.config_tag == "malfunction") //Don't let humans get a cyborg on their side during malf, for balance reasons.
-					O.set_zeroth_law("<span class='danger'>ERROR ER0RR $R0RRO$!R41.%%!!(%$^^__+ @#F0E4'STATION OVERRUN, ASSUME CONTROL TO CONTAIN OUTBREAK#*�&110010</span>")
 
+			ticker.mode.remove_antag_for_borging(BM.mind)
 			BM.mind.transfer_to(O)
 
 			if(O.mind && O.mind.special_role)
-				O.mind.store_memory("As a cyborg, any objectives listed here are null and void, and will be marked as failed. They are simply here for memory purposes.")
+				O.mind.store_memory("As a cyborg, you must obey your silicon laws and master AI above all else. Your objectives will consider you to be dead.")
+				O << "<span class='userdanger'>You have been robotized!</span>"
+				O << "<span class='danger'>You must obey your silicon laws and master AI above all else. Your objectives will consider you to be dead.</span>"
 
 			O.job = "Cyborg"
 
@@ -221,7 +236,9 @@
 			chest.cell.loc = O
 			chest.cell = null
 			W.loc = O//Should fix cybros run time erroring when blown up. It got deleted before, along with the frame.
-			O.mmi = W
+			if(O.mmi) //we delete the mmi created by robot/New()
+				qdel(O.mmi)
+			O.mmi = W //and give the real mmi to the borg.
 			O.updatename()
 
 			feedback_inc("cyborg_birth",1)
@@ -290,41 +307,43 @@
 	Interact(usr)
 	return
 
-/obj/item/robot_parts/chest/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/item/robot_parts/chest/attackby(obj/item/W, mob/user, params)
 	..()
 	if(istype(W, /obj/item/weapon/stock_parts/cell))
 		if(src.cell)
 			user << "<span class='warning'>You have already inserted a cell!</span>"
 			return
 		else
-			user.drop_item()
+			if(!user.unEquip(W))
+				return
 			W.loc = src
 			src.cell = W
 			user << "<span class='notice'>You insert the cell.</span>"
 	if(istype(W, /obj/item/stack/cable_coil))
-		if(src.wires)
+		if(src.wired)
 			user << "<span class='warning'>You have already inserted wire!</span>"
 			return
 		var/obj/item/stack/cable_coil/coil = W
 		if (coil.use(1))
-			src.wires = 1.0
+			src.wired = 1
 			user << "<span class='notice'>You insert the wire.</span>"
 		else
 			user << "<span class='warning'>You need one length of coil to wire it!</span>"
 	return
 
-/obj/item/robot_parts/head/attackby(obj/item/W as obj, mob/user as mob, params)
+/obj/item/robot_parts/head/attackby(obj/item/W, mob/user, params)
 	..()
-	if(istype(W, /obj/item/device/flash/handheld))
-		var/obj/item/device/flash/handheld/F = W
+	if(istype(W, /obj/item/device/assembly/flash/handheld))
+		var/obj/item/device/assembly/flash/handheld/F = W
 		if(src.flash1 && src.flash2)
 			user << "<span class='warning'>You have already inserted the eyes!</span>"
 			return
-		else if(F.broken)
+		else if(F.crit_fail)
 			user << "<span class='warning'>You can't use a broken flash!</span>"
 			return
 		else
-			user.drop_item()
+			if(!user.unEquip(W))
+				return
 			F.loc = src
 			if(src.flash1)
 				src.flash2 = F

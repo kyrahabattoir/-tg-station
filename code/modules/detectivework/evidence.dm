@@ -65,7 +65,7 @@
 	w_class = I.w_class
 	return 1
 
-/obj/item/weapon/evidencebag/attack_self(mob/user as mob)
+/obj/item/weapon/evidencebag/attack_self(mob/user)
 	if(contents.len)
 		var/obj/item/I = contents[1]
 		user.visible_message("[user] takes [I] out of [src].", "<span class='notice'>You take [I] out of [src].</span>",\
@@ -84,12 +84,13 @@
 /obj/item/weapon/storage/box/evidence
 	name = "evidence bag box"
 	desc = "A box claiming to contain evidence bags."
-	New()
-		new /obj/item/weapon/evidencebag(src)
-		new /obj/item/weapon/evidencebag(src)
-		new /obj/item/weapon/evidencebag(src)
-		new /obj/item/weapon/evidencebag(src)
-		new /obj/item/weapon/evidencebag(src)
-		new /obj/item/weapon/evidencebag(src)
-		..()
-		return
+
+/obj/item/weapon/storage/box/evidence/New()
+	new /obj/item/weapon/evidencebag(src)
+	new /obj/item/weapon/evidencebag(src)
+	new /obj/item/weapon/evidencebag(src)
+	new /obj/item/weapon/evidencebag(src)
+	new /obj/item/weapon/evidencebag(src)
+	new /obj/item/weapon/evidencebag(src)
+	..()
+	return

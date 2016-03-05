@@ -30,7 +30,8 @@
 				user << "<span class ='notice'>You remove [G]'s old pin.</span>"
 
 			if(!G.pin)
-				user.drop_item()
+				if(!user.unEquip(src))
+					return
 				gun_insert(user, G)
 				user << "<span class ='notice'>You insert [src] into [G].</span>"
 			else
@@ -41,7 +42,7 @@
 		emagged = 1
 		user << "<span class='notice'>You override the authentication mechanism.</span>"
 
-/obj/item/device/firing_pin/proc/gun_insert(mob/living/user, var/obj/item/weapon/gun/G)
+/obj/item/device/firing_pin/proc/gun_insert(mob/living/user, obj/item/weapon/gun/G)
 	gun = G
 	loc = gun
 	gun.pin = src
@@ -131,7 +132,7 @@
 		return 0
 	return 1
 
-/obj/item/device/firing_pin/clown/ultra/gun_insert(mob/living/user, var/obj/item/weapon/gun/G)
+/obj/item/device/firing_pin/clown/ultra/gun_insert(mob/living/user, obj/item/weapon/gun/G)
 	..()
 	G.clumsy_check = 0
 
@@ -209,3 +210,9 @@
 	icon_state = "firing_pin_blue"
 	suit_requirement = /obj/item/clothing/suit/bluetag
 	tagcolor = "blue"
+
+
+/obj/item/device/firing_pin/Destroy()
+	if(gun)
+		gun.pin = null
+	return ..()

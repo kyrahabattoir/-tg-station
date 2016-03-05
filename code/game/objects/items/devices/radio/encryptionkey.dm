@@ -14,7 +14,7 @@
 
 /obj/item/device/encryptionkey/New()
 
-/obj/item/device/encryptionkey/attackby(obj/item/weapon/W as obj, mob/user as mob, params)
+/obj/item/device/encryptionkey/attackby(obj/item/weapon/W, mob/user, params)
 
 /obj/item/device/encryptionkey/syndicate
 	icon_state = "cypherkey"
@@ -128,3 +128,6 @@
 
 /obj/item/device/encryptionkey/ai //ported from NT, this goes 'inside' the AI.
 	channels = list("Command" = 1, "Security" = 1, "Engineering" = 1, "Science" = 1, "Medical" = 1, "Supply" = 1, "Service" = 1, "AI Private" = 1)
+
+/obj/item/device/encryptionkey/secbot
+	channels = list("AI Private"=1,"Security"=1)

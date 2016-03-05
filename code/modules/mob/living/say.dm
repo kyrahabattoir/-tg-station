@@ -56,6 +56,8 @@ var/list/department_radio_keys = list(
 	  ":ï" = "changeling",	"#ï" = "changeling",	".ï" = "changeling"
 )
 
+var/list/crit_allowed_modes = list(MODE_WHISPER,MODE_CHANGELING,MODE_ALIEN)
+
 /mob/living/say(message, bubble_type,)
 	message = trim(copytext(sanitize(message), 1, MAX_MESSAGE_LEN))
 
@@ -63,17 +65,16 @@ var/list/department_radio_keys = list(
 		say_dead(message)
 		return
 
-	if(stat)
-		return
-
 	if(check_emote(message))
 		return
 
 	if(!can_speak_basic(message)) //Stat is seperate so I can handle whispers properly.
-		src << "<span class='warning'>You find yourself unable to speak!</span>"
 		return
 
 	var/message_mode = get_message_mode(message)
+
+	if(stat && !(message_mode in crit_allowed_modes))
+		return
 
 	if(message_mode == MODE_HEADSET || message_mode == MODE_ROBOT)
 		message = copytext(message, 2)
@@ -86,15 +87,19 @@ var/list/department_radio_keys = list(
 		return
 
 	if(!can_speak_vocal(message))
-		src << "<span class='warning'>You find yourself unable to speak!</span>" //repetition intended
+		src << "<span class='warning'>You find yourself unable to speak!</span>"
 		return
 
-	message = treat_message(message)
+	if(message_mode != MODE_WHISPER) //whisper() calls treat_message(); double process results in "hisspering"
+		message = treat_message(message)
 	var/spans = list()
 	spans += get_spans()
 
-	if(!message || message == "")
+	if(!message)
 		return
+
+	//Log of what we've said, plain message, no spans or junk
+	say_log += message
 
 	var/message_range = 7
 	var/radio_return = radio(message, message_mode, spans)
@@ -137,7 +142,7 @@ var/list/department_radio_keys = list(
 	show_message(message, 2, deaf_message, deaf_type)
 	return message
 
-/mob/living/send_speech(message, message_range = 7, obj/source = src, bubble_type, list/spans)
+/mob/living/send_speech(message, message_range = 7, obj/source = src, bubble_type = bubble_icon, list/spans)
 	var/list/listening = get_hearers_in_view(message_range, source)
 	for(var/mob/M in player_list)
 		if(M.stat == DEAD && M.client && ((M.client.prefs.chat_toggles & CHAT_GHOSTEARS) || (get_dist(M, src) <= 7)) && client) // client is so that ghosts don't have to listen to mice
@@ -152,8 +157,10 @@ var/list/department_radio_keys = list(
 	for(var/mob/M in listening)
 		if(M.client)
 			speech_bubble_recipients.Add(M.client)
+	var/image/I = image('icons/mob/talk.dmi', src, "[bubble_type][say_test(message)]", MOB_LAYER+1)
+	I.appearance_flags = APPEARANCE_UI_IGNORE_ALPHA
 	spawn(0)
-		flick_overlay(image('icons/mob/talk.dmi', src, "h[bubble_type][say_test(message)]",MOB_LAYER+1), speech_bubble_recipients, 30)
+		flick_overlay(I, speech_bubble_recipients, 30)
 
 /mob/proc/binarycheck()
 	return 0
@@ -163,9 +170,6 @@ var/list/department_radio_keys = list(
 		return 1
 
 /mob/living/proc/can_speak_basic(message) //Check BEFORE handling of xeno and ling channels
-	if(!message || message == "")
-		return 0
-
 	if(client)
 		if(client.prefs.muted & MUTE_IC)
 			src << "<span class='danger'>You cannot speak in IC (muted).</span>"
@@ -176,9 +180,6 @@ var/list/department_radio_keys = list(
 	return 1
 
 /mob/living/proc/can_speak_vocal(message) //Check AFTER handling of xeno and ling channels
-	if(!message)
-		return 0
-
 	if(disabilities & MUTE)
 		return 0
 
@@ -209,7 +210,7 @@ var/list/department_radio_keys = list(
 				log_say("[mind.changeling.changelingID]/[src.key] : [message]")
 				for(var/mob/M in mob_list)
 					if(M in dead_mob_list)
-						M << msg
+						M << "<a href='?src=\ref[M];follow=\ref[src]'>(F)</a> [msg]"
 					else
 						switch(M.lingcheck())
 							if(2)
@@ -221,6 +222,10 @@ var/list/department_radio_keys = list(
 			if(1)
 				src << "<i><font color=#800080>Our senses have not evolved enough to be able to communicate this way...</font></i>"
 				return 1
+	if(message_mode == MODE_ALIEN)
+		if(hivecheck())
+			alien_talk(message)
+			return 1
 	return 0
 
 /mob/living/proc/treat_message(message)
@@ -232,6 +237,9 @@ var/list/department_radio_keys = list(
 
 	if(slurring)
 		message = slur(message)
+
+	if(cultslurring)
+		message = cultslur(message)
 
 	message = capitalize(message)
 

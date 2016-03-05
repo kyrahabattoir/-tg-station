@@ -7,14 +7,25 @@
 	w_class = 3
 	throw_speed = 3
 	throw_range = 7
-	pressure_resistance = 10
+	pressure_resistance = 8
+	burn_state = FLAMMABLE
 	var/amount = 30					//How much paper is in the bin.
 	var/list/papers = new/list()	//List of papers put in the bin for reference.
 
+/obj/item/weapon/paper_bin/fire_act()
+	if(!amount)
+		return
+	..()
+
+/obj/item/weapon/paper_bin/burn()
+	amount = 0
+	extinguish()
+	update_icon()
+	return
 
 /obj/item/weapon/paper_bin/MouseDrop(atom/over_object)
-	var/mob/M = usr
-	if(M.restrained() || M.stat || !Adjacent(M))
+	var/mob/living/M = usr
+	if(!istype(M) || M.incapacitated() || !Adjacent(M))
 		return
 
 	if(over_object == M)
@@ -71,7 +82,8 @@
 	if(!istype(i))
 		return ..()
 
-	user.drop_item()
+	if(!user.unEquip(i))
+		return
 	i.loc = src
 	user << "<span class='notice'>You put [i] in [src].</span>"
 	papers.Add(i)

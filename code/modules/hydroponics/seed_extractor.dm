@@ -1,7 +1,10 @@
-/proc/seedify(var/obj/item/O as obj, var/t_max)
+/proc/seedify(obj/item/O, t_max, obj/machinery/seed_extractor/extractor)
 	var/t_amount = 0
 	if(t_max == -1)
-		t_max = rand(1,4)
+		if(extractor)
+			t_max = rand(1,4) * extractor.seed_multiplier
+		else
+			t_max = rand(1,4)
 
 	if(istype(O, /obj/item/weapon/reagent_containers/food/snacks/grown/))
 		var/obj/item/weapon/reagent_containers/food/snacks/grown/F = O
@@ -51,8 +54,39 @@
 	density = 1
 	anchored = 1
 	var/piles = list()
+	var/max_seeds = 1000
+	var/seed_multiplier = 1
 
-/obj/machinery/seed_extractor/attackby(var/obj/item/O as obj, var/mob/user as mob, params)
+/obj/machinery/seed_extractor/New()
+	..()
+	component_parts = list()
+	component_parts += new /obj/item/weapon/circuitboard/seed_extractor(null)
+	component_parts += new /obj/item/weapon/stock_parts/matter_bin(null)
+	component_parts += new /obj/item/weapon/stock_parts/manipulator(null)
+	RefreshParts()
+
+/obj/machinery/seed_extractor/RefreshParts()
+	for(var/obj/item/weapon/stock_parts/matter_bin/B in component_parts)
+		max_seeds = 1000 * B.rating
+	for(var/obj/item/weapon/stock_parts/manipulator/M in component_parts)
+		seed_multiplier = M.rating
+
+/obj/machinery/seed_extractor/attackby(obj/item/O, mob/user, params)
+
+	if(default_deconstruction_screwdriver(user, "sextractor_open", "sextractor", O))
+		return
+
+	if(exchange_parts(user, O))
+		return
+
+	if(default_pry_open(O))
+		return
+
+	if(default_unfasten_wrench(user, O))
+		return
+
+	default_deconstruction_crowbar(O)
+
 	if(isrobot(user))
 		return
 
@@ -60,7 +94,7 @@
 		var/obj/item/weapon/storage/P = O
 		var/loaded = 0
 		for(var/obj/item/seeds/G in P.contents)
-			if(contents.len >= 999)
+			if(contents.len >= max_seeds)
 				break
 			++loaded
 			add(G)
@@ -108,11 +142,11 @@
 	src.potency = poten
 	src.amount = am
 
-/obj/machinery/seed_extractor/attack_hand(mob/user as mob)
+/obj/machinery/seed_extractor/attack_hand(mob/user)
 	user.set_machine(src)
 	interact(user)
 
-/obj/machinery/seed_extractor/interact(mob/user as mob)
+/obj/machinery/seed_extractor/interact(mob/user)
 	if (stat)
 		return 0
 
@@ -151,7 +185,7 @@
 			N.amount = max(N.amount - 1, 0)
 			if (N.amount <= 0)
 				piles -= N
-				del(N)
+				qdel(N)
 			break
 
 	for (var/obj/T in contents)//Now we find the seed we need to vend
@@ -163,7 +197,7 @@
 	src.updateUsrDialog()
 	return
 
-/obj/machinery/seed_extractor/proc/add(var/obj/item/seeds/O as obj)
+/obj/machinery/seed_extractor/proc/add(obj/item/seeds/O)
 	if(contents.len >= 999)
 		usr << "<span class='notice'>\The [src] is full.</span>"
 		return 0

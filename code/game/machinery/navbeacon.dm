@@ -28,15 +28,17 @@
 	var/turf/T = loc
 	hide(T.intact)
 	if(codes["patrol"])
-		navbeacons += src //Register with the patrol list!
+		if(!navbeacons["[z]"])
+			navbeacons["[z]"] = list()
+		navbeacons["[z]"] += src //Register with the patrol list!
 	if(codes["delivery"])
 		deliverybeacons += src
 		deliverybeacontags += location
 
 /obj/machinery/navbeacon/Destroy()
-	navbeacons &= src //Remove from beacon list, if in one.
-	deliverybeacons &= src
-	..()
+	navbeacons["[z]"] -= src //Remove from beacon list, if in one.
+	deliverybeacons -= src
+	return ..()
 
 // set the transponder codes assoc list from codes_txt
 /obj/machinery/navbeacon/proc/set_codes()
@@ -45,7 +47,7 @@
 
 	codes = new()
 
-	var/list/entries = text2list(codes_txt, ";")	// entries are separated by semicolons
+	var/list/entries = splittext(codes_txt, ";")	// entries are separated by semicolons
 
 	for(var/e in entries)
 		var/index = findtext(e, "=")		// format is "key=value"
@@ -59,7 +61,7 @@
 
 // called when turf state changes
 // hide the object if turf is intact
-/obj/machinery/navbeacon/hide(var/intact)
+/obj/machinery/navbeacon/hide(intact)
 	invisibility = intact ? 101 : 0
 	updateicon()
 
@@ -73,7 +75,7 @@
 	else
 		icon_state = "[state]"
 
-/obj/machinery/navbeacon/attackby(var/obj/item/I, var/mob/user, params)
+/obj/machinery/navbeacon/attackby(obj/item/I, mob/user, params)
 	var/turf/T = loc
 	if(T.intact)
 		return		// prevent intraction when T-scanner revealed
@@ -97,16 +99,16 @@
 			user << "<span class='warning'>You must open the cover first!</span>"
 	return
 
-/obj/machinery/navbeacon/attack_ai(var/mob/user)
+/obj/machinery/navbeacon/attack_ai(mob/user)
 	interact(user, 1)
 
 /obj/machinery/navbeacon/attack_paw()
 	return
 
-/obj/machinery/navbeacon/attack_hand(var/mob/user)
+/obj/machinery/navbeacon/attack_hand(mob/user)
 	interact(user, 0)
 
-/obj/machinery/navbeacon/interact(var/mob/user, var/ai = 0)
+/obj/machinery/navbeacon/interact(mob/user, ai = 0)
 	var/turf/T = loc
 	if(T.intact)
 		return		// prevent intraction when T-scanner revealed
@@ -141,7 +143,7 @@ Transponder Codes:<UL>"}
 			t += "<LI>[key] ... [codes[key]]"
 			t += "	<A href='byond://?src=\ref[src];edit=1;code=[key]'>Edit</A>"
 			t += "	<A href='byond://?src=\ref[src];delete=1;code=[key]'>Delete</A><BR>"
-		t += "	<A href='byond://?src=\ref[src];add=1;'> Add New</A><BR>"
+		t += "	<A href='byond://?src=\ref[src];add=1;'>Add New</A><BR>"
 		t+= "<UL></TT>"
 
 	var/datum/browser/popup = new(user, "navbeacon", "Navigation Beacon", 300, 400)
