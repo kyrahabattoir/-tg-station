@@ -11,7 +11,7 @@
 	var/reskinned = FALSE
 
 /obj/item/weapon/nullrod/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is killing \himself with \the [src.name]! It looks like \he's trying get closer to god!</span>")
+	user.visible_message("<span class='suicide'>[user] is killing \himself with \the [src.name]! It looks like \he's trying to get closer to god!</span>")
 	return (BRUTELOSS|FIRELOSS)
 
 /obj/item/weapon/nullrod/attack_self(mob/user)
@@ -262,4 +262,28 @@
 	attack_verb = list("smashed", "slammed", "whacked", "thwacked")
 	icon = 'icons/obj/weapons.dmi'
 	icon_state = "bostaff0"
+	item_state = "bostaff0"
 
+/obj/item/weapon/nullrod/tribal_knife
+	icon_state = "crysknife"
+	item_state = "crysknife"
+	name = "arrhythmic knife"
+	w_class = 5
+	desc = "They say fear is the true mind killer, but stabbing them in the head works too. Honour compels you to not sheathe it once drawn."
+	sharpness = IS_SHARP
+	slot_flags = null
+	flags = HANDSLOW
+	hitsound = 'sound/weapons/bladeslice.ogg'
+	attack_verb = list("attacked", "slashed", "stabbed", "sliced", "torn", "ripped", "diced", "cut")
+
+
+/obj/item/weapon/nullrod/tribal_knife/New()
+	..()
+	SSobj.processing |= src
+
+/obj/item/weapon/nullrod/tribal_knife/Destroy()
+	SSobj.processing.Remove(src)
+	return ..()
+
+/obj/item/weapon/nullrod/tribal_knife/process()
+	slowdown = rand(-2, 2)

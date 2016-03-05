@@ -28,11 +28,7 @@
 	var/next_dest
 	var/next_dest_loc
 
-/proc/stack_trace(msg)
-	CRASH(msg)
-
 /mob/living/simple_animal/bot/cleanbot/New()
-	stack_trace("Cleanbot is being instantiated")
 	..()
 	get_targets()
 	icon_state = "cleanbot[on]"
@@ -105,7 +101,7 @@
 					say(phrase)
 					victim.emote("scream")
 					playsound(src.loc, 'sound/effects/spray2.ogg', 50, 1, -6)
-					victim.acid_act(5, 120, 100)
+					victim.acid_act(5, 2, 100)
 
 			if(prob(10)) //Wets floors randomly
 				var/turf/simulated/T = loc
