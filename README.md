@@ -12,18 +12,6 @@ https://github.com/kyrahabattoir/-tg-station/tree/testing-sandbox
 A minimalistic, functional station, useful for testing & debugging.
 
 ================================================================================
-PRECONF EXTENDED
-================================================================================
-https://github.com/kyrahabattoir/-tg-station/tree/preconf-extended
-
-This is mostly for my server so i don't have to configure anything.
-
-This branch preconfigure the server to run in extended mode, with a couple of
-other tweaks:
-* No random events.
-* Pre enabled database (you still need to put a password!).
-
-================================================================================
 FUZZY CUFFS
 ================================================================================
 https://github.com/kyrahabattoir/-tg-station/tree/FuzzyCuffs
