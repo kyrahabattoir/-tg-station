@@ -5,6 +5,13 @@ Do not clone this specific branch, it only exist to present a nice readme to
 anyone visiting my github repo.
 
 ================================================================================
+SERVER
+================================================================================
+https://github.com/kyrahabattoir/-tg-station/tree/server
+
+Personal server config for ministation.
+
+================================================================================
 TESTING SANDBOX
 ================================================================================
 https://github.com/kyrahabattoir/-tg-station/tree/testing-sandbox
