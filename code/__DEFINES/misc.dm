@@ -366,6 +366,3 @@ var/list/bloody_footprints_cache = list()
 #define TRIGGER_GUARD_ALLOW_ALL -1
 #define TRIGGER_GUARD_NONE 0
 #define TRIGGER_GUARD_NORMAL 1
-
-//Put on the hub
-#define PUTONHUB 1
