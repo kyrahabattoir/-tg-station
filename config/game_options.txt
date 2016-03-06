@@ -95,10 +95,10 @@ PROBABILITY BLOB 0
 PROBABILITY RAGINMAGES 0
 PROBABILITY MONKEY 0
 PROBABILITY METEOR 0
-PROBABILITY EXTENDED 0
+PROBABILITY EXTENDED 1
 
 ## You probably want to keep sandbox off by default for secret and random.
-PROBABILITY SANDBOX 1
+PROBABILITY SANDBOX 0
 
 
 ## Toggles for continuous modes.
@@ -212,7 +212,7 @@ MINIMAL_ACCESS_THRESHOLD 20
 ## This is intended for servers with low populations - where there are not enough
 ## players to fill all roles, so players need to do more than just one job.
 ## This option is ignored if MINIMAL_ACCESS_THRESHOLD is used.
-JOBS_HAVE_MINIMAL_ACCESS
+#JOBS_HAVE_MINIMAL_ACCESS
 
 ## Uncomment to give assistants maint access.
 #ASSISTANTS_HAVE_MAINT_ACCESS
