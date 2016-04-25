@@ -41,7 +41,7 @@ Sorry Giacom. Please don't be mad :(
 
 
 /mob/living/proc/generateStaticOverlay()
-	staticOverlays.Add(list("static", "blank", "letter"))
+	staticOverlays.Add(list("static", "blank", "letter", "animal"))
 	var/image/staticOverlay = image(getStaticIcon(new/icon(icon,icon_state)), loc = src)
 	staticOverlay.override = 1
 	staticOverlays["static"] = staticOverlay
@@ -53,6 +53,10 @@ Sorry Giacom. Please don't be mad :(
 	staticOverlay = getLetterImage(src)
 	staticOverlay.override = 1
 	staticOverlays["letter"] = staticOverlay
+
+	staticOverlay = getRandomAnimalImage(src)
+	staticOverlay.override = 1
+	staticOverlays["animal"] = staticOverlay
 
 
 //Generic Bump(). Override MobBump() and ObjBump() instead of this.
@@ -495,10 +499,12 @@ Sorry Giacom. Please don't be mad :(
 	radiation = 0
 	nutrition = NUTRITION_LEVEL_FED + 50
 	bodytemperature = 310
-	disabilities = 0
 	set_blindness(0)
 	set_blurriness(0)
 	set_eye_damage(0)
+	cure_nearsighted()
+	cure_blind()
+	disabilities = 0
 	ear_deaf = 0
 	ear_damage = 0
 	hallucination = 0
@@ -607,7 +613,7 @@ Sorry Giacom. Please don't be mad :(
 
 /mob/living/movement_delay()
 	. = ..()
-	if(isturf(loc))
+	if(istype(loc, /turf/open))
 		var/turf/open/T = loc
 		. += T.slowdown
 	switch(m_intent)
@@ -673,12 +679,12 @@ Sorry Giacom. Please don't be mad :(
 				qdel(G)
 			else
 				if(G.state == GRAB_AGGRESSIVE)
-					if(prob(75))
+					if(prob(25))
 						visible_message("<span class='danger'>[src] has broken free of [G.assailant]'s grip!</span>")
 						qdel(G)
 				else
 					if(G.state == GRAB_NECK)
-						if(prob(50))
+						if(prob(5))
 							visible_message("<span class='danger'>[src] has broken free of [G.assailant]'s headlock!</span>")
 							qdel(G)
 		if(resisting)
@@ -1046,7 +1052,7 @@ Sorry Giacom. Please don't be mad :(
 	if(amount>0)
 		if(!old_eye_blurry)
 			overlay_fullscreen("blurry", /obj/screen/fullscreen/blurry)
-	else if(old_eye_blurry)
+	else if(old_eye_blurry && !eye_blurry)
 		clear_fullscreen("blurry")
 
 /mob/proc/set_blurriness(amount)
@@ -1109,7 +1115,7 @@ Sorry Giacom. Please don't be mad :(
 			overlay_fullscreen("high", /obj/screen/fullscreen/high)
 			throw_alert("high", /obj/screen/alert/high)
 	else if(old_druggy)
-		druggy = max(eye_blurry+amount, 0)
+		druggy = max(druggy+amount, 0)
 		if(!druggy)
 			clear_fullscreen("high")
 			clear_alert("high")
