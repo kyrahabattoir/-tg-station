@@ -11,7 +11,10 @@
 	production = 5
 	yield = 5
 	growthstages = 5
+	icon_dead = "tea-dead"
+	genes = list(/datum/plant_gene/trait/repeated_harvest)
 	mutatelist = list(/obj/item/seeds/tea/astra)
+	reagents_add = list("vitamin" = 0.04, "teapowder" = 0.1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/tea
 	seed = /obj/item/seeds/tea
@@ -19,7 +22,6 @@
 	desc = "These aromatic tips of the tea plant can be dried to make tea."
 	icon_state = "tea_aspera_leaves"
 	filling_color = "#008000"
-	reagents_add = list("vitamin" = 0.04, "teapowder" = 0.1)
 
 // Tea Astra
 /obj/item/seeds/tea/astra
@@ -29,6 +31,7 @@
 	plantname = "Tea Astra Plant"
 	product = /obj/item/weapon/reagent_containers/food/snacks/grown/tea/astra
 	mutatelist = list()
+	reagents_add = list("synaptizine" = 0.1, "vitamin" = 0.04, "teapowder" = 0.1)
 	rarity = 20
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/tea/astra
@@ -36,7 +39,6 @@
 	name = "Tea Astra tips"
 	icon_state = "tea_astra_leaves"
 	filling_color = "#4582B4"
-	reagents_add = list("salglu_solution" = 0.05, "vitamin" = 0.04, "teapowder" = 0.1)
 
 
 // Coffee
@@ -53,7 +55,10 @@
 	production = 5
 	yield = 5
 	growthstages = 5
+	icon_dead = "coffee-dead"
+	genes = list(/datum/plant_gene/trait/repeated_harvest)
 	mutatelist = list(/obj/item/seeds/coffee/robusta)
+	reagents_add = list("vitamin" = 0.04, "coffeepowder" = 0.1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/coffee
 	seed = /obj/item/seeds/coffee
@@ -62,7 +67,6 @@
 	icon_state = "coffee_arabica"
 	filling_color = "#DC143C"
 	bitesize_mod = 2
-	reagents_add = list("vitamin" = 0.04, "coffeepowder" = 0.1)
 
 // Coffee Robusta
 /obj/item/seeds/coffee/robusta
@@ -73,10 +77,11 @@
 	plantname = "Coffee Robusta Bush"
 	product = /obj/item/weapon/reagent_containers/food/snacks/grown/coffee/robusta
 	mutatelist = list()
+	reagents_add = list("ephedrine" = 0.1, "vitamin" = 0.04, "coffeepowder" = 0.1)
 	rarity = 20
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/coffee/robusta
 	seed = /obj/item/seeds/coffee/robusta
 	name = "coffee robusta beans"
+	desc = "Increases robustness by 37 percent!"
 	icon_state = "coffee_robusta"
-	reagents_add = list("morphine" = 0.05, "vitamin" = 0.04, "coffeepowder" = 0.1)

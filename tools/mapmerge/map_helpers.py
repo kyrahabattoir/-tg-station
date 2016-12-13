@@ -1,23 +1,49 @@
+import sys
+
+try:
+    version = sys.version_info
+    if version.major < 3 or (version.major == 3 and version.minor < 5):
+        print("ERROR: You are running an incompatible version of Python. The current minimum version required is [3.5].\nYour version: {}".format(sys.version))
+        sys.exit()
+except:
+    print("ERROR: Something went wrong, you might be running an incompatible version of Python. The current minimum version required is [3.5].\nYour version: {}".format(sys.version))
+    sys.exit()
+
 import collections
+
+error = {0:"OK", 1:"WARNING: Key lengths are different, all the lines change."}
 
 maxx = 0
 maxy = 0
 key_length = 1
 
-def merge_map(newfile, backupfile, tgm):
+def reset_globals():
     global key_length
     global maxx
     global maxy
     key_length = 1
-    maxx = 1
-    maxy = 1
+    maxx = 0
+    maxy = 0
+
+def merge_map(newfile, backupfile, tgm):
+    reset_globals()
 
     shitmap = parse_map(newfile)
+    originalmap = parse_map(backupfile)
+
+    global key_length
+    if shitmap["key_length"] != originalmap["key_length"]:
+        if tgm:
+            write_dictionary_tgm(newfile, shitmap["dictionary"])
+            write_grid_coord_small(newfile, shitmap["grid"])
+        return 1
+    else:
+        key_length = originalmap["key_length"]
+
     shitDict = shitmap["dictionary"] #key to tile data dictionary
     shitGrid = shitmap["grid"] #x,y coords to tiles (keys) dictionary (the map's layout)
-        
-    originalmap = parse_map(backupfile)
-    originalDict = originalmap["dictionary"]
+    
+    originalDict = sort_dictionary(originalmap["dictionary"])
     originalGrid = originalmap["grid"]
 
     mergeGrid = dict() #final map layout
@@ -46,25 +72,31 @@ def merge_map(newfile, backupfile, tgm):
             originalData = originalDict[originalKey]
 
             #if new tile data at x,y is the same as original tile data at x,y, add to the pile
-            if set(shitData) == frozenset(originalData):
+            if shitData == originalData:
                 mergeGrid[x,y] = originalKey
                 known_keys[shitKey] = originalKey
                 unused_keys.remove(originalKey)
             else:
                 #search for the new tile data in the original dictionary, if a key is found add it to the pile, else generate a new key
-                newKey = search_data(originalDict, shitData)
+                newKey = search_key(originalDict, shitData)
                 if newKey != None:
+                    try:
+                        unused_keys.remove(newKey)
+                    except ValueError: #caused by a duplicate entry
+                        print("NOTICE: Correcting duplicate dictionary entry. ({})".format(shitKey))
                     mergeGrid[x,y] = newKey
-                    known_keys[shitKey] = newKey
-                    unused_keys.remove(newKey)
+                    known_keys[shitKey] = newKey    
+                #if data at original x,y no longer exists we reuse the key immediately
+                elif search_key(shitDict, originalData) == None:
+                    mergeGrid[x,y] = originalKey
+                    originalDict[originalKey] = shitData
+                    unused_keys.remove(originalKey)
+                    known_keys[shitKey] = originalKey
                 else:
                     if len(tempDict) == 0:
                         newKey = generate_new_key(originalDict)
                     else:
                         newKey = generate_new_key(tempDict)
-                    if newKey == "OVERFLOW": #if this happens, merging is impossible
-                        print("ERROR: Key overflow detected.")
-                        return 0
                     tempGrid[x,y] = newKey
                     temp_keys[shitKey] = newKey
                     tempDict[newKey] = shitData
@@ -89,7 +121,6 @@ def merge_map(newfile, backupfile, tgm):
                 i += 1
             sort = 1
 
-
     #Recycle outdated keys with any new tile data, starting from the bottom of the dictionary
     i = 0
     for key, value in reversed(tempDict.items()):
@@ -108,15 +139,7 @@ def merge_map(newfile, backupfile, tgm):
 
     #if gaps in the key sequence were found, sort the dictionary for cleanliness
     if sort == 1:
-        sorted_dict = collections.OrderedDict()
-        next_key = get_next_key("")
-        while len(sorted_dict) < len(originalDict):
-            try:
-                sorted_dict[next_key] = originalDict[next_key]
-            except KeyError:
-                pass
-            next_key = get_next_key(next_key)
-        originalDict = sorted_dict
+        originalDict = sort_dictionary(originalDict)
 
     if tgm:
         write_dictionary_tgm(newfile, originalDict)
@@ -124,7 +147,7 @@ def merge_map(newfile, backupfile, tgm):
     else:
         write_dictionary(newfile, originalDict)
         write_grid(newfile, mergeGrid)
-    return 1
+    return 0
 
 #write dictionary in tgm format
 def write_dictionary_tgm(filename, dictionary): 
@@ -180,15 +203,13 @@ def write_grid_coord_small(filename, grid):
             output.write("({},{},1) = {{\"\n".format(x, 1, 1))
             for y in range(1, maxy):
                 output.write("{}\n".format(grid[x,y]))
-            output.write("{}\n\"}}\n".format(grid[x,maxy-1]))
+            output.write("{}\n\"}}\n".format(grid[x,maxy]))
 
-def search_data(dictionary, data):
-    found_data = None
-    try:
-        found_data = dictionary.values()[list(dictionary.keys()).index(data)]
-    except:
-        pass
-    return found_data
+def search_key(dictionary, data):
+    for key, value in dictionary.items():
+        if value == data:
+            return key
+    return None
 
 def generate_new_key(dictionary):
     last_key = next(reversed(dictionary))
@@ -219,6 +240,17 @@ def get_next_key(key):
             carry -= 1
     return new_key[::-1]
 
+def sort_dictionary(dictionary):
+    sorted_dict = collections.OrderedDict()
+    next_key = get_next_key("")
+    while len(sorted_dict) < len(dictionary):
+        try:
+            sorted_dict[next_key] = dictionary[next_key]
+        except KeyError:
+            pass
+        next_key = get_next_key(next_key)
+    return sorted_dict
+
 #still does not support more than one z level per file, but should parse any format
 def parse_map(map_file):
     with open(map_file, "r") as map_input:
@@ -246,9 +278,10 @@ def parse_map(map_file):
         curr_num = ""
         reading_coord = "x"
 
-        global key_length
+        
         global maxx
         global maxy
+        key_length_local = 0
         curr_x = 0
         curr_y = 0
         curr_z = 1
@@ -319,7 +352,7 @@ def parse_map(map_file):
 
                     if char == ")":
                         curr_data.append(curr_datum)
-                        dictionary[curr_key] = curr_data
+                        dictionary[curr_key] = tuple(curr_data)
                         curr_data = list()
                         curr_datum = ""
                         curr_key = ""
@@ -333,7 +366,7 @@ def parse_map(map_file):
                 if in_key_block:
                     if char == "\"":
                         in_key_block = False
-                        key_length = len(curr_key)
+                        key_length_local = len(curr_key)
                     else:
                         curr_key = curr_key + char
                     continue    
@@ -409,7 +442,7 @@ def parse_map(map_file):
 
                     
                     curr_key = curr_key + char
-                    if len(curr_key) == key_length:
+                    if len(curr_key) == key_length_local:
                         iter_x += 1
                         if iter_x > 1:
                             curr_x += 1
@@ -434,6 +467,7 @@ def parse_map(map_file):
         data = dict()
         data["dictionary"] = dictionary
         data["grid"] = grid
+        data["key_length"] = key_length_local
         return data
 
 #subtract keyB from keyA
@@ -458,8 +492,6 @@ def string_to_num(s):
     except ValueError:
         return -1
 
-#unused functions
-
 #writes a tile data dictionary the same way Dreammaker does
 def write_dictionary(filename, dictionary):
     with open(filename, "w") as output:
@@ -482,7 +514,7 @@ def write_grid(filename, grid):
         output.write("\"}")
         output.write("\n")
 
-#inflated map grid
+#inflated map grid; unused
 def write_grid_coord(filename, grid):
     with open(filename, "a") as output:
         output.write("\n")

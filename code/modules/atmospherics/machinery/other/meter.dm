@@ -11,6 +11,10 @@
 	use_power = 1
 	idle_power_usage = 2
 	active_power_usage = 4
+	obj_integrity = 150
+	max_integrity = 150
+	armor = list(melee = 0, bullet = 0, laser = 0, energy = 100, bomb = 0, bio = 100, rad = 100, fire = 40, acid = 0)
+
 
 /obj/machinery/meter/New()
 	..()
@@ -96,7 +100,7 @@
 	if (istype(W, /obj/item/weapon/wrench))
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
 		user << "<span class='notice'>You begin to unfasten \the [src]...</span>"
-		if (do_after(user, 40/W.toolspeed, target = src))
+		if (do_after(user, 40*W.toolspeed, target = src))
 			user.visible_message( \
 				"[user] unfastens \the [src].", \
 				"<span class='notice'>You unfasten \the [src].</span>", \
@@ -104,7 +108,7 @@
 			new /obj/item/pipe_meter(src.loc)
 			qdel(src)
 	else
-		..()
+		return ..()
 
 /obj/machinery/meter/attack_ai(mob/user)
 	return src.attack_hand(user)

@@ -4,20 +4,34 @@
 	//Handle items on mob
 
 	//first implants & organs
-	var/list/implants = list()
+	var/list/stored_implants = list()
 	var/list/int_organs = list()
 
 	if (tr_flags & TR_KEEPIMPLANTS)
-		for(var/obj/item/weapon/implant/W in src)
-			implants += W
+		for(var/X in implants)
+			var/obj/item/weapon/implant/IMP = X
+			stored_implants += IMP
+			IMP.removed(src, 1, 1)
 
 	if (tr_flags & TR_KEEPORGANS)
-		for(var/obj/item/organ/internal/I in internal_organs)
+		for(var/X in internal_organs)
+			var/obj/item/organ/I = X
 			int_organs += I
 			I.Remove(src, 1)
 
+	var/list/missing_bodyparts_zones = get_missing_limbs()
+
+	var/obj/item/cavity_object
+
+	var/obj/item/bodypart/chest/CH = get_bodypart("chest")
+	if(CH.cavity_item)
+		cavity_object = CH.cavity_item
+		CH.cavity_item = null
+
 	if(tr_flags & TR_KEEPITEMS)
-		for(var/obj/item/W in (src.contents-implants-int_organs))
+		var/Itemlist = get_equipped_items()
+		Itemlist += held_items
+		for(var/obj/item/W in Itemlist)
 			unEquip(W)
 
 	//Make mob invisible and spawn animation
@@ -25,17 +39,12 @@
 	canmove = 0
 	stunned = 1
 	icon = null
-	overlays.Cut()
-	invisibility = 101
+	cut_overlays()
+	invisibility = INVISIBILITY_MAXIMUM
 
-	var/atom/movable/overlay/animation = new( loc )
-	animation.icon_state = "blank"
-	animation.icon = 'icons/mob/mob.dmi'
-	animation.master = src
-	flick("h2monkey", animation)
+	PoolOrNew(/obj/effect/overlay/temp/monkeyify, get_turf(src))
 	sleep(22)
 	var/mob/living/carbon/monkey/O = new /mob/living/carbon/monkey( loc )
-	qdel(animation)
 
 	// hash the original name?
 	if(tr_flags & TR_HASHNAME)
@@ -53,8 +62,10 @@
 
 	if(suiciding)
 		O.suiciding = suiciding
+	if(hellbound)
+		O.hellbound = hellbound
 	O.loc = loc
-	O.a_intent = "harm"
+	O.a_intent = INTENT_HARM
 
 	//keep viruses?
 	if (tr_flags & TR_KEEPVIRUS)
@@ -66,31 +77,53 @@
 
 	//keep damage?
 	if (tr_flags & TR_KEEPDAMAGE)
-		O.setToxLoss(getToxLoss())
-		O.adjustBruteLoss(getBruteLoss())
-		O.setOxyLoss(getOxyLoss())
-		O.adjustFireLoss(getFireLoss())
+		O.setToxLoss(getToxLoss(), 0)
+		O.adjustBruteLoss(getBruteLoss(), 0)
+		O.setOxyLoss(getOxyLoss(), 0)
+		O.setCloneLoss(getCloneLoss(), 0)
+		O.adjustFireLoss(getFireLoss(), 0)
+		O.updatehealth()
 		O.radiation = radiation
 
 	//re-add implants to new mob
 	if (tr_flags & TR_KEEPIMPLANTS)
-		for(var/obj/item/weapon/implant/I in implants)
-			I.loc = O
-			I.implanted = O
+		for(var/Y in implants)
+			var/obj/item/weapon/implant/IMP = Y
+			IMP.implant(O, null, 1)
 
 	//re-add organs to new mob
 	if(tr_flags & TR_KEEPORGANS)
-		for(var/obj/item/organ/internal/I in O.internal_organs)
-			qdel(I)
+		for(var/X in O.internal_organs)
+			qdel(X)
 
-		for(var/obj/item/organ/internal/I in int_organs)
+		for(var/X in int_organs)
+			var/obj/item/organ/I = X
 			I.Insert(O, 1)
+
+	var/obj/item/bodypart/chest/torso = O.get_bodypart("chest")
+	if(cavity_object)
+		torso.cavity_item = cavity_object //cavity item is given to the new chest
+		cavity_object.loc = O
+
+	for(var/missing_zone in missing_bodyparts_zones)
+		var/obj/item/bodypart/BP = O.get_bodypart(missing_zone)
+		BP.drop_limb(1)
+		if(!(tr_flags & TR_KEEPORGANS)) //we didn't already get rid of the organs of the newly spawned mob
+			for(var/X in O.internal_organs)
+				var/obj/item/organ/G = X
+				if(BP.body_zone == check_zone(G.zone))
+					if(mind && mind.changeling && istype(G, /obj/item/organ/brain))
+						continue //so headless changelings don't lose their brain when transforming
+					qdel(G) //we lose the organs in the missing limbs
+		qdel(BP)
 
 	//transfer mind and delete old mob
 	if(mind)
 		mind.transfer_to(O)
 		if(O.mind.changeling)
 			O.mind.changeling.purchasedpowers += new /obj/effect/proc_holder/changeling/humanform(null)
+
+
 	if (tr_flags & TR_DEFAULTMSG)
 		O << "<B>You are now a monkey.</B>"
 
@@ -111,21 +144,35 @@
 	//Handle items on mob
 
 	//first implants & organs
-	var/list/implants = list()
+	var/list/stored_implants = list()
 	var/list/int_organs = list()
 
 	if (tr_flags & TR_KEEPIMPLANTS)
-		for(var/obj/item/weapon/implant/W in src)
-			implants += W
+		for(var/X in implants)
+			var/obj/item/weapon/implant/IMP = X
+			stored_implants += IMP
+			IMP.removed(src, 1, 1)
 
 	if (tr_flags & TR_KEEPORGANS)
-		for(var/obj/item/organ/internal/I in internal_organs)
+		for(var/X in internal_organs)
+			var/obj/item/organ/I = X
 			int_organs += I
 			I.Remove(src, 1)
 
+	var/list/missing_bodyparts_zones = get_missing_limbs()
+
+	var/obj/item/cavity_object
+
+	var/obj/item/bodypart/chest/CH = get_bodypart("chest")
+	if(CH.cavity_item)
+		cavity_object = CH.cavity_item
+		CH.cavity_item = null
+
 	//now the rest
 	if (tr_flags & TR_KEEPITEMS)
-		for(var/obj/item/W in (src.contents-implants-int_organs))
+		var/Itemlist = get_equipped_items()
+		Itemlist += held_items
+		for(var/obj/item/W in Itemlist)
 			unEquip(W)
 			if (client)
 				client.screen -= W
@@ -133,24 +180,22 @@
 				W.loc = loc
 				W.dropped(src)
 				W.layer = initial(W.layer)
+				W.plane = initial(W.plane)
+
+
 
 	//Make mob invisible and spawn animation
 	notransform = 1
 	canmove = 0
 	stunned = 1
 	icon = null
-	overlays.Cut()
-	invisibility = 101
-	var/atom/movable/overlay/animation = new( loc )
-	animation.icon_state = "blank"
-	animation.icon = 'icons/mob/mob.dmi'
-	animation.master = src
-	flick("monkey2h", animation)
+	cut_overlays()
+	invisibility = INVISIBILITY_MAXIMUM
+	PoolOrNew(/obj/effect/overlay/temp/monkeyify/humanify, get_turf(src))
 	sleep(22)
 	var/mob/living/carbon/human/O = new( loc )
 	for(var/obj/item/C in O.loc)
 		O.equip_to_appropriate_slot(C)
-	qdel(animation)
 
 	dna.transfer_identity(O)
 	O.updateappearance(mutcolor_update=1)
@@ -170,6 +215,8 @@
 
 	if(suiciding)
 		O.suiciding = suiciding
+	if(hellbound)
+		O.hellbound = hellbound
 
 	O.loc = loc
 
@@ -184,25 +231,45 @@
 
 	//keep damage?
 	if (tr_flags & TR_KEEPDAMAGE)
-		O.setToxLoss(getToxLoss())
-		O.adjustBruteLoss(getBruteLoss())
-		O.setOxyLoss(getOxyLoss())
-		O.adjustFireLoss(getFireLoss())
+		O.setToxLoss(getToxLoss(), 0)
+		O.adjustBruteLoss(getBruteLoss(), 0)
+		O.setOxyLoss(getOxyLoss(), 0)
+		O.setCloneLoss(getCloneLoss(), 0)
+		O.adjustFireLoss(getFireLoss(), 0)
+		O.updatehealth()
 		O.radiation = radiation
 
 	//re-add implants to new mob
 	if (tr_flags & TR_KEEPIMPLANTS)
-		for(var/obj/item/weapon/implant/I in implants)
-			I.loc = O
-			I.implanted = O
-		O.sec_hud_set_implants()
+		for(var/Y in implants)
+			var/obj/item/weapon/implant/IMP = Y
+			IMP.implant(O, null, 1)
 
 	if(tr_flags & TR_KEEPORGANS)
-		for(var/obj/item/organ/internal/I in O.internal_organs)
-			qdel(I)
+		for(var/X in O.internal_organs)
+			qdel(X)
 
-		for(var/obj/item/organ/internal/I in int_organs)
+		for(var/X in int_organs)
+			var/obj/item/organ/I = X
 			I.Insert(O, 1)
+
+
+	var/obj/item/bodypart/chest/torso = get_bodypart("chest")
+	if(cavity_object)
+		torso.cavity_item = cavity_object //cavity item is given to the new chest
+		cavity_object.loc = O
+
+	for(var/missing_zone in missing_bodyparts_zones)
+		var/obj/item/bodypart/BP = O.get_bodypart(missing_zone)
+		BP.drop_limb(1)
+		if(!(tr_flags & TR_KEEPORGANS)) //we didn't already get rid of the organs of the newly spawned mob
+			for(var/X in O.internal_organs)
+				var/obj/item/organ/G = X
+				if(BP.body_zone == check_zone(G.zone))
+					if(mind && mind.changeling && istype(G, /obj/item/organ/brain))
+						continue //so headless changelings don't lose their brain when transforming
+					qdel(G) //we lose the organs in the missing limbs
+		qdel(BP)
 
 	if(mind)
 		mind.transfer_to(O)
@@ -210,7 +277,7 @@
 			for(var/obj/effect/proc_holder/changeling/humanform/HF in O.mind.changeling.purchasedpowers)
 				mind.changeling.purchasedpowers -= HF
 
-	O.a_intent = "help"
+	O.a_intent = INTENT_HELP
 	if (tr_flags & TR_DEFAULTMSG)
 		O << "<B>You are now a human.</B>"
 
@@ -230,7 +297,7 @@
 /mob/living/carbon/human/AIize()
 	if (notransform)
 		return
-	for(var/t in organs)
+	for(var/t in bodyparts)
 		qdel(t)
 
 	return ..()
@@ -244,7 +311,7 @@
 	notransform = 1
 	canmove = 0
 	icon = null
-	invisibility = 101
+	invisibility = INVISIBILITY_MAXIMUM
 	return ..()
 
 /mob/proc/AIize()
@@ -314,8 +381,8 @@
 	notransform = 1
 	canmove = 0
 	icon = null
-	invisibility = 101
-	for(var/t in organs)
+	invisibility = INVISIBILITY_MAXIMUM
+	for(var/t in bodyparts)
 		qdel(t)
 
 	var/mob/living/silicon/robot/R = new /mob/living/silicon/robot(loc)
@@ -365,8 +432,8 @@
 	notransform = 1
 	canmove = 0
 	icon = null
-	invisibility = 101
-	for(var/t in organs)
+	invisibility = INVISIBILITY_MAXIMUM
+	for(var/t in bodyparts)
 		qdel(t)
 
 	var/alien_caste = pick("Hunter","Sentinel","Drone")
@@ -379,7 +446,7 @@
 		if("Drone")
 			new_xeno = new /mob/living/carbon/alien/humanoid/drone(loc)
 
-	new_xeno.a_intent = "harm"
+	new_xeno.a_intent = INTENT_HARM
 	new_xeno.key = key
 
 	new_xeno << "<B>You are now an alien.</B>"
@@ -395,8 +462,8 @@
 	notransform = 1
 	canmove = 0
 	icon = null
-	invisibility = 101
-	for(var/t in organs)
+	invisibility = INVISIBILITY_MAXIMUM
+	for(var/t in bodyparts)
 		qdel(t)
 
 	var/mob/living/simple_animal/slime/new_slime
@@ -411,38 +478,21 @@
 		new_slime = pick(babies)
 	else
 		new_slime = new /mob/living/simple_animal/slime(loc)
-	new_slime.a_intent = "harm"
+	new_slime.a_intent = INTENT_HARM
 	new_slime.key = key
 
 	new_slime << "<B>You are now a slime. Skreee!</B>"
 	. = new_slime
 	qdel(src)
 
-/mob/living/carbon/human/proc/Blobize()
-	if (notransform)
-		return
-	if(!client) //TOO BAD
-		new /obj/effect/blob/core (loc)
-	else
-		new /obj/effect/blob/core (loc,new_overmind = src.client)
-	gib(src)
-
-
-/mob/proc/become_god(var/side_colour)
-	var/mob/camera/god/G = new /mob/camera/god(loc)
-	G.side = side_colour
+/mob/proc/become_overmind(mode_made, starting_points = 60)
+	var/mob/camera/blob/B = new /mob/camera/blob(loc, 0, mode_made, starting_points)
 	if(mind)
-		mind.transfer_to(G)
+		mind.transfer_to(B)
 	else
-		G.key = key
-
-	G.job = "Deity"
-	G.rename_self("deity")
-	G.update_icons()
-
-	. = G
+		B.key = key
+	. = B
 	qdel(src)
-
 
 
 /mob/living/carbon/human/proc/corgize()
@@ -454,12 +504,12 @@
 	notransform = 1
 	canmove = 0
 	icon = null
-	invisibility = 101
-	for(var/t in organs)	//this really should not be necessary
+	invisibility = INVISIBILITY_MAXIMUM
+	for(var/t in bodyparts)	//this really should not be necessary
 		qdel(t)
 
 	var/mob/living/simple_animal/pet/dog/corgi/new_corgi = new /mob/living/simple_animal/pet/dog/corgi (loc)
-	new_corgi.a_intent = "harm"
+	new_corgi.a_intent = INTENT_HARM
 	new_corgi.key = key
 
 	new_corgi << "<B>You are now a Corgi. Yap Yap!</B>"
@@ -484,15 +534,15 @@
 	notransform = 1
 	canmove = 0
 	icon = null
-	invisibility = 101
+	invisibility = INVISIBILITY_MAXIMUM
 
-	for(var/t in organs)
+	for(var/t in bodyparts)
 		qdel(t)
 
 	var/mob/new_mob = new mobpath(src.loc)
 
 	new_mob.key = key
-	new_mob.a_intent = "harm"
+	new_mob.a_intent = INTENT_HARM
 
 
 	new_mob << "You suddenly feel more... animalistic."
@@ -511,7 +561,7 @@
 	var/mob/new_mob = new mobpath(src.loc)
 
 	new_mob.key = key
-	new_mob.a_intent = "harm"
+	new_mob.a_intent = INTENT_HARM
 	new_mob << "You feel more... animalistic"
 
 	. = new_mob

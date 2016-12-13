@@ -4,7 +4,6 @@
 	name = "anomaly"
 	desc = "A mysterious anomaly, seen commonly only in the region of space that the station orbits..."
 	icon_state = "bhole3"
-	unacidable = 1
 	density = 0
 	anchored = 1
 	luminosity = 3
@@ -58,7 +57,7 @@
 
 /obj/effect/anomaly/grav/New()
 	..()
-	aSignal.origin_tech = "magnets=5;powerstorage=4"
+	aSignal.origin_tech = "magnets=7"
 
 /obj/effect/anomaly/grav/anomalyEffect()
 	..()
@@ -91,7 +90,6 @@
 		var/atom/target = get_edge_target_turf(A, get_dir(src, get_step_away(A, src)))
 		A.throw_at(target, 5, 1)
 		boing = 0
-		return
 
 /////////////////////
 
@@ -104,7 +102,7 @@
 
 /obj/effect/anomaly/flux/New()
 	..()
-	aSignal.origin_tech = "powerstorage=6;programming=4;plasmatech=4"
+	aSignal.origin_tech = "powerstorage=7"
 
 /obj/effect/anomaly/flux/anomalyEffect()
 	..()
@@ -146,7 +144,7 @@
 
 /obj/effect/anomaly/bluespace/New()
 	..()
-	aSignal.origin_tech = "bluespace=5;magnets=5;powerstorage=3"
+	aSignal.origin_tech = "bluespace=7"
 
 /obj/effect/anomaly/bluespace/anomalyEffect()
 	..()
@@ -156,7 +154,6 @@
 /obj/effect/anomaly/bluespace/Bumped(atom/A)
 	if(isliving(A))
 		do_teleport(A, locate(A.x, A.y, A.z), 8)
-	return
 
 /////////////////////
 
@@ -166,13 +163,13 @@
 
 /obj/effect/anomaly/pyro/New()
 	..()
-	aSignal.origin_tech = "plasmatech=5;powerstorage=4;biotech=6"
+	aSignal.origin_tech = "plasmatech=7"
 
 /obj/effect/anomaly/pyro/anomalyEffect()
 	..()
-	var/turf/simulated/T = get_turf(src)
+	var/turf/open/T = get_turf(src)
 	if(istype(T))
-		T.atmos_spawn_air(SPAWN_HEAT | SPAWN_TOXINS | SPAWN_OXYGEN, 15)
+		T.atmos_spawn_air("o2=5;plasma=5;TEMP=1000")
 
 /////////////////////
 
@@ -183,7 +180,7 @@
 
 /obj/effect/anomaly/bhole/New()
 	..()
-	aSignal.origin_tech = "materials=5;combat=4;engineering=4"
+	aSignal.origin_tech = "engineering=7"
 
 /obj/effect/anomaly/bhole/anomalyEffect()
 	..()
@@ -210,7 +207,6 @@
 		affect_coord(x-t, y+r, ex_act_force, pull_chance, turf_removal_chance)
 		affect_coord(x+r, y+t, ex_act_force, pull_chance, turf_removal_chance)
 		affect_coord(x-r, y-t, ex_act_force, pull_chance, turf_removal_chance)
-	return
 
 /obj/effect/anomaly/bhole/proc/affect_coord(x, y, ex_act_force, pull_chance, turf_removal_chance)
 	//Get turf at coordinate
@@ -229,6 +225,5 @@
 			step_towards(M,src)
 
 	//Damaging the turf
-	if( T && istype(T,/turf/simulated) && prob(turf_removal_chance) )
+	if( T && prob(turf_removal_chance) )
 		T.ex_act(ex_act_force)
-	return

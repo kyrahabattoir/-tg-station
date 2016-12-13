@@ -6,7 +6,7 @@
 	desc = "Protected by FRM."
 	icon = 'icons/obj/module.dmi'
 	icon_state = "cyborg_upgrade"
-	origin_tech = "programming=4"
+	origin_tech = "programming=2"
 	var/locked = 0
 	var/installed = 0
 	var/require_module = 0
@@ -20,39 +20,6 @@
 		R << "Upgrade mounting error!  No suitable hardpoint detected!"
 		usr << "There's no mounting point for the module!"
 		return 1
-
-/obj/item/borg/upgrade/reset
-	name = "cyborg module reset board"
-	desc = "Used to reset a cyborg's module. Destroys any other upgrades applied to the cyborg."
-	icon_state = "cyborg_upgrade1"
-	require_module = 1
-
-/obj/item/borg/upgrade/reset/action(mob/living/silicon/robot/R)
-	if(..())
-		return
-
-	R.notify_ai(2)
-
-	R.uneq_all()
-	R.hands.icon_state = "nomod"
-	R.icon_state = "robot"
-	qdel(R.module)
-	R.module = null
-
-	R.modtype = "robot"
-	R.designation = "Default"
-	R.updatename("Default")
-
-	R.update_icons()
-	R.update_headlamp()
-
-	R.speed = 0 // Remove upgrades.
-	R.ionpulse = FALSE
-	R.magpulse = FALSE
-
-	R.status_flags |= CANPUSH
-
-	return 1
 
 /obj/item/borg/upgrade/rename
 	name = "cyborg reclassification board"
@@ -96,7 +63,7 @@
 	desc = "Used to kick in a cyborg's VTEC systems, increasing their speed."
 	icon_state = "cyborg_upgrade2"
 	require_module = 1
-	origin_tech = "engineering=4;materials=5"
+	origin_tech = "engineering=4;materials=5;programming=4"
 
 /obj/item/borg/upgrade/vtec/action(mob/living/silicon/robot/R)
 	if(..())
@@ -116,7 +83,7 @@
 	icon_state = "cyborg_upgrade3"
 	require_module = 1
 	module_type = /obj/item/weapon/robot_module/security
-	origin_tech = "engineering=4;powerstorage=4"
+	origin_tech = "engineering=4;powerstorage=4;combat=4"
 
 /obj/item/borg/upgrade/disablercooler/action(mob/living/silicon/robot/R)
 	if(..())
@@ -158,20 +125,20 @@
 	icon_state = "cyborg_upgrade3"
 	require_module = 1
 	module_type = /obj/item/weapon/robot_module/miner
-	origin_tech = "engineering=5;materials=5"
+	origin_tech = "engineering=4;materials=5"
 
 /obj/item/borg/upgrade/ddrill/action(mob/living/silicon/robot/R)
 	if(..())
 		return
 
-	for(var/obj/item/weapon/pickaxe/drill/cyborg/D in R.module.modules)
-		qdel(D)
-	for(var/obj/item/weapon/shovel/S in R.module.modules)
-		qdel(S)
+	for(var/obj/item/weapon/pickaxe/drill/cyborg/D in R.module)
+		R.module.remove_module(D, TRUE)
+	for(var/obj/item/weapon/shovel/S in R.module)
+		R.module.remove_module(S, TRUE)
 
-	R.module.modules += new /obj/item/weapon/pickaxe/drill/cyborg/diamond(R.module)
-	R.module.rebuild()
-
+	var/obj/item/weapon/pickaxe/drill/cyborg/diamond/DD = new /obj/item/weapon/pickaxe/drill/cyborg/diamond(R.module)
+	R.module.basic_modules += DD
+	R.module.add_module(DD, FALSE, TRUE)
 	return 1
 
 /obj/item/borg/upgrade/soh
@@ -180,18 +147,18 @@
 	icon_state = "cyborg_upgrade3"
 	require_module = 1
 	module_type = /obj/item/weapon/robot_module/miner
-	origin_tech = "engineering=5;materials=5;bluespace=3"
+	origin_tech = "engineering=4;materials=4;bluespace=4"
 
 /obj/item/borg/upgrade/soh/action(mob/living/silicon/robot/R)
 	if(..())
 		return
 
-	for(var/obj/item/weapon/storage/bag/ore/cyborg/S in R.module.modules)
-		qdel(S)
+	for(var/obj/item/weapon/storage/bag/ore/cyborg/S in R.module)
+		R.module.remove_module(S, TRUE)
 
-	R.module.modules += new /obj/item/weapon/storage/bag/ore/holding(R.module)
-	R.module.rebuild()
-
+	var/obj/item/weapon/storage/bag/ore/holding/H = new /obj/item/weapon/storage/bag/ore/holding(R.module)
+	R.module.basic_modules += H
+	R.module.add_module(H, FALSE, TRUE)
 	return 1
 
 /obj/item/borg/upgrade/syndicate
@@ -199,7 +166,7 @@
 	desc = "Unlocks the hidden, deadlier functions of a cyborg"
 	icon_state = "cyborg_upgrade3"
 	require_module = 1
-	origin_tech = "combat=4;syndicate=2"
+	origin_tech = "combat=4;syndicate=1"
 
 /obj/item/borg/upgrade/syndicate/action(mob/living/silicon/robot/R)
 	if(..())
@@ -210,6 +177,21 @@
 
 	R.SetEmagged(1)
 
+	return 1
+
+/obj/item/borg/upgrade/lavaproof
+	name = "mining cyborg lavaproof tracks"
+	desc = "An upgrade kit to apply specialized coolant systems and insulation layers to mining cyborg tracks, enabling them to withstand exposure to molten rock."
+	icon_state = "ash_plating"
+	resistance_flags = LAVA_PROOF | FIRE_PROOF
+	require_module = 1
+	module_type = /obj/item/weapon/robot_module/miner
+	origin_tech = "engineering=4;materials=4;plasmatech=4"
+
+/obj/item/borg/upgrade/lavaproof/action(mob/living/silicon/robot/R)
+	if(..())
+		return
+	R.weather_immunities += "lava"
 	return 1
 
 /obj/item/borg/upgrade/selfrepair
@@ -223,6 +205,7 @@
 	var/on = 0
 	var/powercost = 10
 	var/mob/living/silicon/robot/cyborg
+	var/datum/action/toggle_action
 
 /obj/item/borg/upgrade/selfrepair/action(mob/living/silicon/robot/R)
 	if(..())
@@ -235,18 +218,27 @@
 
 	cyborg = R
 	icon_state = "selfrepair_off"
-	var/datum/action/A = new /datum/action/item_action/toggle(src)
-	A.Grant(R)
+	toggle_action = new /datum/action/item_action/toggle(src)
+	toggle_action.Grant(R)
 	return 1
+
+/obj/item/borg/uprgade/selfrepair/dropped()
+	addtimer(src, "check_dropped", 1)
+
+/obj/item/borg/upgrade/selfrepair/proc/check_dropped()
+	if(loc != cyborg)
+		toggle_action.Remove(cyborg)
+		cyborg = null
+		deactivate()
 
 /obj/item/borg/upgrade/selfrepair/ui_action_click()
 	on = !on
 	if(on)
 		cyborg << "<span class='notice'>You activate the self-repair module.</span>"
-		SSobj.processing |= src
+		START_PROCESSING(SSobj, src)
 	else
 		cyborg << "<span class='notice'>You deactivate the self-repair module.</span>"
-		SSobj.processing -= src
+		STOP_PROCESSING(SSobj, src)
 	update_icon()
 
 /obj/item/borg/upgrade/selfrepair/update_icon()
@@ -259,7 +251,7 @@
 		icon_state = "cyborg_upgrade5"
 
 /obj/item/borg/upgrade/selfrepair/proc/deactivate()
-	SSobj.processing -= src
+	STOP_PROCESSING(SSobj, src)
 	on = FALSE
 	update_icon()
 
@@ -269,6 +261,11 @@
 		return
 
 	if(cyborg && (cyborg.stat != DEAD) && on)
+		if(!cyborg.cell)
+			cyborg << "<span class='warning'>Self-repair module deactivated. Please, insert the power cell.</span>"
+			deactivate()
+			return
+
 		if(cyborg.cell.charge < powercost * 2)
 			cyborg << "<span class='warning'>Self-repair module deactivated. Please recharge.</span>"
 			deactivate()

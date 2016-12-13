@@ -71,16 +71,17 @@
 		src << "<span class='warning'><i>This subject does not have a strong enough life energy...</i></span>"
 		return 0
 
-	if(isslime(M.buckled_mob))
+	if(locate(/mob/living/simple_animal/slime) in M.buckled_mobs)
 		src << "<span class='warning'><i>Another slime is already feeding on this subject...</i></span>"
 		return 0
 	return 1
 
 /mob/living/simple_animal/slime/proc/Feedon(mob/living/M)
-	M.unbuckle_mob(force=1) //Slimes rip other mobs (eg: shoulder parrots) off (Slimes Vs Slimes is already handled in CanFeedon())
+	M.unbuckle_all_mobs(force=1) //Slimes rip other mobs (eg: shoulder parrots) off (Slimes Vs Slimes is already handled in CanFeedon())
 	if(M.buckle_mob(src, force=1))
-		M.visible_message("<span class='danger'>The [name] has latched onto [M]!</span>", \
-						"<span class='userdanger'>The [name] has latched onto [M]!</span>")
+		layer = M.layer+0.01 //appear above the target mob
+		M.visible_message("<span class='danger'>[name] has latched onto [M]!</span>", \
+						"<span class='userdanger'>[name] has latched onto [M]!</span>")
 	else
 		src << "<span class='warning'><i>I have failed to latch onto the subject</i></span>"
 
@@ -94,7 +95,8 @@
 		if(!silent)
 			visible_message("<span class='warning'>[src] has let go of [buckled]!</span>", \
 							"<span class='notice'><i>I stopped feeding.</i></span>")
-		buckled.unbuckle_mob(force=1)
+		layer = initial(layer)
+		buckled.unbuckle_mob(src,force=1)
 
 /mob/living/simple_animal/slime/verb/Evolve()
 	set category = "Slime"
@@ -111,7 +113,7 @@
 			for(var/datum/action/innate/slime/evolve/E in actions)
 				E.Remove(src)
 			regenerate_icons()
-			name = text("[colour] [is_adult ? "adult" : "baby"] slime ([number])")
+			update_name()
 		else
 			src << "<i>I am not ready to evolve yet...</i>"
 	else
@@ -147,13 +149,15 @@
 			var/new_nutrition = round(nutrition * 0.9)
 			var/new_powerlevel = round(powerlevel / 4)
 			for(var/i=1,i<=4,i++)
-				var/mob/living/simple_animal/slime/M = new /mob/living/simple_animal/slime/(loc)
+				var/child_colour
 				if(mutation_chance >= 100)
-					M.colour = "rainbow"
+					child_colour = "rainbow"
 				else if(prob(mutation_chance))
-					M.colour = slime_mutation[rand(1,4)]
+					child_colour = slime_mutation[rand(1,4)]
 				else
-					M.colour = colour
+					child_colour = colour
+				var/mob/living/simple_animal/slime/M
+				M = new(loc, child_colour)
 				if(ckey)
 					M.nutrition = new_nutrition //Player slimes are more robust at spliting. Once an oversight of poor copypasta, now a feature!
 				M.powerlevel = new_powerlevel
@@ -165,8 +169,9 @@
 				feedback_add_details("slime_babies_born","slimebirth_[replacetext(M.colour," ","_")]")
 
 			var/mob/living/simple_animal/slime/new_slime = pick(babies)
-			new_slime.a_intent = "harm"
-			new_slime.languages = languages
+			new_slime.a_intent = INTENT_HARM
+			new_slime.languages_spoken = languages_spoken
+			new_slime.languages_understood = languages_understood
 			if(src.mind)
 				src.mind.transfer_to(new_slime)
 			else

@@ -1,7 +1,7 @@
+//If you're looking for spawners like ash walker eggs, check ghost_role_spawners.dm
 
-
-
-
+/obj/structure/fans/tiny/invisible //For blocking air in ruin doorways
+	invisibility = INVISIBILITY_ABSTRACT
 
 //lavaland_surface_seed_vault.dmm
 //Seed Vault
@@ -16,111 +16,133 @@
 				/obj/item/seeds/sunflower/moonflower = 8
 				)
 
-/obj/effect/mob_spawn/human/seed_vault
-	name = "sleeper"
-	mob_name = "Vault Creature"
-	icon = 'icons/obj/Cryogenic2.dmi'
-	icon_state = "sleeper"
+//Free Golems
+
+/obj/item/weapon/disk/design_disk/golem_shell
+	name = "Golem Creation Disk"
+	desc = "A gift from the Liberator."
+	icon_state = "datadisk1"
+	max_blueprints = 1
+
+/obj/item/weapon/disk/design_disk/golem_shell/New()
+	..()
+	var/datum/design/golem_shell/G = new
+	blueprints[1] = G
+
+/datum/design/golem_shell
+	name = "Golem Shell Construction"
+	desc = "Allows for the construction of a Golem Shell."
+	id = "golem"
+	req_tech = list("materials" = 12)
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 40000)
+	build_path = /obj/item/golem_shell
+	category = list("Imported")
+
+/obj/item/golem_shell
+	name = "incomplete golem shell"
+	icon = 'icons/obj/wizard.dmi'
+	icon_state = "construct"
+	desc = "The incomplete body of a golem. Add ten sheets of any mineral to finish."
+	var/shell_type = /obj/effect/mob_spawn/human/golem
+	var/has_owner = FALSE //if the resulting golem obeys someone
+
+/obj/item/golem_shell/attackby(obj/item/I, mob/user, params)
+	..()
+	var/species
+	if(istype(I, /obj/item/stack/sheet))
+		var/obj/item/stack/sheet/O = I
+
+		if(istype(O, /obj/item/stack/sheet/metal))
+			species = /datum/species/golem
+
+		if(istype(O, /obj/item/stack/sheet/glass))
+			species = /datum/species/golem/glass
+
+		if(istype(O, /obj/item/stack/sheet/plasteel))
+			species = /datum/species/golem/plasteel
+
+		if(istype(O, /obj/item/stack/sheet/mineral/sandstone))
+			species = /datum/species/golem/sand
+
+		if(istype(O, /obj/item/stack/sheet/mineral/plasma))
+			species = /datum/species/golem/plasma
+
+		if(istype(O, /obj/item/stack/sheet/mineral/diamond))
+			species = /datum/species/golem/diamond
+
+		if(istype(O, /obj/item/stack/sheet/mineral/gold))
+			species = /datum/species/golem/gold
+
+		if(istype(O, /obj/item/stack/sheet/mineral/silver))
+			species = /datum/species/golem/silver
+
+		if(istype(O, /obj/item/stack/sheet/mineral/uranium))
+			species = /datum/species/golem/uranium
+
+		if(istype(O, /obj/item/stack/sheet/mineral/bananium))
+			species = /datum/species/golem/bananium
+
+		if(istype(O, /obj/item/stack/sheet/mineral/titanium))
+			species = /datum/species/golem/titanium
+
+		if(istype(O, /obj/item/stack/sheet/mineral/plastitanium))
+			species = /datum/species/golem/plastitanium
+
+		if(istype(O, /obj/item/stack/sheet/mineral/abductor))
+			species = /datum/species/golem/alloy
+
+		if(istype(O, /obj/item/stack/sheet/mineral/wood))
+			species = /datum/species/golem/wood
+
+		if(istype(O, /obj/item/stack/sheet/bluespace_crystal))
+			species = /datum/species/golem/bluespace
+
+		if(species)
+			if(O.use(10))
+				user << "You finish up the golem shell with ten sheets of [O]."
+				var/obj/effect/mob_spawn/human/golem/G = new shell_type(get_turf(src))
+				G.mob_species = species
+				var/datum/species/golem/S = species
+				G.name += " ([initial(S.id)])"
+				if(has_owner)
+					G.owner = user
+				qdel(src)
+			else
+				user << "You need at least ten sheets to finish a golem."
+		else
+			user << "You can't build a golem out of this kind of material."
+
+//made with xenobiology, the golem obeys its creator
+/obj/item/golem_shell/artificial
+	name = "incomplete artificial golem shell"
+	has_owner = TRUE
+
+
+///Syndicate Listening Post
+/obj/effect/mob_spawn/human/lavaland_syndicate
+	r_hand = /obj/item/weapon/gun/ballistic/automatic/sniper_rifle
+	name = "Syndicate Bioweapon Scientist"
+	uniform = /obj/item/clothing/under/syndicate
+	suit = /obj/item/clothing/suit/toggle/labcoat
+	shoes = /obj/item/clothing/shoes/combat
+	gloves = /obj/item/clothing/gloves/combat
+	radio = /obj/item/device/radio/headset/syndicate/alt
+	back = /obj/item/weapon/storage/backpack
+	pocket1 = /obj/item/weapon/gun/ballistic/automatic/pistol
+	id_job = "Operative"
+	id_access_list = list(access_syndicate)
 	roundstart = FALSE
 	death = FALSE
-	mob_species = /datum/species/pod
-	flavour_text = {"You are a strange, artificial creature. In the face of impending apocalyptic events, your creators tasked you with maintaining an emergency seed vault. You are to tend to the plants and await their return to aid in rebuilding civilization. You've been waiting quite a while though..."}
+	icon = 'icons/obj/Cryogenic2.dmi'
+	icon_state = "sleeper"
+	has_id = 1
+	flavour_text = "<font size=3>You are a syndicate agent, employed in a top secret research facility developing biological weapons. Unfortunatley, your hated enemy, Nanotrasen, has begun mining in this sector. <b>Continue your research as best you can, and try to keep a low profile. Do not abandon the base without good cause.</b> The base is rigged with explosives should the worst happen, do not let the base fall into enemy hands!</b>"
 
-//Greed
-
-/obj/structure/cursed_slot_machine
-	name = "greed's slot machine"
-	desc = "High stakes, high rewards."
-	icon = 'icons/obj/economy.dmi'
-	icon_state = "slots1"
-	anchored = 1
-	density = 1
-	var/win_prob = 5
-
-/obj/structure/cursed_slot_machine/attack_hand(mob/living/carbon/human/user)
-	if(!istype(user))
-		return
-	if(in_use)
-		return
-	in_use = TRUE
-	user << "<span class='danger'><B>You feel your very life draining away as you pull the lever...it'll be worth it though, right?</B></span>"
-	user.adjustCloneLoss(20)
-	if(user.stat)
-		user.gib()
-	icon_state = "slots2"
-	sleep(50)
-	icon_state = "slots1"
-	in_use = FALSE
-	if(prob(win_prob))
-		new /obj/item/weapon/dice/d20/fate/one_use(get_turf(src))
-		if(user)
-			user << "You hear laughter echoing around you as the machine fades away. In it's place...more gambling."
-			qdel(src)
-	else
-		if(user)
-			user << "<span class='danger'>Looks like you didn't win anything this time...next time though, right?</span>"
-//Gluttony
-
-/obj/effect/gluttony
-	name = "gluttony's wall"
-	desc = "Only those who truly indulge may pass."
-	anchored = 1
-	density = 1
-	icon_state = "blob"
-	icon = 'icons/mob/blob.dmi'
-
-/obj/effect/gluttony/CanPass(atom/movable/mover, turf/target, height=0)//So bullets will fly over and stuff.
-	if(height==0)
-		return 1
-	if(istype(mover, /mob/living/carbon/human))
-		var/mob/living/carbon/human/H = mover
-		if(H.nutrition >= NUTRITION_LEVEL_FAT)
-			return 1
-		else
-			H << "<span class='danger'><B>You're not gluttonous enough to pass this barrier!</B></span>"
-	else
-		return 0
-
-//Pride
-
-/obj/structure/mirror/magic/pride
-	name = "pride's mirror"
-	desc = "Pride cometh before the..."
-	icon_state = "magic_mirror"
-
-/obj/structure/mirror/magic/pride/curse(mob/user)
-	user.visible_message("<span class='danger'><B>The ground splits beneath [user] as their hand leaves the mirror!</B></span>")
-	var/turf/T = get_turf(user)
-	T.ChangeTurf(/turf/simulated/chasm/straight_down)
-	var/turf/simulated/chasm/straight_down/C = T
-	C.drop(user)
-
-//Sloth - I'll finish this item later
-
-//Envy
-
-/obj/item/weapon/knife/envy
-	name = "envy's knife"
-	desc = "Their success will be yours."
-	icon = 'icons/obj/wizard.dmi'
-	icon_state = "render"
-	item_state = "render"
-	force = 18
-	throwforce = 10
-	w_class = 3
-	hitsound = 'sound/weapons/bladeslice.ogg'
-
-/obj/item/weapon/knife/envy/afterattack(atom/movable/AM, mob/living/carbon/human/user, proximity)
-	..()
-	if(!proximity)
-		return
-	if(!istype(user))
-		return
-	if(istype(AM, /mob/living/carbon/human))
-		var/mob/living/carbon/human/H = AM
-		if(user.real_name != H.dna.real_name)
-			user.real_name = H.dna.real_name
-			H.dna.transfer_identity(user, transfer_SE=1)
-			user.updateappearance(mutcolor_update=1)
-			user.domutcheck()
-			user << "You assume the face of [H]. Are you satisfied?"
+/obj/effect/mob_spawn/human/lavaland_syndicate/comms
+	name = "Syndicate Comms Agent"
+	r_hand = /obj/item/weapon/melee/energy/sword/saber
+	mask = /obj/item/clothing/mask/chameleon
+	suit = /obj/item/clothing/suit/armor/vest
+	flavour_text = "<font size=3>You are a syndicate agent, employed in a top secret research facility developing biological weapons. Unfortunatley, your hated enemy, Nanotrasen, has begun mining in this sector. <b>Monitor enemy activity as best you can, and try to keep a low profile. Do not abandon the base without good cause.</b> Use the communication equipment to provide support to any field agents, and sow disinformation to throw Nanotrasen off your trail. Do not let the base fall into enemy hands!</b>"
+	pocket2 = /obj/item/weapon/card/id/syndicate/anyone

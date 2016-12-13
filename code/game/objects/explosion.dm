@@ -1,22 +1,24 @@
 //TODO: Flash range does nothing currently
 
-/proc/trange(Dist=0,turf/Center=null)//alternative to range (ONLY processes turfs and thus less intensive)
-	if(Center==null) return
-
-	//var/x1=((Center.x-Dist)<1 ? 1 : Center.x-Dist)
-	//var/y1=((Center.y-Dist)<1 ? 1 : Center.y-Dist)
-	//var/x2=((Center.x+Dist)>world.maxx ? world.maxx : Center.x+Dist)
-	//var/y2=((Center.y+Dist)>world.maxy ? world.maxy : Center.y+Dist)
-
-	var/turf/x1y1 = locate(((Center.x-Dist)<1 ? 1 : Center.x-Dist),((Center.y-Dist)<1 ? 1 : Center.y-Dist),Center.z)
-	var/turf/x2y2 = locate(((Center.x+Dist)>world.maxx ? world.maxx : Center.x+Dist),((Center.y+Dist)>world.maxy ? world.maxy : Center.y+Dist),Center.z)
-	return block(x1y1,x2y2)
-
-
-/proc/explosion(turf/epicenter, devastation_range, heavy_impact_range, light_impact_range, flash_range, adminlog = 1, ignorecap = 0, flame_range = 0 ,silent = 0)
+/proc/explosion(turf/epicenter, devastation_range, heavy_impact_range, light_impact_range, flash_range, adminlog = 1, ignorecap = 0, flame_range = 0 ,silent = 0, smoke = 1)
 	set waitfor = 0
-	src = null	//so we don't abort once src is deleted
+	src = null //so we don't abort once src is deleted
 	epicenter = get_turf(epicenter)
+	if(!epicenter)
+		return
+
+	// Archive the uncapped explosion for the doppler array
+	var/orig_dev_range = devastation_range
+	var/orig_heavy_range = heavy_impact_range
+	var/orig_light_range = light_impact_range
+
+	if(!ignorecap && epicenter.z != ZLEVEL_MINING)
+		//Clamp all values to MAX_EXPLOSION_RANGE
+		devastation_range = min(MAX_EX_DEVESTATION_RANGE, devastation_range)
+		heavy_impact_range = min(MAX_EX_HEAVY_RANGE, heavy_impact_range)
+		light_impact_range = min(MAX_EX_LIGHT_RANGE, light_impact_range)
+		flash_range = min(MAX_EX_FLASH_RANGE, flash_range)
+		flame_range = min(MAX_EX_FLAME_RANGE, flame_range)
 
 	//DO NOT REMOVE THIS SLEEP, IT BREAKS THINGS
 	//not sleeping causes us to ex_act() the thing that triggered the explosion
@@ -27,27 +29,13 @@
 	//and somethings expect us to ex_act them so they can qdel()
 	sleep(1) //tldr, let the calling proc call qdel(src) before we explode
 
-	// Archive the uncapped explosion for the doppler array
-	var/orig_dev_range = devastation_range
-	var/orig_heavy_range = heavy_impact_range
-	var/orig_light_range = light_impact_range
-
-	if(!ignorecap)
-		// Clamp all values to MAX_EXPLOSION_RANGE
-		devastation_range = min (MAX_EX_DEVESTATION_RANGE, devastation_range)
-		heavy_impact_range = min (MAX_EX_HEAVY_RANGE, heavy_impact_range)
-		light_impact_range = min (MAX_EX_LIGHT_RANGE, light_impact_range)
-		flash_range = min (MAX_EX_FLASH_RANGE, flash_range)
-		flame_range = min (MAX_EX_FLAME_RANGE, flame_range)
-
 	var/start = world.timeofday
-	if(!epicenter) return
 
 	var/max_range = max(devastation_range, heavy_impact_range, light_impact_range, flame_range)
 	var/list/cached_exp_block = list()
 
 	if(adminlog)
-		message_admins("Explosion with size ([devastation_range], [heavy_impact_range], [light_impact_range], [flame_range]) in area [epicenter.loc.name] ([epicenter.x],[epicenter.y],[epicenter.z])")
+		message_admins("Explosion with size ([devastation_range], [heavy_impact_range], [light_impact_range], [flame_range]) in area [epicenter.loc.name] ([epicenter.x],[epicenter.y],[epicenter.z] - <a href='?_src_=holder;adminplayerobservecoodjump=1;X=[epicenter.x];Y=[epicenter.y];Z=[epicenter.z]'>JMP</a>)")
 		log_game("Explosion with size ([devastation_range], [heavy_impact_range], [light_impact_range], [flame_range]) in area [epicenter.loc.name] ([epicenter.x],[epicenter.y],[epicenter.z])")
 
 	// Play sounds; we want sounds to be different depending on distance so we will manually do it ourselves.
@@ -83,15 +71,20 @@
 	SSmachine.postpone(postponeCycles)
 
 	if(heavy_impact_range > 1)
-		var/datum/effect_system/explosion/E = new/datum/effect_system/explosion()
-		E.set_up(epicenter)
-		E.start()
+		if(smoke)
+			var/datum/effect_system/explosion/smoke/E = new/datum/effect_system/explosion/smoke()
+			E.set_up(epicenter)
+			E.start()
+		else
+			var/datum/effect_system/explosion/E = new/datum/effect_system/explosion()
+			E.set_up(epicenter)
+			E.start()
 
 	var/x0 = epicenter.x
 	var/y0 = epicenter.y
 	var/z0 = epicenter.z
 
-	var/list/affected_turfs = trange(max_range, epicenter)
+	var/list/affected_turfs = spiral_range_turfs(max_range, epicenter)
 
 	if(config.reactionary_explosions)
 		for(var/turf/T in affected_turfs) // we cache the explosion block rating of every turf in the explosion area
@@ -107,11 +100,14 @@
 				if(W.reinf && W.fulltile)
 					cached_exp_block[T] += W.explosion_block
 
-			for(var/obj/effect/blob/B in T)
+			for(var/obj/structure/blob/B in T)
 				cached_exp_block[T] += B.explosion_block
+			CHECK_TICK
 
 	for(var/turf/T in affected_turfs)
 
+		if (!T)
+			continue
 		var/dist = cheap_hypotenuse(T.x, T.y, x0, y0)
 
 		if(config.reactionary_explosions)
@@ -138,7 +134,7 @@
 		//------- TURF FIRES -------
 
 		if(T)
-			if(flame_dist && prob(40) && !istype(T, /turf/space) && !T.density)
+			if(flame_dist && prob(40) && !isspaceturf(T) && !T.density)
 				PoolOrNew(/obj/effect/hotspot, T) //Mostly for ambience!
 			if(dist > 0)
 				T.ex_act(dist)
@@ -153,6 +149,7 @@
 				I.throw_speed = 4 //Temporarily change their throw_speed for embedding purposes (Reset when it finishes throwing, regardless of hitting anything)
 				I.throw_at_fast(throw_at, throw_range, 2)//Throw it at 2 speed, this is purely visual anyway.
 
+		CHECK_TICK
 
 	var/took = (world.timeofday-start)/10
 	//You need to press the DebugGame verb to see these now....they were getting annoying and we've collected a fair bit of data. Just -test- changes  to explosion code using this please so we can compare
@@ -169,7 +166,7 @@
 
 
 /proc/secondaryexplosion(turf/epicenter, range)
-	for(var/turf/tile in trange(range, epicenter))
+	for(var/turf/tile in spiral_range_turfs(range, epicenter))
 		tile.ex_act(2)
 
 
@@ -211,7 +208,7 @@
 	var/x0 = epicenter.x
 	var/y0 = epicenter.y
 	var/list/wipe_colours = list()
-	for(var/turf/T in trange(max_range, epicenter))
+	for(var/turf/T in spiral_range_turfs(max_range, epicenter))
 		wipe_colours += T
 		var/dist = cheap_hypotenuse(T.x, T.y, x0, y0)
 
@@ -230,7 +227,7 @@
 					if(W.explosion_block && W.fulltile)
 						dist += W.explosion_block
 
-				for(var/obj/effect/blob/B in T)
+				for(var/obj/structure/blob/B in T)
 					dist += B.explosion_block
 
 		if(dist < dev)
@@ -250,4 +247,18 @@
 		T.color = null
 		T.maptext = ""
 
+/proc/dyn_explosion(turf/epicenter, power, flash_range, adminlog = 1, ignorecap = 1, flame_range = 0 ,silent = 0, smoke = 1)
+	if(!power)
+		return
+	var/range = 0
+	range = round((2 * power)**DYN_EX_SCALE)
+	explosion(epicenter, round(range * 0.25), round(range * 0.5), round(range), flash_range*range, adminlog, ignorecap, flame_range*range, silent, smoke)
 
+// Using default dyn_ex scale:
+// 100 explosion power is a (5, 10, 20) explosion.
+// 75 explosion power is a (4, 8, 17) explosion.
+// 50 explosion power is a (3, 7, 14) explosion.
+// 25 explosion power is a (2, 5, 10) explosion.
+// 10 explosion power is a (1, 3, 6) explosion.
+// 5 explosion power is a (0, 1, 3) explosion.
+// 1 explosion power is a (0, 0, 1) explosion.

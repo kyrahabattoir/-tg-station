@@ -9,8 +9,9 @@
 	production = 1
 	yield = 4
 	potency = 15
-	oneharvest = 1
-	mutatelist = list(/obj/item/seeds/wheat/oat)
+	icon_dead = "wheat-dead"
+	mutatelist = list(/obj/item/seeds/wheat/oat, /obj/item/seeds/wheat/meat)
+	reagents_add = list("nutriment" = 0.04)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/wheat
 	seed = /obj/item/seeds/wheat
@@ -20,7 +21,6 @@
 	icon_state = "wheat"
 	filling_color = "#F0E68C"
 	bitesize_mod = 2
-	reagents_add = list("nutriment" = 0.04)
 
 // Oat
 /obj/item/seeds/wheat/oat
@@ -40,7 +40,6 @@
 	icon_state = "oat"
 	filling_color = "#556B2F"
 	bitesize_mod = 2
-	reagents_add = list("nutriment" = 0.04)
 
 // Rice
 /obj/item/seeds/wheat/rice
@@ -61,4 +60,31 @@
 	icon_state = "rice"
 	filling_color = "#FAFAD2"
 	bitesize_mod = 2
-	reagents_add = list("nutriment" = 0.04)
+
+//Meatwheat - grows into synthetic meat
+/obj/item/seeds/wheat/meat
+	name = "pack of meatwheat seeds"
+	desc = "If you ever wanted to drive a vegetarian to insanity, here's how."
+	icon_state = "seed-meatwheat"
+	species = "meatwheat"
+	plantname = "Meatwheat"
+	product = /obj/item/weapon/reagent_containers/food/snacks/grown/meatwheat
+	mutatelist = list()
+
+/obj/item/weapon/reagent_containers/food/snacks/grown/meatwheat
+	name = "meatwheat"
+	desc = "Some blood-drenched wheat stalks. You can crush them into what passes for meat if you squint hard enough."
+	icon_state = "meatwheat"
+	gender = PLURAL
+	filling_color = rgb(150, 0, 0)
+	bitesize_mod = 2
+	seed = /obj/item/seeds/wheat/meat
+
+/obj/item/weapon/reagent_containers/food/snacks/grown/meatwheat/attack_self(mob/living/user)
+	user.visible_message("<span class='notice'>[user] crushes [src] into meat.</span>", "<span class='notice'>You crush [src] into something that resembles meat.</span>")
+	playsound(user, 'sound/effects/blobattack.ogg', 50, 1)
+	var/obj/item/weapon/reagent_containers/food/snacks/meat/slab/meatwheat/M = new(get_turf(user))
+	user.drop_item()
+	qdel(src)
+	user.put_in_hands(M)
+	return 1

@@ -10,9 +10,13 @@
 	maturation = 10
 	production = 1
 	yield = 4
-	oneharvest = 1
 	growthstages = 4
+	growing_icon = 'icons/obj/hydroponics/growing_vegetables.dmi'
+	icon_grow = "potato-grow"
+	icon_dead = "potato-dead"
+	genes = list(/datum/plant_gene/trait/battery)
 	mutatelist = list(/obj/item/seeds/potato/sweet)
+	reagents_add = list("vitamin" = 0.04, "nutriment" = 0.1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/potato
 	seed = /obj/item/seeds/potato
@@ -20,23 +24,28 @@
 	desc = "Boil 'em! Mash 'em! Stick 'em in a stew!"
 	icon_state = "potato"
 	filling_color = "#E9967A"
-	reagents_add = list("vitamin" = 0.04, "nutriment" = 0.1)
 	bitesize = 100
 
+
+/obj/item/weapon/reagent_containers/food/snacks/grown/potato/wedges
+	name = "potato wedges"
+	desc = "a potato cut up into wedges"
+	icon_state = "potato_wedge"
+	filling_color = "#E9967A"
+	bitesize = 100
+
+
 /obj/item/weapon/reagent_containers/food/snacks/grown/potato/attackby(obj/item/weapon/W, mob/user, params)
-	..()
-	if(istype(W, /obj/item/stack/cable_coil))
-		var/obj/item/stack/cable_coil/C = W
-		if (C.use(5))
-			user << "<span class='notice'>You add some cable to the potato and slide it inside the battery encasing.</span>"
-			var/obj/item/weapon/stock_parts/cell/potato/pocell = new /obj/item/weapon/stock_parts/cell/potato(user.loc)
-			pocell.maxcharge = src.potency * 20
-			pocell.charge = pocell.maxcharge
-			qdel(src)
-			return
-		else
-			user << "<span class='warning'>You need five lengths of cable to make a potato battery!</span>"
-			return
+	if(W.is_sharp())
+		user << "<span class='notice'>You cut the potato into wedges with [W].</span>"
+		var/obj/item/weapon/reagent_containers/food/snacks/grown/potato/wedges/Wedges = new /obj/item/weapon/reagent_containers/food/snacks/grown/potato/wedges
+		if(!remove_item_from_storage(user))
+			user.unEquip(src)
+		user.put_in_hands(Wedges)
+		qdel(src)
+	else
+		return ..()
+
 
 // Sweet Potato
 /obj/item/seeds/potato/sweet
@@ -47,10 +56,10 @@
 	plantname = "Sweet Potato Plants"
 	product = /obj/item/weapon/reagent_containers/food/snacks/grown/potato/sweet
 	mutatelist = list()
+	reagents_add = list("vitamin" = 0.1, "sugar" = 0.1, "nutriment" = 0.1)
 
 /obj/item/weapon/reagent_containers/food/snacks/grown/potato/sweet
 	seed = /obj/item/seeds/potato/sweet
 	name = "sweet potato"
 	desc = "It's sweet."
 	icon_state = "sweetpotato"
-	reagents_add = list("vitamin" = 0.1, "sugar" = 0.1, "nutriment" = 0.1)

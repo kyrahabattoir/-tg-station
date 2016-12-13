@@ -7,6 +7,7 @@
 	anchored = 1
 	state_open = 1
 	var/points = 0
+	var/credits = 0
 	var/list/history = list()
 	var/list/abductee_minds = list()
 	var/flash = " - || - "
@@ -15,7 +16,7 @@
 /obj/machinery/abductor/experiment/MouseDrop_T(mob/target, mob/user)
 	if(user.stat || user.lying || !Adjacent(user) || !target.Adjacent(user) || !ishuman(target))
 		return
-	if(IsAbductor(target))
+	if(isabductor(target))
 		return
 	close_machine(target)
 
@@ -30,8 +31,8 @@
 		..()
 
 /obj/machinery/abductor/experiment/close_machine(mob/target)
-	for(var/mob/living/carbon/C in loc)
-		if(IsAbductor(C))
+	for(var/A in loc)
+		if(isabductor(A))
 			return
 	if(state_open && !panel_open)
 		..(target)
@@ -46,19 +47,19 @@
 		photo.Blend("#[H.dna.features["mcolor"]]", ICON_MULTIPLY)
 
 	var/icon/eyes_s
-	if(EYECOLOR in H.dna.species.specflags)
+	if(EYECOLOR in H.dna.species.species_traits)
 		eyes_s = icon("icon" = 'icons/mob/human_face.dmi', "icon_state" = "[H.dna.species.eyes]_s")
 		eyes_s.Blend("#[H.eye_color]", ICON_MULTIPLY)
 
 	var/datum/sprite_accessory/S
 	S = hair_styles_list[H.hair_style]
-	if(S && (HAIR in H.dna.species.specflags))
+	if(S && (HAIR in H.dna.species.species_traits))
 		var/icon/hair_s = icon("icon" = S.icon, "icon_state" = "[S.icon_state]_s")
 		hair_s.Blend("#[H.hair_color]", ICON_MULTIPLY)
 		eyes_s.Blend(hair_s, ICON_OVERLAY)
 
 	S = facial_hair_styles_list[H.facial_hair_style]
-	if(S && (FACEHAIR in H.dna.species.specflags))
+	if(S && (FACEHAIR in H.dna.species.species_traits))
 		var/icon/facial_s = icon("icon" = S.icon, "icon_state" = "[S.icon_state]_s")
 		facial_s.Blend("#[H.facial_hair_color]", ICON_MULTIPLY)
 		eyes_s.Blend(facial_s, ICON_OVERLAY)
@@ -66,7 +67,7 @@
 	if(eyes_s)
 		photo.Blend(eyes_s, ICON_OVERLAY)
 
-	var/icon/splat = icon("icon" = 'icons/mob/dam_human.dmi',"icon_state" = "chest30")
+	var/icon/splat = icon("icon" = 'icons/mob/dam_mob.dmi',"icon_state" = "chest30")
 	photo.Blend(splat,ICON_OVERLAY)
 
 	return photo
@@ -137,7 +138,7 @@
 	if(H.stat == DEAD)
 		say("Specimen deceased - please provide fresh sample.")
 		return "<span class='bad'>Specimen deceased.</span>"
-	var/obj/item/organ/internal/gland/GlandTest = locate() in H.internal_organs
+	var/obj/item/organ/gland/GlandTest = locate() in H.internal_organs
 	if(!GlandTest)
 		say("Experimental dissection not detected!")
 		return "<span class='bad'>No glands detected!</span>"
@@ -159,13 +160,10 @@
 		var/datum/objective/abductee/O = new objtype()
 		ticker.mode.abductees += H.mind
 		H.mind.objectives += O
-		var/obj_count = 1
-		H << "<span class='notice'>Your current objectives:</span>"
-		for(var/datum/objective/objective in H.mind.objectives)
-			H << "<B>Objective #[obj_count]</B>: [objective.explanation_text]"
-			obj_count++
+		H.mind.announce_objectives()
+		ticker.mode.update_abductor_icons_added(H.mind)
 
-		for(var/obj/item/organ/internal/gland/G in H.internal_organs)
+		for(var/obj/item/organ/gland/G in H.internal_organs)
 			G.Start()
 			point_reward++
 		if(point_reward > 0)
@@ -173,6 +171,7 @@
 			SendBack(H)
 			playsound(src.loc, 'sound/machines/ding.ogg', 50, 1)
 			points += point_reward
+			credits += point_reward
 			return "<span class='good'>Experiment successful! [point_reward] new data-points collected.</span>"
 		else
 			playsound(src.loc, 'sound/machines/buzz-sigh.ogg', 50, 1)
@@ -187,13 +186,10 @@
 
 /obj/machinery/abductor/experiment/proc/SendBack(mob/living/carbon/human/H)
 	H.Sleeping(8)
-	var/area/A
 	if(console && console.pad && console.pad.teleport_target)
-		A = console.pad.teleport_target
-		if(A.safe) // right now crew areas are safe - being locked behind closed doors is not fun
-			TeleportToArea(H,A)
-			H.uncuff()
-			return
+		H.forceMove(console.pad.teleport_target)
+		H.uncuff()
+		return
 	//Area not chosen / It's not safe area - teleport to arrivals
 	H.forceMove(pick(latejoin))
 	H.uncuff()

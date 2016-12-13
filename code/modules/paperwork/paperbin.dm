@@ -1,27 +1,34 @@
 /obj/item/weapon/paper_bin
 	name = "paper bin"
+	desc = "Contains all the paper you'll never need."
 	icon = 'icons/obj/bureaucracy.dmi'
 	icon_state = "paper_bin1"
 	item_state = "sheet-metal"
 	throwforce = 0
-	w_class = 3
+	w_class = WEIGHT_CLASS_NORMAL
 	throw_speed = 3
 	throw_range = 7
 	pressure_resistance = 8
-	burn_state = FLAMMABLE
 	var/amount = 30					//How much paper is in the bin.
-	var/list/papers = new/list()	//List of papers put in the bin for reference.
+	var/list/papers = list()	//List of papers put in the bin for reference.
 
-/obj/item/weapon/paper_bin/fire_act()
+/obj/item/weapon/paper_bin/fire_act(exposed_temperature, exposed_volume)
 	if(!amount)
 		return
 	..()
 
-/obj/item/weapon/paper_bin/burn()
-	amount = 0
-	extinguish()
-	update_icon()
-	return
+/obj/item/weapon/paper_bin/Destroy()
+	if(papers)
+		for(var/i in papers)
+			qdel(i)
+		papers = null
+	. = ..()
+
+/obj/item/weapon/paper_bin/fire_act(exposed_temperature, exposed_volume)
+	if(amount)
+		amount = 0
+		update_icon()
+	..()
 
 /obj/item/weapon/paper_bin/MouseDrop(atom/over_object)
 	var/mob/living/M = usr
@@ -31,16 +38,12 @@
 	if(over_object == M)
 		M.put_in_hands(src)
 
-	else if(istype(over_object, /obj/screen))
-		switch(over_object.name)
-			if("r_hand")
-				if(!remove_item_from_storage(M))
-					M.unEquip(src)
-				M.put_in_r_hand(src)
-			if("l_hand")
-				if(!remove_item_from_storage(M))
-					M.unEquip(src)
-				M.put_in_l_hand(src)
+	else if(istype(over_object, /obj/screen/inventory/hand))
+		var/obj/screen/inventory/hand/H = over_object
+		if(!remove_item_from_storage(M))
+			if(!M.unEquip(src))
+				return
+		M.put_in_hand(src, H.held_index)
 
 	add_fingerprint(M)
 
@@ -78,18 +81,18 @@
 	add_fingerprint(user)
 
 
-/obj/item/weapon/paper_bin/attackby(obj/item/weapon/paper/i, mob/user, params)
-	if(!istype(i))
+/obj/item/weapon/paper_bin/attackby(obj/item/I, mob/user, params)
+	if(istype(I, /obj/item/weapon/paper))
+		var/obj/item/weapon/paper/P = I
+		if(!user.unEquip(P))
+			return
+		P.loc = src
+		user << "<span class='notice'>You put [P] in [src].</span>"
+		papers.Add(P)
+		amount++
+		update_icon()
+	else
 		return ..()
-
-	if(!user.unEquip(i))
-		return
-	i.loc = src
-	user << "<span class='notice'>You put [i] in [src].</span>"
-	papers.Add(i)
-	amount++
-	update_icon()
-
 
 /obj/item/weapon/paper_bin/examine(mob/user)
 	..()

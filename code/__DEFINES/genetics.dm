@@ -80,9 +80,17 @@
 #define TR_KEEPSRC		128
 #define TR_KEEPORGANS	256
 
-//Organ stuff, It's here because "Genetics" is the most relevant file for organs
+//Organ stuff, It's here because "Genetics" is the most relevant file for organs and bodyparts
 #define ORGAN_ORGANIC   1
 #define ORGAN_ROBOTIC   2
+
+#define BODYPART_ORGANIC   1
+#define BODYPART_ROBOTIC   2
+
+#define MONKEY_BODYPART "monkey"
+#define ALIEN_BODYPART "alien"
+#define LARVA_BODYPART "larva"
+#define DEVIL_BODYPART "devil"
 
 //Nutrition levels for humans. No idea where else to put it
 #define NUTRITION_LEVEL_FAT 600
@@ -91,3 +99,42 @@
 #define NUTRITION_LEVEL_FED 350
 #define NUTRITION_LEVEL_HUNGRY 250
 #define NUTRITION_LEVEL_STARVING 150
+
+#define CLONER_FRESH_CLONE "fresh"
+#define CLONER_MATURE_CLONE "mature"
+
+//Blood levels
+#define BLOOD_VOLUME_MAXIMUM		2000
+#define BLOOD_VOLUME_SLIME_SPLIT	1120
+#define BLOOD_VOLUME_NORMAL			560
+#define BLOOD_VOLUME_SAFE			501
+#define BLOOD_VOLUME_OKAY			336
+#define BLOOD_VOLUME_BAD			224
+#define BLOOD_VOLUME_SURVIVE		122
+
+//species traits for mutantraces
+#define MUTCOLORS		1
+#define HAIR			2
+#define FACEHAIR		3
+#define EYECOLOR		4
+#define LIPS			5
+#define RESISTHOT		6
+#define RESISTCOLD		7
+#define RESISTPRESSURE  8
+#define RADIMMUNE		9
+#define NOBREATH		10
+#define NOGUNS			11
+#define NOBLOOD			12
+#define NOFIRE			13
+#define VIRUSIMMUNE		14
+#define PIERCEIMMUNE	15
+#define NOTRANSSTING	16
+#define MUTCOLORS_PARTSONLY	17	//Used if we want the mutant colour to be only used by mutant bodyparts. Don't combine this with MUTCOLORS, or it will be useless.
+#define NODISMEMBER		18
+#define NOHUNGER		19
+#define NOCRITDAMAGE	20
+#define NOZOMBIE		21
+#define EASYDISMEMBER	22
+#define EASYLIMBATTACHMENT 23
+#define TOXINLOVER		24
+#define DIGITIGRADE		25	//Uses weird leg sprites. Optional for Lizards, required for ashwalkers. Don't give it to other races unless you make sprites for this (see human_parts_greyscale.dmi)

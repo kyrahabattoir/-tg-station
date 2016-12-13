@@ -1,19 +1,27 @@
 /atom/movable
-	layer = 3
+	layer = OBJ_LAYER
 	var/last_move = null
 	var/anchored = 0
 	var/throwing = 0
 	var/throw_speed = 2
 	var/throw_range = 7
 	var/mob/pulledby = null
-	var/languages = 0 //For say() and Hear()
+	var/languages_spoken = 0 //For say() and Hear()
+	var/languages_understood = 0
 	var/verb_say = "says"
 	var/verb_ask = "asks"
 	var/verb_exclaim = "exclaims"
 	var/verb_yell = "yells"
 	var/inertia_dir = 0
+	var/atom/inertia_last_loc
+	var/inertia_moving = 0
+	var/inertia_next_move = 0
+	var/inertia_move_delay = 5
 	var/pass_flags = 0
+	var/moving_diagonally = 0 //0: not doing a diagonal move. 1 and 2: doing the first/second step of the diagonal move
 	glide_size = 8
+	appearance_flags = TILE_BOUND
+
 
 
 /atom/movable/Move(atom/newloc, direct = 0)
@@ -24,28 +32,39 @@
 		if (!(direct & (direct - 1))) //Cardinal move
 			. = ..()
 		else //Diagonal move, split it into cardinal moves
+			moving_diagonally = FIRST_DIAG_STEP
 			if (direct & 1)
 				if (direct & 4)
 					if (step(src, NORTH))
+						moving_diagonally = SECOND_DIAG_STEP
 						. = step(src, EAST)
 					else if (step(src, EAST))
+						moving_diagonally = SECOND_DIAG_STEP
 						. = step(src, NORTH)
 				else if (direct & 8)
 					if (step(src, NORTH))
+						moving_diagonally = SECOND_DIAG_STEP
 						. = step(src, WEST)
 					else if (step(src, WEST))
+						moving_diagonally = SECOND_DIAG_STEP
 						. = step(src, NORTH)
 			else if (direct & 2)
 				if (direct & 4)
 					if (step(src, SOUTH))
+						moving_diagonally = SECOND_DIAG_STEP
 						. = step(src, EAST)
 					else if (step(src, EAST))
+						moving_diagonally = SECOND_DIAG_STEP
 						. = step(src, SOUTH)
 				else if (direct & 8)
 					if (step(src, SOUTH))
+						moving_diagonally = SECOND_DIAG_STEP
 						. = step(src, WEST)
 					else if (step(src, WEST))
+						moving_diagonally = SECOND_DIAG_STEP
 						. = step(src, SOUTH)
+			moving_diagonally = 0
+			return
 
 	if(!loc || (loc == oldloc && oldloc != newloc))
 		last_move = 0
@@ -55,19 +74,16 @@
 		Moved(oldloc, direct)
 
 	last_move = direct
-
-	spawn(5)	// Causes space drifting. /tg/station has no concept of speed, we just use 5
-		if(loc && direct && last_move == direct)
-			if(loc == newloc) //Remove this check and people can accelerate. Not opening that can of worms just yet.
-				newtonian_move(last_move)
-
-	if(. && buckled_mob && !handle_buckled_mob_movement(loc,direct)) //movement failed due to buckled mob
+	setDir(direct)
+	if(. && has_buckled_mobs() && !handle_buckled_mob_movement(loc,direct)) //movement failed due to buckled mob(s)
 		. = 0
 
 //Called after a successful Move(). By this point, we've already moved
 /atom/movable/proc/Moved(atom/OldLoc, Dir)
+	if (!inertia_moving)
+		inertia_next_move = world.time + inertia_move_delay
+		newtonian_move(Dir)
 	return 1
-
 
 /atom/movable/Destroy()
 	. = ..()
@@ -78,11 +94,9 @@
 	for(var/atom/movable/AM in contents)
 		qdel(AM)
 	loc = null
-	invisibility = 101
-	if (pulledby)
-		if (pulledby.pulling == src)
-			pulledby.pulling = null
-		pulledby = null
+	invisibility = INVISIBILITY_ABSTRACT
+	if(pulledby)
+		pulledby.stop_pulling()
 
 
 // Previously known as HasEntered()
@@ -103,6 +117,8 @@
 
 /atom/movable/proc/forceMove(atom/destination)
 	if(destination)
+		if(pulledby)
+			pulledby.stop_pulling()
 		var/atom/oldloc = loc
 		if(oldloc)
 			oldloc.Exited(src, destination)
@@ -122,30 +138,20 @@
 
 /mob/living/forceMove(atom/destination)
 	stop_pulling()
-	if(pulledby)
-		pulledby.stop_pulling()
 	if(buckled)
-		buckled.unbuckle_mob()
-	if(buckled_mob)
-		unbuckle_mob(force=1)
+		buckled.unbuckle_mob(src,force=1)
+	if(has_buckled_mobs())
+		unbuckle_all_mobs(force=1)
 	. = ..()
 	if(client)
 		reset_perspective(destination)
 	update_canmove() //if the mob was asleep inside a container and then got forceMoved out we need to make them fall.
 
-/mob/living/carbon/brain/forceMove(atom/destination)
+/mob/living/brain/forceMove(atom/destination)
 	if(container)
-		container.forceMove(destination)
+		return container.forceMove(destination)
 	else //something went very wrong.
 		CRASH("Brainmob without container.")
-
-
-/mob/living/silicon/pai/forceMove(atom/destination)
-	if(card)
-		card.forceMove(destination)
-	else //something went very wrong.
-		CRASH("pAI without card")
-
 
 //Called whenever an object moves and by mobs when they attempt to move themselves through space
 //And when an object or action applies a force on src, see newtonian_move() below
@@ -159,13 +165,16 @@
 	if(pulledby)
 		return 1
 
+	if(throwing)
+		return 1
+
 	if(locate(/obj/structure/lattice) in range(1, get_turf(src))) //Not realistic but makes pushing things in space easier
 		return 1
 
 	return 0
 
-/atom/movable/proc/newtonian_move(direction) //Only moves the object if it's under no gravity
 
+/atom/movable/proc/newtonian_move(direction) //Only moves the object if it's under no gravity
 	if(!loc || Process_Spacemove(0))
 		inertia_dir = 0
 		return 0
@@ -173,10 +182,9 @@
 	inertia_dir = direction
 	if(!direction)
 		return 1
-
-	var/old_dir = dir
-	. = step(src, direction)
-	dir = old_dir
+	inertia_last_loc = loc
+	SSspacedrift.processing[src] = src
+	return 1
 
 /atom/movable/proc/checkpass(passflag)
 	return pass_flags&passflag
@@ -198,12 +206,15 @@
 		return 0
 	//use a modified version of Bresenham's algorithm to get from the atom's current position to that of the target
 
+	if(pulledby)
+		pulledby.stop_pulling()
+
 	throwing = 1
 	if(spin) //if we don't want the /atom/movable to spin.
 		SpinAnimation(5, 1)
 
 	var/dist_travelled = 0
-	var/dist_since_sleep = 0
+	var/next_sleep = 0
 
 	var/dist_x = abs(target.x - src.x)
 	var/dist_y = abs(target.y - src.y)
@@ -228,8 +239,8 @@
 	var/init_dir = get_dir(src, target)
 
 	while(target && ((dist_travelled < range && loc != finalturf)  || !has_gravity(src))) //stop if we reached our destination (or max range) and aren't floating
-
-		if(!istype(loc, /turf))
+		var/slept = 0
+		if(!isturf(loc))
 			hit = 1
 			break
 
@@ -250,17 +261,23 @@
 			hit = 1
 			break
 		dist_travelled++
-		dist_since_sleep++
 
 		if(dist_travelled > 600) //safety to prevent infinite while loop.
 			break
-		if(dist_since_sleep >= speed)
-			dist_since_sleep = 0
+		if(dist_travelled >= next_sleep)
+			slept = 1
+			next_sleep += speed
 			sleep(1)
+		if(!slept)
+			var/ticks_slept = TICK_CHECK
+			if(ticks_slept)
+				slept = 1
+				next_sleep += speed*(ticks_slept*world.tick_lag) //delay the next normal sleep
 
-		if(!dist_since_sleep && hitcheck()) //to catch sneaky things moving on our tile during our sleep(1)
+		if(slept && hitcheck()) //to catch sneaky things moving on our tile while we slept
 			hit = 1
 			break
+
 
 	//done throwing, either because it hit something or it finished moving
 	throwing = 0
@@ -272,6 +289,7 @@
 				return 1
 
 		throw_impact(get_turf(src))  // we haven't hit something yet and we still must, let's hit the ground.
+	newtonian_move(init_dir)
 	return 1
 
 /atom/movable/proc/hitcheck()
@@ -283,41 +301,19 @@
 			throw_impact(AM)
 			return 1
 
-//Overlays
-/atom/movable/overlay
-	var/atom/master = null
-	anchored = 1
-
-/atom/movable/overlay/New()
-	verbs.Cut()
-	return
-
-/atom/movable/overlay/attackby(a, b, c)
-	if (src.master)
-		return src.master.attackby(a, b, c)
-	return
-
-/atom/movable/overlay/attack_paw(a, b, c)
-	if (src.master)
-		return src.master.attack_paw(a, b, c)
-	return
-
-/atom/movable/overlay/attack_hand(a, b, c)
-	if (src.master)
-		return src.master.attack_hand(a, b, c)
-	return
-
 /atom/movable/proc/handle_buckled_mob_movement(newloc,direct)
-	if(!buckled_mob.Move(newloc, direct))
-		loc = buckled_mob.loc
-		last_move = buckled_mob.last_move
-		inertia_dir = last_move
-		buckled_mob.inertia_dir = last_move
-		return 0
+	for(var/m in buckled_mobs)
+		var/mob/living/buckled_mob = m
+		if(!buckled_mob.Move(newloc, direct))
+			loc = buckled_mob.loc
+			last_move = buckled_mob.last_move
+			inertia_dir = last_move
+			buckled_mob.inertia_dir = last_move
+			return 0
 	return 1
 
 /atom/movable/CanPass(atom/movable/mover, turf/target, height=1.5)
-	if(buckled_mob == mover)
+	if(mover in buckled_mobs)
 		return 1
 	return ..()
 
@@ -344,3 +340,68 @@
 //called when a mob resists while inside a container that is itself inside something.
 /atom/movable/proc/relay_container_resist(mob/living/user, obj/O)
 	return
+
+
+/atom/movable/proc/do_attack_animation(atom/A, visual_effect_icon, obj/item/used_item, no_effect, end_pixel_y)
+	if(!no_effect && (visual_effect_icon || used_item))
+		do_item_attack_animation(A, visual_effect_icon, used_item)
+
+	var/pixel_x_diff = 0
+	var/pixel_y_diff = 0
+	var/final_pixel_y = initial(pixel_y)
+	if(end_pixel_y)
+		final_pixel_y = end_pixel_y
+
+	var/direction = get_dir(src, A)
+	if(direction & NORTH)
+		pixel_y_diff = 8
+	else if(direction & SOUTH)
+		pixel_y_diff = -8
+
+	if(direction & EAST)
+		pixel_x_diff = 8
+	else if(direction & WEST)
+		pixel_x_diff = -8
+
+	animate(src, pixel_x = pixel_x + pixel_x_diff, pixel_y = pixel_y + pixel_y_diff, time = 2)
+	animate(pixel_x = initial(pixel_x), pixel_y = final_pixel_y, time = 2)
+
+/atom/movable/proc/do_item_attack_animation(atom/A, visual_effect_icon, obj/item/used_item)
+	var/image/I
+	if(visual_effect_icon)
+		I = image('icons/effects/effects.dmi', A, visual_effect_icon, A.layer + 0.1)
+	else if(used_item)
+		I = image(used_item.icon, A, used_item.icon_state, A.layer + 0.1)
+
+		// Scale the icon.
+		I.transform *= 0.75
+		// The icon should not rotate.
+		I.appearance_flags = APPEARANCE_UI_IGNORE_ALPHA
+
+		// Set the direction of the icon animation.
+		var/direction = get_dir(src, A)
+		if(direction & NORTH)
+			I.pixel_y = -16
+		else if(direction & SOUTH)
+			I.pixel_y = 16
+
+		if(direction & EAST)
+			I.pixel_x = -16
+		else if(direction & WEST)
+			I.pixel_x = 16
+
+		if(!direction) // Attacked self?!
+			I.pixel_z = 16
+
+	if(!I)
+		return
+
+	flick_overlay(I, clients, 5) // 5 ticks/half a second
+
+	// And animate the attack!
+	animate(I, alpha = 175, pixel_x = 0, pixel_y = 0, pixel_z = 0, time = 3)
+
+/atom/movable/vv_get_dropdown()
+	. = ..()
+	. -= "Jump to"
+	.["Follow"] = "?_src_=holder;adminplayerobservefollow=\ref[src]"
