@@ -37,12 +37,9 @@ GPL
 https://github.com/kyrahabattoir/-tg-station/tree/GPL
 
 A /tg/station branch that doesn't contain any AGPL code (GPLv3 only).
-
-================================================================================
-OTHERS?
-================================================================================
-Other branches might come and go, they are tweaks and bug fixes aimed for the
-tg-station main repository and will be removed as soon as they are merged.
+Unless someone wishes to rewrite the AGPL sections of the /tg/station codebase
+under a GPLv3 license, this might become old quickly but is still a solid base
+for an ss13 project.
 
 ================================================================================
 LICENSE
