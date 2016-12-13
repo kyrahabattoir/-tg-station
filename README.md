@@ -32,6 +32,13 @@ Perfect for... "special interrogation".
 NOTE: I included a separate .dmi file so it's a simpler merge.
 
 ================================================================================
+GPL
+================================================================================
+https://github.com/kyrahabattoir/-tg-station/tree/GPL
+
+A /tg/station branch that doesn't contain any AGPL code (GPLv3 only).
+
+================================================================================
 OTHERS?
 ================================================================================
 Other branches might come and go, they are tweaks and bug fixes aimed for the
