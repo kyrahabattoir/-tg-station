@@ -34,7 +34,9 @@ NOTE: I included a separate .dmi file so it's a simpler merge.
 ================================================================================
 GPL
 ================================================================================
-https://github.com/kyrahabattoir/-tg-station/tree/GPL
+https://github.com/kyrahabattoir/-tg-station-GPL
+
+Now with independent repository!
 
 A /tg/station branch that doesn't contain any AGPL code (GPLv3 only).
 Unless someone wishes to rewrite the AGPL sections of the /tg/station codebase
