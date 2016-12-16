@@ -41,6 +41,9 @@ Unless someone wishes to rewrite the AGPL sections of the /tg/station codebase
 under a GPLv3 license, this might become old quickly but is still a solid base
 for an ss13 project.
 
+Obviously, it needs work, bugfix and improvement PRs are welcome as long as they
+are GPLv3 only.
+
 ================================================================================
 LICENSE
 ================================================================================
