@@ -20,6 +20,7 @@
 	var/max_damage = 0
 	var/list/embedded_objects = list()
 	var/held_index = 0 //are we a hand? if so, which one!
+	var/is_pseudopart = FALSE //For limbs that don't really exist, eg chainsaws
 
 	//Coloring and proper item icon update
 	var/skin_tone = ""
@@ -43,9 +44,9 @@
 /obj/item/bodypart/examine(mob/user)
 	..()
 	if(brute_dam > 0)
-		user << "<span class='warning'>This limb has [brute_dam > 30 ? "severe" : "minor"] bruising.</span>"
+		to_chat(user, "<span class='warning'>This limb has [brute_dam > 30 ? "severe" : "minor"] bruising.</span>")
 	if(burn_dam > 0)
-		user << "<span class='warning'>This limb has [burn_dam > 30 ? "severe" : "minor"] burns.</span>"
+		to_chat(user, "<span class='warning'>This limb has [burn_dam > 30 ? "severe" : "minor"] burns.</span>")
 
 /obj/item/bodypart/blob_act()
 	take_damage(max_damage)
@@ -67,7 +68,7 @@
 				else
 					H.visible_message("<span class='warning'>[user] jams [src] into [H]'s empty socket!</span>",\
 					"<span class='notice'>[user] forces [src] into your empty socket, and it locks into place!</span>")
-				user.unEquip(src,1)
+				user.temporarilyRemoveItemFromInventory(src, TRUE)
 				attach_limb(C)
 				return
 	..()
@@ -76,7 +77,7 @@
 	if(W.sharpness)
 		add_fingerprint(user)
 		if(!contents.len)
-			user << "<span class='warning'>There is nothing left inside [src]!</span>"
+			to_chat(user, "<span class='warning'>There is nothing left inside [src]!</span>")
 			return
 		playsound(loc, 'sound/weapons/slice.ogg', 50, 1, -1)
 		user.visible_message("<span class='warning'>[user] begins to cut open [src].</span>",\
@@ -114,6 +115,10 @@
 	if(status == BODYPART_ROBOTIC) //This makes robolimbs not damageable by chems and makes it stronger
 		brute = max(0, brute - 5)
 		burn = max(0, burn - 4)
+
+	switch(animal_origin)
+		if(ALIEN_BODYPART,LARVA_BODYPART) //aliens take double burn
+			burn *= 2
 
 	var/can_inflict = max_damage - (brute_dam + burn_dam)
 	if(!can_inflict)
@@ -178,13 +183,20 @@
 
 
 //Change organ status
-/obj/item/bodypart/proc/change_bodypart_status(new_limb_status, heal_limb)
+/obj/item/bodypart/proc/change_bodypart_status(new_limb_status, heal_limb, change_icon_to_default)
 	status = new_limb_status
 	if(heal_limb)
 		burn_dam = 0
 		brute_dam = 0
 		brutestate = 0
 		burnstate = 0
+
+	if(change_icon_to_default)
+		if(status == BODYPART_ORGANIC)
+			icon = DEFAULT_BODYPART_ICON_ORGANIC
+		else if(status == BODYPART_ROBOTIC)
+			icon = DEFAULT_BODYPART_ICON_ROBOTIC
+
 	if(owner)
 		owner.updatehealth()
 		owner.update_body() //if our head becomes robotic, we remove the lizard horns and human hair.
@@ -287,11 +299,11 @@
 	if(animal_origin)
 		if(status == BODYPART_ORGANIC)
 			if(species_id == "husk")
-				standing += image("icon"='icons/mob/animal_parts.dmi', "icon_state"="[animal_origin]_husk_[body_zone]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+				standing += image("icon"='icons/mob/animal_parts.dmi', "icon_state"="[animal_origin]_husk_[body_zone]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 			else
-				standing += image("icon"='icons/mob/animal_parts.dmi', "icon_state"="[animal_origin]_[body_zone]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+				standing += image("icon"='icons/mob/animal_parts.dmi', "icon_state"="[animal_origin]_[body_zone]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 		else
-			standing += image("icon"='icons/mob/augments.dmi', "icon_state"="[animal_origin]_[body_zone]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+			standing += image("icon"='icons/mob/augments.dmi', "icon_state"="[animal_origin]_[body_zone]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 		return standing
 
 	var/icon_gender = (body_gender == FEMALE) ? "f" : "m" //gender of the icon, if applicable
@@ -304,21 +316,21 @@
 	if(status == BODYPART_ORGANIC)
 		if(should_draw_greyscale)
 			if(should_draw_gender)
-				I = image("icon"='icons/mob/human_parts_greyscale.dmi', "icon_state"="[species_id]_[body_zone]_[icon_gender]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+				I = image("icon"='icons/mob/human_parts_greyscale.dmi', "icon_state"="[species_id]_[body_zone]_[icon_gender]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 			else if(use_digitigrade)
-				I = image("icon"='icons/mob/human_parts_greyscale.dmi', "icon_state"="digitigrade_[use_digitigrade]_[body_zone]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+				I = image("icon"='icons/mob/human_parts_greyscale.dmi', "icon_state"="digitigrade_[use_digitigrade]_[body_zone]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 			else
-				I = image("icon"='icons/mob/human_parts_greyscale.dmi', "icon_state"="[species_id]_[body_zone]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+				I = image("icon"='icons/mob/human_parts_greyscale.dmi', "icon_state"="[species_id]_[body_zone]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 		else
 			if(should_draw_gender)
-				I = image("icon"='icons/mob/human_parts.dmi', "icon_state"="[species_id]_[body_zone]_[icon_gender]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+				I = image("icon"='icons/mob/human_parts.dmi', "icon_state"="[species_id]_[body_zone]_[icon_gender]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 			else
-				I = image("icon"='icons/mob/human_parts.dmi', "icon_state"="[species_id]_[body_zone]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+				I = image("icon"='icons/mob/human_parts.dmi', "icon_state"="[species_id]_[body_zone]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 	else
 		if(should_draw_gender)
-			I = image("icon"='icons/mob/augments.dmi', "icon_state"="[body_zone]_[icon_gender]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+			I = image("icon"= icon, "icon_state"="[body_zone]_[icon_gender]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 		else
-			I = image("icon"='icons/mob/augments.dmi', "icon_state"="[body_zone]_s", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
+			I = image("icon"= icon, "icon_state"="[body_zone]", "layer"=-BODYPARTS_LAYER, "dir"=image_dir)
 		standing += I
 		return standing
 
@@ -379,7 +391,7 @@
 
 /obj/item/bodypart/chest/alien
 	icon = 'icons/mob/animal_parts.dmi'
-	icon_state = "alien_chest_s"
+	icon_state = "alien_chest"
 	dismemberable = 0
 	max_damage = 500
 	animal_origin = ALIEN_BODYPART
@@ -391,7 +403,7 @@
 
 /obj/item/bodypart/chest/larva
 	icon = 'icons/mob/animal_parts.dmi'
-	icon_state = "larva_chest_s"
+	icon_state = "larva_chest"
 	dismemberable = 0
 	max_damage = 50
 	animal_origin = LARVA_BODYPART
@@ -420,7 +432,7 @@
 
 /obj/item/bodypart/l_arm/alien
 	icon = 'icons/mob/animal_parts.dmi'
-	icon_state = "alien_l_arm_s"
+	icon_state = "alien_l_arm"
 	px_x = 0
 	px_y = 0
 	dismemberable = 0
@@ -454,7 +466,7 @@
 
 /obj/item/bodypart/r_arm/alien
 	icon = 'icons/mob/animal_parts.dmi'
-	icon_state = "alien_r_arm_s"
+	icon_state = "alien_r_arm"
 	px_x = 0
 	px_y = 0
 	dismemberable = 0
@@ -490,7 +502,7 @@
 
 /obj/item/bodypart/l_leg/alien
 	icon = 'icons/mob/animal_parts.dmi'
-	icon_state = "alien_l_leg_s"
+	icon_state = "alien_l_leg"
 	px_x = 0
 	px_y = 0
 	dismemberable = 0
@@ -528,7 +540,7 @@
 
 /obj/item/bodypart/r_leg/alien
 	icon = 'icons/mob/animal_parts.dmi'
-	icon_state = "alien_r_leg_s"
+	icon_state = "alien_r_leg"
 	px_x = 0
 	px_y = 0
 	dismemberable = 0
