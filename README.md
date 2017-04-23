@@ -1,29 +1,28 @@
-================================================================================
-KYRAHABATTOIR'S TG-STATION MODS INFORMATIONS
-================================================================================
+---
+# KYRAHABATTOIR'S TG-STATION MODS INFORMATIONS
+---
 Do not clone this specific branch, it only exist to present a nice readme to
 anyone visiting my github repo.
 
-================================================================================
-SERVER
-================================================================================
+---
+# SERVER (outdated)
+---
 https://github.com/kyrahabattoir/-tg-station/tree/server
 
 Personal server config for ministation.
 
-================================================================================
-TESTING SANDBOX
-================================================================================
+---
+# TESTING SANDBOX (outdated)
+---
 https://github.com/kyrahabattoir/-tg-station/tree/testing-sandbox
 
 A minimalistic, functional station, useful for testing & debugging.
 
-================================================================================
-FUZZY CUFFS
-================================================================================
+---
+# FUZZY CUFFS (outdated)
+---
 https://github.com/kyrahabattoir/-tg-station/tree/FuzzyCuffs
-[fuzz]: http://i.imgur.com/ZtW7OZ7.png
-![][fuzz]
+![fuzzy cuffs image](http://i.imgur.com/ZtW7OZ7.png)
 
 Primarily a test for building colored overlays on sprites, this will add a
 variant to the regular handcuffs that have a randomly colored fur sleeve.
@@ -31,9 +30,18 @@ Perfect for... "special interrogation".
 
 NOTE: I included a separate .dmi file so it's a simpler merge.
 
-================================================================================
-GPL
-================================================================================
+# DESTINY
+---
+https://github.com/kyrahabattoir/-tg-station/tree/destiny
+
+An attempts at porting Goonstation's destiny map to tgstation code.
+
+This is mostly a way for me to experiment maintaining a map outside the tg-station upstream code.
+And a way to ruin my sleep cycle.
+
+---
+# GPL
+---
 https://github.com/kyrahabattoir/-tg-station-GPL
 
 Now with independent repository!
@@ -46,17 +54,17 @@ for an ss13 project.
 Obviously, it needs work, bugfix and improvement PRs are welcome as long as they
 are GPLv3 only.
 
-================================================================================
-LICENSE
-================================================================================
+---
+# LICENSE
+---
 
 All code commits by KyrahAbattoir are GNU GPL v3 (http://www.gnu.org/licenses/gpl.html)
 All content commits by KyrahAbattoir including icons and sound are under a Creative Commons 3.0 BY-SA
 license (http://creativecommons.org/licenses/by-sa/3.0/).
 
-================================================================================
-/TG/ CODE & ASSETS LICENSE
-================================================================================
+---
+# /TG/ CODE & ASSETS LICENSE
+---
 
 All code after commit 333c566b88108de218d882840e61928a9b759d8f on 2014/31/12 at 4:38 PM PST (https://github.com/tgstation/tgstation/commit/333c566b88108de218d882840e61928a9b759d8f) is licensed under GNU AGPL v3 (http://www.gnu.org/licenses/agpl-3.0.html).
 
