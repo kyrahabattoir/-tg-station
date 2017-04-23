@@ -22,6 +22,7 @@ A minimalistic, functional station, useful for testing & debugging.
 # FUZZY CUFFS (outdated)
 ---
 https://github.com/kyrahabattoir/-tg-station/tree/FuzzyCuffs
+
 ![fuzzy cuffs image](http://i.imgur.com/ZtW7OZ7.png)
 
 Primarily a test for building colored overlays on sprites, this will add a
