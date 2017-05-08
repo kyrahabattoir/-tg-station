@@ -71,6 +71,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 8;
 	icon_state = "scrub_map";
+	name = "air scrubber E";
 	on = 1;
 	tag = "icon-scrub_map (WEST)"
 	},
@@ -95,8 +96,8 @@
 	},
 /obj/machinery/airalarm{
 	dir = 4;
-	locked = 0;
-	pixel_x = -23;
+	name = "air alarm W";
+	pixel_x = -24;
 	pixel_y = 0
 	},
 /turf/open/floor/plasteel/orange/side{
@@ -1297,13 +1298,14 @@
 /area/hallway/primary/fore)
 "dZ" = (
 /obj/structure/bed,
-/obj/item/weapon/bedsheet/blue,
 /obj/item/weapon/storage/secure/safe{
 	pixel_x = -22
 	},
 /obj/machinery/atmospherics/components/unary/vent_pump{
+	name = "air vent N";
 	on = 1
 	},
+/obj/item/weapon/bedsheet/random,
 /turf/open/floor/plasteel/grimy,
 /area/crew_quarters/sleep)
 "ea" = (
@@ -1313,41 +1315,44 @@
 /area/crew_quarters/sleep)
 "eb" = (
 /obj/structure/bed,
-/obj/item/weapon/bedsheet/orange,
 /obj/item/weapon/storage/secure/safe{
 	pixel_x = 32
 	},
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 4;
 	icon_state = "scrub_map";
+	name = "air scrubber W";
 	on = 1;
-	tag = "icon-scrub_map (EAST)"
+	tag = "icon-scrub_map (NORTH)"
 	},
+/obj/item/weapon/bedsheet/random,
 /turf/open/floor/plasteel/grimy,
 /area/crew_quarters/sleep)
 "ec" = (
 /obj/structure/bed,
-/obj/item/weapon/bedsheet/green,
 /obj/item/weapon/storage/secure/safe{
 	pixel_x = -22
 	},
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 8;
 	icon_state = "scrub_map";
+	name = "air scrubber E";
 	on = 1;
 	tag = "icon-scrub_map (WEST)"
 	},
+/obj/item/weapon/bedsheet/random,
 /turf/open/floor/plasteel/grimy,
 /area/crew_quarters/sleep)
 "ed" = (
 /obj/structure/bed,
-/obj/item/weapon/bedsheet/blue,
 /obj/item/weapon/storage/secure/safe{
 	pixel_x = 32
 	},
 /obj/machinery/atmospherics/components/unary/vent_pump{
+	name = "air vent N";
 	on = 1
 	},
+/obj/item/weapon/bedsheet/random,
 /turf/open/floor/plasteel/grimy,
 /area/crew_quarters/sleep)
 "ee" = (
@@ -2099,6 +2104,11 @@
 /area/maintenance/auxsolarstarboard)
 "fv" = (
 /obj/structure/closet/crate,
+/obj/item/device/radio/intercom{
+	name = "station intercom W";
+	pixel_x = -28;
+	pixel_y = 0
+	},
 /turf/open/floor/wood,
 /area/crew_quarters/locker/locker_toilet)
 "fw" = (
@@ -2175,6 +2185,10 @@
 	pixel_y = 1;
 	d2 = 2
 	},
+/obj/structure/cable{
+	tag = "icon-1-2";
+	icon_state = "1-2"
+	},
 /turf/open/floor/plating,
 /area/bridge)
 "fF" = (
@@ -2184,6 +2198,13 @@
 /turf/closed/wall/r_wall,
 /area/chapel/main)
 "fH" = (
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/glass,
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (NORTH)";
+	icon_state = "intact";
+	dir = 1
+	},
 /turf/open/floor/plasteel/black,
 /area/chapel/main)
 "fI" = (
@@ -2193,6 +2214,15 @@
 /turf/open/floor/circuit,
 /area/ai_monitored/turret_protected/ai)
 "fK" = (
+/obj/machinery/light_switch{
+	name = "light switch W";
+	pixel_x = -24
+	},
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (NORTH)";
+	icon_state = "intact";
+	dir = 1
+	},
 /turf/open/floor/plasteel/chapel{
 	tag = "icon-chapel (NORTH)";
 	icon_state = "chapel";
@@ -2208,6 +2238,11 @@
 /area/chapel/main)
 "fM" = (
 /obj/structure/chair/wood,
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (NORTH)";
+	icon_state = "intact";
+	dir = 1
+	},
 /turf/open/floor/plasteel/chapel{
 	tag = "icon-chapel (WEST)";
 	icon_state = "chapel";
@@ -2227,6 +2262,11 @@
 /area/bridge)
 "fP" = (
 /obj/structure/chair/wood,
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (NORTH)";
+	icon_state = "intact";
+	dir = 1
+	},
 /turf/open/floor/plasteel/chapel{
 	tag = "icon-chapel (NORTH)";
 	icon_state = "chapel";
@@ -2246,9 +2286,19 @@
 /turf/open/floor/plating,
 /area/chapel/main)
 "fR" = (
+/obj/structure/cable{
+	tag = "icon-1-2";
+	icon_state = "1-2"
+	},
 /turf/open/floor/plasteel/black,
 /area/ai_monitored/turret_protected/ai)
 "fS" = (
+/obj/structure/chair/wood,
+/obj/machinery/atmospherics/pipe/manifold/scrubbers{
+	tag = "icon-manifold (WEST)";
+	icon_state = "manifold";
+	dir = 8
+	},
 /turf/open/floor/plasteel/chapel{
 	tag = "icon-chapel (WEST)";
 	icon_state = "chapel";
@@ -2268,6 +2318,7 @@
 /area/chapel/main)
 "fV" = (
 /obj/structure/table/wood,
+/obj/item/weapon/storage/book/bible,
 /turf/open/floor/plasteel/chapel{
 	tag = "icon-chapel (EAST)";
 	icon_state = "chapel";
@@ -2282,10 +2333,11 @@
 /area/chapel/office)
 "fY" = (
 /turf/closed/wall/r_wall,
-/area/chapel/office)
+/area/chapel/crematorium)
 "fZ" = (
+/obj/structure/bodycontainer/crematorium,
 /turf/open/floor/plasteel/black,
-/area/chapel/office)
+/area/chapel/crematorium)
 "ga" = (
 /obj/machinery/light,
 /turf/open/floor/plasteel/black/corner,
@@ -2329,6 +2381,11 @@
 	d1 = 1;
 	d2 = 8;
 	icon_state = "1-8"
+	},
+/obj/machinery/door/airlock/glass_command{
+	cyclelinkeddir = 4;
+	name = "Bridge";
+	req_access_txt = "19"
 	},
 /turf/open/floor/plasteel,
 /area/bridge)
@@ -2514,6 +2571,7 @@
 	icon_state = "intact";
 	dir = 1
 	},
+/obj/item/weapon/reagent_containers/food/snacks/sandwich,
 /turf/open/floor/plasteel/cafeteria,
 /area/crew_quarters/kitchen)
 "gL" = (
@@ -4123,6 +4181,7 @@
 	dir = 8;
 	frequency = 1440;
 	icon_state = "scrub_map";
+	name = "air scrubber SM";
 	on = 1;
 	tag = "icon-scrub_map (WEST)"
 	},
@@ -4298,6 +4357,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 8;
 	layer = 2.4;
+	name = "air vent E";
 	on = 1
 	},
 /turf/open/floor/plasteel/freezer,
@@ -4305,8 +4365,10 @@
 "lB" = (
 /obj/structure/toilet,
 /obj/machinery/airalarm{
+	name = "air alarm N";
 	pixel_y = 24
 	},
+/obj/effect/landmark/start/assistant,
 /turf/open/floor/plasteel/freezer,
 /area/crew_quarters/toilet)
 "lC" = (
@@ -4388,6 +4450,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 8;
 	icon_state = "scrub_map";
+	name = "air scrubber E";
 	on = 1;
 	tag = "icon-scrub_map (WEST)"
 	},
@@ -4534,6 +4597,7 @@
 /area/crew_quarters/locker)
 "mw" = (
 /obj/machinery/atmospherics/components/unary/vent_pump{
+	name = "air vent N";
 	on = 1
 	},
 /turf/open/floor/plasteel,
@@ -4575,10 +4639,12 @@
 /obj/structure/chair/office/dark{
 	dir = 1
 	},
+/obj/effect/landmark/start/assistant,
 /turf/open/floor/plasteel,
 /area/crew_quarters/electronic_marketing_den)
 "mE" = (
 /obj/machinery/atmospherics/components/unary/vent_pump{
+	name = "air vent N";
 	on = 1
 	},
 /turf/open/floor/plasteel,
@@ -4778,6 +4844,7 @@
 /area/crew_quarters/locker)
 "nq" = (
 /obj/machinery/airalarm{
+	name = "air alarm N";
 	pixel_y = 24
 	},
 /turf/open/floor/plasteel,
@@ -4792,6 +4859,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 1;
 	icon_state = "scrub_map";
+	name = "air scrubber S";
 	on = 1;
 	tag = "icon-scrub_map (NORTH)"
 	},
@@ -4827,12 +4895,14 @@
 /area/crew_quarters/electronic_marketing_den)
 "nz" = (
 /obj/structure/chair/office/dark,
+/obj/effect/landmark/start/assistant,
 /turf/open/floor/plasteel,
 /area/crew_quarters/electronic_marketing_den)
 "nA" = (
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 1;
 	icon_state = "scrub_map";
+	name = "air scrubber S";
 	on = 1;
 	tag = "icon-scrub_map (NORTH)"
 	},
@@ -4847,8 +4917,10 @@
 "nC" = (
 /obj/structure/chair/office/dark,
 /obj/machinery/airalarm{
+	name = "air alarm N";
 	pixel_y = 24
 	},
+/obj/effect/landmark/start/assistant,
 /turf/open/floor/plasteel,
 /area/crew_quarters/electronic_marketing_den)
 "nD" = (
@@ -5008,15 +5080,14 @@
 /area/crew_quarters/sleep)
 "on" = (
 /obj/structure/cable{
-	d1 = 4;
-	d2 = 8;
-	icon_state = "4-8";
-	pixel_x = 0
-	},
-/obj/structure/cable{
 	d1 = 1;
 	d2 = 8;
 	icon_state = "1-8"
+	},
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 4;
+	icon_state = "1-4"
 	},
 /turf/open/floor/plasteel/black,
 /area/crew_quarters/sleep)
@@ -5083,8 +5154,9 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 4;
 	icon_state = "scrub_map";
+	name = "air scrubber W";
 	on = 1;
-	tag = "icon-scrub_map (EAST)"
+	tag = "icon-scrub_map (NORTH)"
 	},
 /turf/open/floor/plasteel/black,
 /area/crew_quarters/sleep)
@@ -5454,6 +5526,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 8;
 	layer = 2.4;
+	name = "air vent E";
 	on = 1
 	},
 /turf/open/floor/plasteel/black,
@@ -5501,12 +5574,13 @@
 /turf/open/floor/plating,
 /area/space)
 "pN" = (
-/obj/machinery/door/airlock/glass,
 /obj/machinery/atmospherics/pipe/simple/supply{
 	tag = "icon-intact (NORTH)";
 	icon_state = "intact";
 	dir = 1
 	},
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/glass,
 /turf/open/floor/plasteel/black,
 /area/crew_quarters/sleep)
 "pO" = (
@@ -5550,20 +5624,16 @@
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/central)
 "pU" = (
-/obj/structure/cable{
-	d1 = 2;
-	d2 = 8;
-	icon_state = "2-8"
-	},
 /obj/machinery/atmospherics/pipe/simple/supply{
 	tag = "icon-intact (SOUTHEAST)";
 	icon_state = "intact";
 	dir = 6
 	},
 /obj/structure/cable{
-	d1 = 2;
-	d2 = 4;
-	icon_state = "2-4"
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_x = 0
 	},
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/central)
@@ -5596,17 +5666,13 @@
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/central)
 "pX" = (
-/obj/machinery/atmospherics/pipe/simple/supply{
-	tag = "icon-intact (NORTHWEST)";
-	icon_state = "intact";
-	dir = 9
-	},
 /obj/structure/cable{
 	d1 = 4;
 	d2 = 8;
 	icon_state = "4-8";
 	pixel_x = 0
 	},
+/obj/machinery/atmospherics/pipe/manifold/supply,
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/central)
 "pY" = (
@@ -5625,6 +5691,11 @@
 	d2 = 8;
 	icon_state = "4-8";
 	pixel_x = 0
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
 	},
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/central)
@@ -5696,12 +5767,6 @@
 /turf/open/floor/plating,
 /area/space)
 "qh" = (
-/obj/structure/cable{
-	d1 = 1;
-	d2 = 2;
-	icon_state = "1-2";
-	pixel_y = 0
-	},
 /obj/machinery/atmospherics/pipe/simple/supply{
 	tag = "icon-intact (NORTH)";
 	icon_state = "intact";
@@ -5811,6 +5876,7 @@
 	tag = "icon-1-2";
 	icon_state = "1-2"
 	},
+/obj/machinery/computer/camera_advanced,
 /turf/open/floor/wood,
 /area/bridge)
 "qt" = (
@@ -5845,6 +5911,7 @@
 	icon_state = "comfychair";
 	dir = 1
 	},
+/obj/effect/landmark/start/captain,
 /turf/open/floor/wood,
 /area/bridge)
 "qw" = (
@@ -5874,11 +5941,6 @@
 	d1 = 4;
 	d2 = 8;
 	icon_state = "4-8"
-	},
-/obj/structure/cable{
-	d1 = 2;
-	d2 = 4;
-	icon_state = "2-4"
 	},
 /obj/machinery/disposal/bin,
 /turf/open/floor/wood,
@@ -5946,20 +6008,15 @@
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/central)
 "qE" = (
-/obj/structure/cable{
-	d1 = 1;
-	d2 = 8;
-	icon_state = "1-8"
-	},
-/obj/structure/cable{
-	d1 = 1;
-	d2 = 2;
-	icon_state = "1-2"
-	},
 /obj/structure/chair/comfy/teal{
 	tag = "icon-comfychair (EAST)";
 	icon_state = "comfychair";
 	dir = 4
+	},
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8"
 	},
 /turf/open/floor/wood,
 /area/bridge)
@@ -5969,6 +6026,11 @@
 	icon_state = "1-2"
 	},
 /obj/structure/table/wood/fancy,
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
 /turf/open/floor/wood,
 /area/bridge)
 "qG" = (
@@ -6041,6 +6103,11 @@
 	pixel_y = 3
 	},
 /obj/item/weapon/reagent_containers/food/drinks/drinkingglass,
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
 /turf/open/floor/wood,
 /area/bridge)
 "qM" = (
@@ -6084,6 +6151,7 @@
 	},
 /obj/structure/table/wood/fancy,
 /obj/item/weapon/restraints/handcuffs,
+/obj/item/weapon/reagent_containers/glass/bottle/epinephrine,
 /turf/open/floor/wood,
 /area/bridge)
 "qR" = (
@@ -6122,11 +6190,7 @@
 	d2 = 8;
 	icon_state = "4-8"
 	},
-/obj/structure/cable{
-	d1 = 2;
-	d2 = 4;
-	icon_state = "2-4"
-	},
+/obj/machinery/computer/station_alert,
 /turf/open/floor/wood,
 /area/bridge)
 "qV" = (
@@ -6331,11 +6395,21 @@
 	icon_state = "2-8"
 	},
 /obj/machinery/modular_computer/console/preset/command,
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 4;
+	icon_state = "2-4"
+	},
 /turf/open/floor/wood,
 /area/bridge)
 "rq" = (
 /obj/machinery/light{
 	dir = 1
+	},
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8"
 	},
 /turf/open/floor/wood,
 /area/bridge)
@@ -6387,6 +6461,11 @@
 /area/bridge)
 "rw" = (
 /obj/structure/table/wood,
+/obj/machinery/light_switch{
+	name = "light switch S";
+	pixel_x = 0;
+	pixel_y = -24
+	},
 /turf/open/floor/wood,
 /area/bridge)
 "rx" = (
@@ -6516,6 +6595,7 @@
 	},
 /obj/structure/table/reinforced,
 /obj/machinery/airalarm{
+	name = "air alarm N";
 	pixel_y = 24
 	},
 /turf/open/floor/plasteel/cafeteria,
@@ -6573,6 +6653,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 8;
 	layer = 2.4;
+	name = "air vent E";
 	on = 1
 	},
 /obj/structure/closet/secure_closet/freezer,
@@ -6863,11 +6944,6 @@
 /area/hallway/primary/central)
 "sw" = (
 /obj/structure/cable{
-	d1 = 2;
-	d2 = 8;
-	icon_state = "2-8"
-	},
-/obj/structure/cable{
 	tag = "icon-1-2";
 	icon_state = "1-2"
 	},
@@ -7002,6 +7078,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 1;
 	layer = 2.4;
+	name = "air vent S";
 	on = 1
 	},
 /turf/open/floor/plasteel/cafeteria,
@@ -7026,6 +7103,7 @@
 /area/crew_quarters/kitchen)
 "sR" = (
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
+	name = "air scrubber N";
 	on = 1
 	},
 /turf/open/floor/plasteel/cafeteria,
@@ -7044,6 +7122,7 @@
 /area/crew_quarters/kitchen)
 "sU" = (
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
+	name = "air scrubber N";
 	on = 1
 	},
 /turf/open/floor/plasteel/freezer,
@@ -7412,13 +7491,14 @@
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/central)
 "tR" = (
-/obj/machinery/airalarm{
-	pixel_y = 24
-	},
 /obj/machinery/atmospherics/pipe/simple/scrubbers{
 	tag = "icon-intact (EAST)";
 	icon_state = "intact";
 	dir = 4
+	},
+/obj/machinery/airalarm{
+	name = "air alarm N";
+	pixel_y = 24
 	},
 /turf/open/floor/plasteel,
 /area/hydroponics)
@@ -7427,7 +7507,6 @@
 	dir = 1
 	},
 /obj/structure/closet/crate,
-/obj/item/weapon/book/manual/hydroponics_pod_people,
 /obj/machinery/atmospherics/pipe/simple/scrubbers{
 	tag = "icon-intact (EAST)";
 	icon_state = "intact";
@@ -7439,6 +7518,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 8;
 	icon_state = "scrub_map";
+	name = "air scrubber E";
 	on = 1;
 	tag = "icon-scrub_map (WEST)"
 	},
@@ -7719,6 +7799,7 @@
 	icon_state = "intact";
 	dir = 10
 	},
+/obj/effect/landmark/start/botanist,
 /turf/open/floor/grass,
 /area/hydroponics)
 "uJ" = (
@@ -7743,6 +7824,7 @@
 "uM" = (
 /obj/structure/table/reinforced,
 /obj/item/weapon/computer_hardware/printer,
+/obj/item/weapon/book/manual/hydroponics_pod_people,
 /turf/open/floor/plasteel,
 /area/hydroponics)
 "uN" = (
@@ -7812,6 +7894,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 1;
 	icon_state = "scrub_map";
+	name = "air scrubber S";
 	on = 1;
 	tag = "icon-scrub_map (NORTH)"
 	},
@@ -7829,8 +7912,10 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 4;
 	layer = 2.4;
+	name = "air vent W";
 	on = 1
 	},
+/obj/effect/landmark/start/botanist,
 /turf/open/floor/grass,
 /area/hydroponics)
 "vb" = (
@@ -7865,6 +7950,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 8;
 	layer = 2.4;
+	name = "air vent E";
 	on = 1
 	},
 /turf/open/floor/plasteel,
@@ -7900,6 +7986,7 @@
 /area/crew_quarters/bar)
 "vj" = (
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
+	name = "air scrubber N";
 	on = 1
 	},
 /turf/open/floor/plasteel/bar,
@@ -7908,6 +7995,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 4;
 	layer = 2.4;
+	name = "air vent W";
 	on = 1
 	},
 /turf/open/floor/plasteel/bar,
@@ -7966,6 +8054,7 @@
 	icon_state = "intact";
 	dir = 4
 	},
+/obj/effect/landmark/start/botanist,
 /turf/open/floor/grass,
 /area/hydroponics)
 "vr" = (
@@ -8476,6 +8565,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 1;
 	icon_state = "scrub_map";
+	name = "air scrubber S";
 	on = 1;
 	tag = "icon-scrub_map (NORTH)"
 	},
@@ -8566,7 +8656,6 @@
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/starboard)
 "wN" = (
-/obj/machinery/atmospherics/components/unary/vent_pump,
 /obj/structure/cable{
 	d1 = 1;
 	d2 = 8;
@@ -8576,6 +8665,10 @@
 	d1 = 2;
 	d2 = 8;
 	icon_state = "2-8"
+	},
+/obj/machinery/atmospherics/components/unary/vent_pump{
+	name = "air vent N";
+	on = 1
 	},
 /turf/open/floor/plasteel/black,
 /area/hallway/primary/starboard)
@@ -8832,6 +8925,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 8;
 	layer = 2.4;
+	name = "air vent E";
 	on = 1
 	},
 /turf/open/floor/plasteel/orange/side{
@@ -9031,7 +9125,7 @@
 	icon_state = "vent_map";
 	id_tag = "n2_out";
 	internal_pressure_bound = 4000;
-	name = "Nitrogen tank vent";
+	name = "air vent N2";
 	on = 1;
 	pressure_checks = 2;
 	pump_direction = 0;
@@ -9079,7 +9173,7 @@
 	icon_state = "vent_map";
 	id_tag = "o2_out";
 	internal_pressure_bound = 4000;
-	name = "Oxygen tank vent";
+	name = "air vent O2";
 	on = 1;
 	pressure_checks = 2;
 	pump_direction = 0;
@@ -10446,6 +10540,7 @@
 	dir = 6
 	},
 /obj/machinery/airalarm{
+	name = "air alarm N";
 	pixel_y = 24
 	},
 /turf/open/floor/wood,
@@ -10468,6 +10563,10 @@
 	icon_state = "intact";
 	dir = 4
 	},
+/obj/machinery/firealarm{
+	name = "fire alarm N";
+	pixel_y = 24
+	},
 /turf/open/floor/wood,
 /area/crew_quarters/locker/locker_toilet)
 "Bb" = (
@@ -10477,6 +10576,10 @@
 	tag = "icon-intact (EAST)";
 	icon_state = "intact";
 	dir = 4
+	},
+/obj/machinery/light_switch{
+	name = "light switch E";
+	pixel_x = 24
 	},
 /turf/open/floor/wood,
 /area/crew_quarters/locker/locker_toilet)
@@ -10503,6 +10606,10 @@
 	icon_state = "intact";
 	dir = 4
 	},
+/obj/machinery/light_switch{
+	name = "light switch W";
+	pixel_x = -24
+	},
 /turf/open/floor/wood,
 /area/assembly/showroom)
 "Bf" = (
@@ -10511,6 +10618,10 @@
 	tag = "icon-intact (EAST)";
 	icon_state = "intact";
 	dir = 4
+	},
+/obj/machinery/firealarm{
+	name = "fire alarm N";
+	pixel_y = 24
 	},
 /turf/open/floor/wood,
 /area/assembly/showroom)
@@ -10534,12 +10645,18 @@
 	dir = 10
 	},
 /obj/machinery/airalarm{
+	name = "air alarm N";
 	pixel_y = 24
 	},
 /turf/open/floor/wood,
 /area/assembly/showroom)
 "Bi" = (
 /obj/machinery/vending/snack/random,
+/obj/item/device/radio/intercom{
+	name = "station intercom E";
+	pixel_x = 28;
+	pixel_y = 0
+	},
 /turf/open/floor/wood,
 /area/assembly/showroom)
 "Bj" = (
@@ -10553,6 +10670,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 1;
 	icon_state = "scrub_map";
+	name = "air scrubber S";
 	on = 1;
 	tag = "icon-scrub_map (NORTH)"
 	},
@@ -10565,6 +10683,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 4;
 	layer = 2.4;
+	name = "air vent W";
 	on = 1
 	},
 /turf/open/floor/wood,
@@ -10578,12 +10697,13 @@
 /turf/open/floor/wood,
 /area/crew_quarters/locker/locker_toilet)
 "Bp" = (
-/obj/machinery/door/airlock/glass,
 /obj/machinery/atmospherics/pipe/simple/supply{
 	tag = "icon-intact (EAST)";
 	icon_state = "intact";
 	dir = 4
 	},
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/glass,
 /turf/open/floor/plasteel/grimy,
 /area/crew_quarters/locker/locker_toilet)
 "Bq" = (
@@ -10596,12 +10716,13 @@
 /turf/open/floor/plasteel/black,
 /area/crew_quarters/sleep)
 "Br" = (
-/obj/machinery/door/airlock/glass,
 /obj/machinery/atmospherics/pipe/simple/supply{
 	tag = "icon-intact (EAST)";
 	icon_state = "intact";
 	dir = 4
 	},
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/glass,
 /turf/open/floor/plasteel/grimy,
 /area/assembly/showroom)
 "Bs" = (
@@ -10616,6 +10737,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 8;
 	layer = 2.4;
+	name = "air vent E";
 	on = 1
 	},
 /turf/open/floor/wood,
@@ -10628,6 +10750,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 1;
 	icon_state = "scrub_map";
+	name = "air scrubber S";
 	on = 1;
 	tag = "icon-scrub_map (NORTH)"
 	},
@@ -10804,6 +10927,7 @@
 /obj/machinery/light{
 	dir = 1
 	},
+/obj/effect/landmark/start/assistant,
 /turf/open/floor/plasteel/freezer,
 /area/crew_quarters)
 "Cn" = (
@@ -10959,8 +11083,12 @@
 	icon_state = "0-4";
 	d2 = 4
 	},
+/obj/machinery/power/apc{
+	dir = 8;
+	name = "Chapel APC"
+	},
 /turf/open/floor/plating,
-/area/space)
+/area/chapel/main)
 "CS" = (
 /turf/closed/wall,
 /area/crew_quarters)
@@ -11788,14 +11916,15 @@
 /area/space)
 "FI" = (
 /obj/machinery/disposal/bin,
-/obj/machinery/airalarm{
-	pixel_y = 24
-	},
 /obj/structure/cable{
 	d1 = 4;
 	d2 = 8;
 	icon_state = "4-8";
 	pixel_x = 0
+	},
+/obj/machinery/airalarm{
+	name = "air alarm N";
+	pixel_y = 24
 	},
 /turf/open/floor/plasteel/yellow,
 /area/crew_quarters/chief)
@@ -11814,6 +11943,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 4;
 	icon_state = "scrub_map";
+	name = "air scrubber W";
 	on = 1;
 	tag = "icon-scrub_map (NORTH)"
 	},
@@ -12106,6 +12236,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 4;
 	layer = 2.4;
+	name = "air vent W";
 	on = 1
 	},
 /turf/open/floor/plasteel/yellow,
@@ -12239,6 +12370,7 @@
 /obj/machinery/atmospherics/components/unary/vent_scrubber{
 	dir = 4;
 	icon_state = "scrub_map";
+	name = "air scrubber W";
 	on = 1;
 	tag = "icon-scrub_map (NORTH)"
 	},
@@ -12626,13 +12758,13 @@
 /turf/closed/wall/r_wall,
 /area/atmos/recycling)
 "HR" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers/visible,
 /obj/machinery/airalarm{
 	dir = 4;
-	locked = 0;
-	pixel_x = -23;
+	name = "air alarm W";
+	pixel_x = -24;
 	pixel_y = 0
 	},
-/obj/machinery/atmospherics/pipe/simple/scrubbers/visible,
 /turf/open/floor/plasteel,
 /area/atmos/recycling)
 "HS" = (
@@ -12726,6 +12858,7 @@
 /obj/machinery/atmospherics/components/unary/vent_pump{
 	dir = 4;
 	layer = 2.4;
+	name = "air vent W";
 	on = 1
 	},
 /turf/open/floor/plasteel,
@@ -14338,6 +14471,7 @@
 	dir = 4;
 	frequency = 1440;
 	layer = 2.4;
+	name = "air vent SM";
 	on = 1
 	},
 /turf/open/floor/engine,
@@ -14393,6 +14527,900 @@
 	},
 /turf/open/floor/plating,
 /area/engine/engineering)
+"MD" = (
+/obj/machinery/modular_computer/console/preset/civilian,
+/obj/machinery/airalarm{
+	dir = 4;
+	name = "air alarm W";
+	pixel_x = -24;
+	pixel_y = 0
+	},
+/turf/open/floor/plasteel,
+/area/crew_quarters/electronic_marketing_den)
+"ME" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers,
+/obj/machinery/airalarm{
+	dir = 8;
+	icon_state = "alarm0";
+	name = "air alarm E";
+	pixel_x = 24
+	},
+/turf/open/floor/plasteel/black,
+/area/crew_quarters/sleep)
+"MF" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers,
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/glass,
+/turf/open/floor/plasteel/black,
+/area/crew_quarters/sleep)
+"MG" = (
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_x = 0
+	},
+/obj/machinery/light{
+	dir = 1
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MH" = (
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 4;
+	icon_state = "2-4"
+	},
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MI" = (
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_x = 0
+	},
+/obj/machinery/light{
+	dir = 1
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MJ" = (
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_x = 0
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MK" = (
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_x = 0
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"ML" = (
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_x = 0
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MM" = (
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_x = 0
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MN" = (
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8";
+	pixel_x = 0
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (SOUTHWEST)";
+	icon_state = "intact";
+	dir = 10
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MO" = (
+/obj/machinery/light,
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MP" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/obj/machinery/firealarm{
+	dir = 1;
+	icon_state = "fire0";
+	name = "fire alarm S";
+	pixel_y = -24;
+	tag = "icon-fire0 (NORTH)"
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MQ" = (
+/obj/machinery/atmospherics/pipe/manifold/scrubbers,
+/obj/machinery/airalarm{
+	dir = 1;
+	icon_state = "alarm0";
+	name = "air alarm S";
+	pixel_y = -24
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MR" = (
+/obj/machinery/light,
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"MS" = (
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/glass,
+/obj/machinery/atmospherics/pipe/simple/supply,
+/turf/open/floor/plasteel/black,
+/area/chapel/main)
+"MT" = (
+/obj/structure/cable{
+	icon_state = "0-4";
+	d2 = 4
+	},
+/obj/effect/landmark/start/ai,
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"MU" = (
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8"
+	},
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"MV" = (
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
+/obj/structure/cable{
+	icon_state = "0-2";
+	pixel_y = 1;
+	d2 = 2
+	},
+/obj/machinery/power/apc{
+	dir = 1;
+	name = "AI APC"
+	},
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"MW" = (
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (NORTHEAST)";
+	icon_state = "intact";
+	dir = 5
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (EAST)";
+	icon_state = "chapel";
+	dir = 4
+	},
+/area/chapel/main)
+"MX" = (
+/obj/structure/table/wood,
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (SOUTHWEST)";
+	icon_state = "intact";
+	dir = 10
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (NORTH)";
+	icon_state = "chapel";
+	dir = 1
+	},
+/area/chapel/main)
+"MY" = (
+/obj/structure/table/reinforced,
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"MZ" = (
+/obj/structure/cable{
+	tag = "icon-1-2";
+	icon_state = "1-2"
+	},
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"Na" = (
+/obj/machinery/atmospherics/components/unary/vent_pump{
+	dir = 4;
+	layer = 2.4;
+	name = "air vent W";
+	on = 1
+	},
+/turf/open/floor/plasteel/chapel,
+/area/chapel/main)
+"Nb" = (
+/obj/structure/chair/wood,
+/obj/machinery/airalarm{
+	dir = 8;
+	icon_state = "alarm0";
+	name = "air alarm E";
+	pixel_x = 24
+	},
+/obj/machinery/atmospherics/pipe/manifold/supply{
+	tag = "icon-manifold (EAST)";
+	icon_state = "manifold";
+	dir = 4
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (WEST)";
+	icon_state = "chapel";
+	dir = 8
+	},
+/area/chapel/main)
+"Nc" = (
+/obj/structure/table/reinforced,
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"Nd" = (
+/obj/structure/cable{
+	tag = "icon-1-2";
+	icon_state = "1-2"
+	},
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"Ne" = (
+/obj/structure/chair/wood,
+/obj/machinery/atmospherics/pipe/simple/supply,
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (NORTH)";
+	icon_state = "chapel";
+	dir = 1
+	},
+/area/chapel/main)
+"Nf" = (
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 4;
+	icon_state = "2-4"
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (EAST)";
+	icon_state = "chapel";
+	dir = 4
+	},
+/area/chapel/main)
+"Ng" = (
+/obj/machinery/door/airlock/maintenance_hatch{
+	name = "Chapel Maintenance hatch";
+	req_access_txt = "12"
+	},
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8"
+	},
+/turf/open/floor/plating,
+/area/chapel/main)
+"Nh" = (
+/obj/structure/table/reinforced,
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"Ni" = (
+/obj/structure/cable{
+	tag = "icon-1-2";
+	icon_state = "1-2"
+	},
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"Nj" = (
+/obj/structure/chair/wood,
+/obj/machinery/light{
+	dir = 8
+	},
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (NORTH)";
+	icon_state = "intact";
+	dir = 1
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (WEST)";
+	icon_state = "chapel";
+	dir = 8
+	},
+/area/chapel/main)
+"Nk" = (
+/obj/structure/chair/wood,
+/obj/machinery/atmospherics/pipe/simple/supply,
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (WEST)";
+	icon_state = "chapel";
+	dir = 8
+	},
+/area/chapel/main)
+"Nl" = (
+/obj/machinery/light{
+	dir = 4;
+	icon_state = "tube1"
+	},
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2";
+	pixel_y = 0
+	},
+/turf/open/floor/plasteel/chapel,
+/area/chapel/main)
+"Nm" = (
+/obj/structure/cable{
+	tag = "icon-1-2";
+	icon_state = "1-2"
+	},
+/turf/open/floor/circuit,
+/area/ai_monitored/turret_protected/ai)
+"Nn" = (
+/obj/structure/chair/wood,
+/obj/machinery/firealarm{
+	dir = 8;
+	name = "fire alarm W";
+	pixel_x = -24
+	},
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (NORTH)";
+	icon_state = "intact";
+	dir = 1
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (NORTH)";
+	icon_state = "chapel";
+	dir = 1
+	},
+/area/chapel/main)
+"No" = (
+/obj/structure/chair/wood,
+/obj/machinery/atmospherics/pipe/simple/supply,
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (NORTH)";
+	icon_state = "chapel";
+	dir = 1
+	},
+/area/chapel/main)
+"Np" = (
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 4;
+	icon_state = "1-4"
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (EAST)";
+	icon_state = "chapel";
+	dir = 4
+	},
+/area/chapel/main)
+"Nq" = (
+/obj/structure/noticeboard{
+	pixel_y = 32
+	},
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (NORTH)";
+	icon_state = "chapel";
+	dir = 1
+	},
+/area/chapel/main)
+"Nr" = (
+/obj/machinery/atmospherics/components/unary/vent_scrubber{
+	dir = 8;
+	icon_state = "scrub_map";
+	name = "air scrubber E";
+	on = 1;
+	tag = "icon-scrub_map (WEST)"
+	},
+/turf/open/floor/plasteel/chapel,
+/area/chapel/main)
+"Ns" = (
+/obj/structure/chair/wood,
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (NORTHEAST)";
+	icon_state = "intact";
+	dir = 5
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (WEST)";
+	icon_state = "chapel";
+	dir = 8
+	},
+/area/chapel/main)
+"Nt" = (
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/chapel,
+/area/chapel/main)
+"Nu" = (
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2";
+	pixel_y = 0
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (SOUTHWEST)";
+	icon_state = "intact";
+	dir = 10
+	},
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (WEST)";
+	icon_state = "chapel";
+	dir = 8
+	},
+/area/chapel/main)
+"Nv" = (
+/obj/structure/table/wood,
+/obj/item/candle,
+/obj/item/weapon/storage/box/matches,
+/obj/machinery/atmospherics/pipe/simple/scrubbers,
+/turf/open/floor/plasteel/chapel{
+	tag = "icon-chapel (NORTH)";
+	icon_state = "chapel";
+	dir = 1
+	},
+/area/chapel/main)
+"Nw" = (
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2";
+	pixel_y = 0
+	},
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/glass{
+	name = "Chapel Office";
+	req_access_txt = "22"
+	},
+/obj/machinery/atmospherics/pipe/simple/supply{
+	tag = "icon-intact (NORTH)";
+	icon_state = "intact";
+	dir = 1
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"Nx" = (
+/obj/structure/cable{
+	tag = "icon-1-2";
+	icon_state = "1-2"
+	},
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
+/turf/open/floor/wood,
+/area/bridge)
+"Ny" = (
+/obj/machinery/computer/card,
+/turf/open/floor/wood,
+/area/bridge)
+"Nz" = (
+/obj/machinery/light_switch{
+	name = "light switch W";
+	pixel_x = -24
+	},
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (NORTHEAST)";
+	icon_state = "intact";
+	dir = 5
+	},
+/turf/open/floor/carpet,
+/area/chapel/main)
+"NA" = (
+/obj/effect/landmark/start/chaplain,
+/obj/machinery/light,
+/obj/item/device/radio/intercom{
+	name = "station intercom S";
+	pixel_y = -28
+	},
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/carpet,
+/area/chapel/main)
+"NB" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (SOUTHWEST)";
+	icon_state = "intact";
+	dir = 10
+	},
+/turf/open/floor/carpet,
+/area/chapel/main)
+"NC" = (
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock/glass{
+	name = "Chapel Office";
+	req_access_txt = "22"
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"ND" = (
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2";
+	pixel_y = 0
+	},
+/obj/machinery/atmospherics/components/unary/vent_pump{
+	dir = 1;
+	layer = 2.4;
+	name = "air vent S";
+	on = 1
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"NE" = (
+/obj/structure/closet/wardrobe/chaplain_black,
+/obj/machinery/light{
+	dir = 1
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"NF" = (
+/obj/machinery/computer/med_data,
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8"
+	},
+/turf/open/floor/wood,
+/area/bridge)
+"NG" = (
+/obj/structure/cable{
+	tag = "icon-1-2";
+	icon_state = "1-2"
+	},
+/obj/structure/table/wood,
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
+/turf/open/floor/wood,
+/area/bridge)
+"NH" = (
+/obj/machinery/computer/communications,
+/turf/open/floor/wood,
+/area/bridge)
+"NI" = (
+/turf/closed/wall/r_wall,
+/area/chapel/crematorium)
+"NJ" = (
+/turf/closed/wall,
+/area/chapel/crematorium)
+"NK" = (
+/turf/closed/wall,
+/area/chapel/crematorium)
+"NL" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers,
+/turf/closed/wall,
+/area/chapel/crematorium)
+"NM" = (
+/turf/closed/wall,
+/area/chapel/crematorium)
+"NN" = (
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2";
+	pixel_y = 0
+	},
+/obj/machinery/light_switch{
+	name = "light switch W";
+	pixel_x = -24
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"NO" = (
+/obj/machinery/disposal/bin,
+/obj/machinery/airalarm{
+	dir = 8;
+	icon_state = "alarm0";
+	name = "air alarm E";
+	pixel_x = 24
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"NP" = (
+/obj/effect/landmark/start/assistant,
+/turf/open/floor/plasteel/freezer,
+/area/crew_quarters)
+"NQ" = (
+/obj/machinery/computer/secure_data,
+/turf/open/floor/wood,
+/area/bridge)
+"NR" = (
+/obj/machinery/computer/cargo/request,
+/turf/open/floor/wood,
+/area/bridge)
+"NS" = (
+/obj/structure/closet/coffin,
+/obj/item/weapon/reagent_containers/food/drinks/bottle/wine,
+/obj/machinery/firealarm{
+	name = "fire alarm N";
+	pixel_y = 24
+	},
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"NT" = (
+/obj/structure/closet/coffin,
+/obj/machinery/light{
+	dir = 4;
+	icon_state = "tube1"
+	},
+/obj/machinery/atmospherics/pipe/simple/scrubbers,
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"NU" = (
+/turf/closed/wall,
+/area/chapel/crematorium)
+"NV" = (
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 4;
+	icon_state = "1-4"
+	},
+/obj/machinery/firealarm{
+	dir = 8;
+	name = "fire alarm W";
+	pixel_x = -24
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"NW" = (
+/obj/structure/cable{
+	d1 = 4;
+	d2 = 8;
+	icon_state = "4-8"
+	},
+/obj/structure/chair/wood,
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"NX" = (
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"NY" = (
+/obj/machinery/button/crematorium{
+	pixel_x = -24;
+	pixel_y = 24
+	},
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"NZ" = (
+/obj/effect/landmark/start/chaplain,
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"Oa" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (NORTHEAST)";
+	icon_state = "intact";
+	dir = 5
+	},
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"Ob" = (
+/obj/machinery/door/firedoor,
+/obj/machinery/door/airlock{
+	name = "Crematorium";
+	req_access_txt = "27"
+	},
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"Oc" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (SOUTHWEST)";
+	icon_state = "intact";
+	dir = 10
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"Od" = (
+/obj/structure/table/wood,
+/obj/item/weapon/clipboard,
+/obj/item/weapon/paper_bin{
+	pixel_x = -5;
+	pixel_y = -5
+	},
+/obj/item/weapon/pen,
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"Oe" = (
+/obj/structure/table/wood,
+/obj/item/weapon/storage/book/bible,
+/obj/item/weapon/reagent_containers/food/drinks/bottle/holywater,
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2";
+	pixel_y = 0
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"Of" = (
+/obj/structure/cable{
+	icon_state = "0-4";
+	d2 = 4
+	},
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 4;
+	icon_state = "2-4"
+	},
+/obj/machinery/power/apc{
+	dir = 8;
+	name = "Chapel Office APC"
+	},
+/turf/open/floor/plating,
+/area/chapel/office)
+"Og" = (
+/obj/machinery/light{
+	dir = 8
+	},
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"Oh" = (
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"Oi" = (
+/obj/structure/bodycontainer/morgue,
+/turf/open/floor/plasteel/black,
+/area/chapel/crematorium)
+"Oj" = (
+/turf/closed/wall,
+/area/chapel/crematorium)
+"Ok" = (
+/obj/machinery/atmospherics/components/unary/vent_scrubber{
+	dir = 1;
+	icon_state = "scrub_map";
+	name = "air scrubber S";
+	on = 1;
+	tag = "icon-scrub_map (NORTH)"
+	},
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"Ol" = (
+/obj/structure/chair/wood{
+	tag = "icon-wooden_chair (NORTH)";
+	icon_state = "wooden_chair";
+	dir = 1
+	},
+/obj/effect/landmark/start/chaplain,
+/obj/machinery/light,
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"Om" = (
+/obj/machinery/modular_computer/console/preset/civilian,
+/obj/structure/cable,
+/turf/open/floor/plasteel/grimy,
+/area/chapel/office)
+"On" = (
+/obj/structure/cable,
+/obj/machinery/power/apc{
+	dir = 8;
+	name = "Crematorium APC"
+	},
+/turf/open/floor/plating,
+/area/chapel/crematorium)
+"Oo" = (
+/obj/machinery/firealarm{
+	dir = 4;
+	icon_state = "fire0";
+	name = "fire alarm E";
+	pixel_x = 24;
+	tag = "icon-fire0 (EAST)"
+	},
+/turf/open/floor/plasteel/black,
+/area/hallway/primary/central)
+"Op" = (
+/obj/machinery/atmospherics/pipe/simple/scrubbers{
+	tag = "icon-intact (EAST)";
+	icon_state = "intact";
+	dir = 4
+	},
+/obj/structure/noticeboard{
+	pixel_y = 32
+	},
+/turf/open/floor/plasteel/blue/side,
+/area/hydroponics)
+"Oq" = (
+/obj/effect/landmark/start/botanist,
+/turf/open/floor/grass,
+/area/hydroponics)
+"Or" = (
+/obj/structure/reagent_dispensers/watertank/high,
+/turf/open/floor/grass,
+/area/hydroponics)
+"Os" = (
+/obj/effect/landmark/start/botanist,
+/turf/open/floor/grass,
+/area/hydroponics)
+"Ot" = (
+/obj/effect/landmark/start/botanist,
+/turf/open/floor/grass,
+/area/hydroponics)
 
 (1,1,1) = {"
 aa
@@ -43867,9 +44895,9 @@ ad
 aj
 yd
 Lq
-Lr
-Ls
-Lx
+Lq
+Lq
+Lq
 LE
 aj
 bz
@@ -44081,7 +45109,7 @@ Cq
 Cy
 BK
 CM
-BQ
+NP
 fC
 BQ
 fC
@@ -44640,7 +45668,7 @@ aj
 bj
 bj
 bn
-LA
+Lz
 yq
 aj
 bA
@@ -44897,7 +45925,7 @@ aj
 bk
 bj
 bo
-LB
+Lz
 yq
 aj
 bB
@@ -45154,7 +46182,7 @@ aj
 aj
 aj
 iL
-LC
+Lz
 yq
 ji
 ji
@@ -45612,7 +46640,7 @@ AY
 Bl
 By
 pR
-cv
+MO
 BK
 BR
 BR
@@ -45621,15 +46649,15 @@ BK
 BQ
 BK
 BK
-qB
-qH
-qH
-qH
-qH
-qH
-qH
-qH
-sq
+sd
+qh
+qh
+qh
+qh
+qh
+qh
+qh
+wO
 gm
 gu
 gz
@@ -45675,7 +46703,7 @@ yz
 js
 jG
 yK
-bG
+LO
 jv
 js
 js
@@ -45853,16 +46881,16 @@ dX
 dZ
 ef
 dX
-eq
+dZ
 ef
 dX
-eD
+dZ
 ef
 dX
-eP
+dZ
 ef
 dX
-fk
+dZ
 ef
 cs
 AZ
@@ -45874,11 +46902,11 @@ BK
 BK
 BK
 BK
-qB
-qH
-qH
-qH
-qC
+sd
+qh
+qh
+qh
+sy
 qi
 qO
 qO
@@ -45886,7 +46914,7 @@ qO
 qO
 qO
 rW
-pV
+vl
 gm
 gv
 gA
@@ -46131,7 +47159,7 @@ qh
 qh
 qh
 qh
-qC
+sy
 qi
 qO
 qO
@@ -46143,7 +47171,7 @@ fO
 fO
 fD
 qj
-pV
+vl
 gm
 gw
 gB
@@ -46284,7 +47312,7 @@ ab
 ab
 ab
 ab
-dn
+dm
 dm
 dm
 dm
@@ -46367,16 +47395,16 @@ dX
 eb
 eh
 dX
-er
+eb
 eu
 dX
-eE
+eb
 eI
 dX
-eQ
+eb
 eY
 dX
-fl
+eb
 eL
 cs
 Bb
@@ -46400,7 +47428,7 @@ ra
 rz
 fD
 qj
-pV
+vl
 bv
 gm
 gm
@@ -46442,12 +47470,12 @@ aJ
 aJ
 aJ
 ji
-jr
+LM
 jD
 jv
 ju
 jv
-Mg
+Mf
 jv
 jv
 js
@@ -46538,13 +47566,13 @@ ab
 ab
 ab
 ab
-dn
 dm
 dm
 dm
 dm
 dm
-dn
+dm
+dm
 aj
 ae
 ae
@@ -46639,7 +47667,7 @@ cs
 Bc
 Bp
 cs
-pV
+MG
 qj
 fB
 cv
@@ -46649,15 +47677,15 @@ fO
 fO
 fD
 qU
-ra
-rf
-fT
+qV
+NF
+NQ
 qV
 fT
 fD
 fD
 qj
-pV
+vl
 bJ
 sZ
 to
@@ -46699,17 +47727,17 @@ aJ
 aJ
 aJ
 ji
-jr
+LM
 jE
 yH
 jP
 ki
-Mh
-kv
+Mf
+LT
 kq
 kL
 Mr
-Mv
+Mr
 la
 ji
 ji
@@ -46897,24 +47925,24 @@ oM
 oC
 pN
 pX
-qj
+MP
 fD
 fD
 fD
 qy
 qE
-qK
+qE
 qP
 qV
-fT
-fT
+qV
+qV
 fT
 qV
 ga
 fD
 fO
 qj
-sv
+vl
 sJ
 ta
 ta
@@ -46956,7 +47984,7 @@ aJ
 aJ
 aJ
 ji
-jr
+LM
 jE
 yI
 jZ
@@ -47049,7 +48077,7 @@ al
 al
 ab
 dm
-dn
+dm
 dm
 do
 dq
@@ -47153,8 +48181,8 @@ pE
 oN
 oD
 pO
-pR
-qj
+MH
+sb
 fE
 qs
 qv
@@ -47163,8 +48191,8 @@ qF
 qL
 qQ
 qW
-qs
-rg
+Nx
+NG
 rg
 rp
 gb
@@ -47391,13 +48419,13 @@ lX
 lX
 oc
 oo
-ou
+oY
 oz
 oE
 oJ
 oz
 oE
-oY
+ME
 oz
 oE
 oJ
@@ -47409,9 +48437,9 @@ oE
 oJ
 oz
 Bq
-oc
+MF
 pZ
-qm
+MQ
 fD
 fD
 fD
@@ -47423,7 +48451,7 @@ fT
 fT
 fT
 fT
-fT
+qV
 gc
 fD
 gh
@@ -47470,7 +48498,7 @@ aJ
 aJ
 aJ
 ji
-jr
+LM
 LT
 yI
 kb
@@ -47566,13 +48594,13 @@ ab
 ab
 ab
 ab
-dn
 dm
 dm
 dm
 dm
 dm
-dn
+dm
+dm
 aj
 ae
 ae
@@ -47667,20 +48695,20 @@ AR
 Bd
 Br
 AR
-pR
-cv
+MI
+qj
 fF
-fJ
+MT
 fD
 fD
 fD
 fD
 fD
 fT
-fT
-fT
-fT
-fT
+Ny
+NH
+NR
+qV
 fT
 fD
 fD
@@ -47688,7 +48716,7 @@ sd
 sy
 bJ
 cv
-cv
+Oo
 cv
 qj
 cv
@@ -47727,7 +48755,7 @@ aJ
 aJ
 aJ
 ji
-jr
+LM
 yD
 js
 kc
@@ -47736,7 +48764,7 @@ kl
 kl
 Mn
 Mp
-Ms
+Mr
 Mw
 Mz
 ji
@@ -47826,7 +48854,7 @@ ab
 ab
 ab
 ab
-dn
+dm
 dm
 dm
 dm
@@ -47902,7 +48930,7 @@ dG
 nb
 dM
 nz
-mo
+MD
 mn
 dP
 dX
@@ -47912,10 +48940,10 @@ dX
 ec
 ex
 dX
-ce
+ec
 eL
 dX
-eR
+ec
 fb
 dX
 ec
@@ -47924,13 +48952,13 @@ AR
 Be
 Bs
 BE
-pR
-cv
+MJ
+qj
 fF
-fJ
-fJ
-fJ
-fJ
+MU
+MY
+Nc
+Nh
 fJ
 fD
 fD
@@ -47984,13 +49012,13 @@ aJ
 aJ
 aJ
 ji
-jr
+LM
 yE
 LY
 LZ
-Mc
-jT
-Mk
+LY
+LZ
+LY
 Mo
 kN
 ji
@@ -48181,20 +49209,20 @@ AR
 Bf
 Bt
 BE
-pR
-cv
+MK
+qj
 fF
-fJ
-fJ
-fJ
-fJ
-fJ
+MV
+MZ
+Nd
+Ni
+Nm
 fR
 fR
 fR
 fR
 fR
-fT
+rf
 rw
 fD
 fD
@@ -48423,23 +49451,23 @@ dX
 ed
 el
 dX
-et
+ed
 el
 dX
-cf
+ed
 el
 dX
-eS
+ed
 el
 dX
-cf
+ed
 el
 AR
 Bg
 Bu
 BE
-pR
-cv
+ML
+MR
 fG
 fG
 fG
@@ -48449,7 +49477,7 @@ fG
 fG
 fG
 fG
-fG
+NI
 fY
 fY
 fY
@@ -48466,7 +49494,7 @@ gX
 uk
 br
 br
-br
+Os
 vr
 br
 uk
@@ -48503,7 +49531,7 @@ jw
 jS
 Ma
 jS
-Mi
+Ma
 ky
 js
 ju
@@ -48695,21 +49723,21 @@ AR
 Bh
 Bv
 BE
-pR
-cv
+MM
+sc
 fH
 fK
 fM
 fP
-fM
-fP
+Nj
+Nn
 fS
-fU
-fS
-fI
+Nv
+Nz
+NJ
 fZ
-fZ
-fZ
+NY
+Og
 ge
 rK
 se
@@ -48767,7 +49795,7 @@ kc
 kl
 kZ
 js
-MC
+MA
 zL
 bW
 aa
@@ -48952,21 +49980,21 @@ AR
 Bi
 Bw
 BE
-pR
-cv
-fH
+MN
+ta
+MS
+MW
+Na
 fL
 fN
 fL
-fN
-fL
-fN
+Nr
 fV
-fN
-fI
-fZ
-fZ
-fZ
+NA
+NK
+NS
+NZ
+Oh
 ge
 rM
 se
@@ -48978,11 +50006,11 @@ ge
 gQ
 gX
 hb
-br
-br
-br
+Oq
+Or
+gX
 vr
-br
+Ot
 hb
 gX
 wh
@@ -49010,12 +50038,12 @@ aU
 GB
 Lt
 LD
-LG
+LD
 LK
 LN
-LU
+LN
 jU
-Mb
+LN
 Md
 js
 kz
@@ -49212,18 +50240,18 @@ AR
 fz
 fB
 fI
-fK
-fM
-fP
-fM
-fP
-fS
+MX
+Nb
+Ne
+Nk
+No
+Ns
 fU
-fS
-fI
-fZ
-fZ
-fZ
+NB
+NL
+NT
+Oa
+Oi
 ge
 rN
 se
@@ -49471,16 +50499,16 @@ qg
 fI
 fI
 fI
-fL
-fN
-fL
-fN
-fI
-fN
-fI
+Nf
+Nl
+Np
+Nt
 fW
-fZ
-fW
+NC
+NM
+NU
+Ob
+Oj
 ge
 rO
 sj
@@ -49522,19 +50550,19 @@ HR
 GZ
 Il
 GB
-Lv
+Lu
 Ha
 Ha
 GB
 LO
-LV
-bG
-bG
-bG
-bG
-bG
-bG
-bG
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
 ji
 Mx
 KU
@@ -49728,16 +50756,16 @@ ap
 ap
 ap
 fI
+Ng
 fI
-fI
-fK
-fS
-fK
-fX
-fX
-fX
-fX
-fX
+Nq
+Nu
+Nw
+ND
+NN
+NV
+Oc
+Ok
 ge
 rP
 gj
@@ -49746,7 +50774,7 @@ sR
 tf
 tt
 ge
-gR
+Op
 gX
 gX
 br
@@ -49781,17 +50809,17 @@ Im
 Iy
 Ha
 Ha
-LH
-LL
-LP
-LW
-bG
-bG
-bG
-bG
-bG
-bG
-bG
+Ha
+Lw
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
 ji
 zp
 MA
@@ -49985,16 +51013,16 @@ aj
 aj
 ap
 ap
-ap
-fI
-fQ
+tU
 fI
 fI
+fI
+fW
+NE
 fX
-fX
-fX
-fX
-fX
+NW
+Od
+Ol
 ge
 rQ
 gk
@@ -50040,15 +51068,15 @@ Ha
 Ha
 Ha
 GB
-LQ
-LX
-bG
-bG
-bG
-bG
-bG
-bG
-bG
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
 ji
 zc
 zw
@@ -50242,16 +51270,16 @@ aa
 aj
 aj
 aj
-ap
-ap
-tU
+tY
+ah
+fy
 ap
 fW
 fW
-fX
-fX
-fX
-fX
+NO
+NX
+Oe
+Om
 rB
 rR
 sk
@@ -50297,15 +51325,15 @@ Ha
 Ha
 Ha
 GB
-LR
-bG
-bG
-bG
-bG
-bG
-bG
-bG
-bG
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
 Mt
 zf
 MB
@@ -50554,15 +51582,15 @@ Ha
 Ha
 Ha
 GB
-LS
-bG
-bG
-bG
-bG
-bG
-bG
-bG
-bG
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
+LO
 ji
 zb
 zv
@@ -50764,8 +51792,8 @@ tY
 ah
 CR
 ap
-Df
-Ay
+Of
+On
 rC
 rT
 sm
@@ -50809,7 +51837,7 @@ GT
 GB
 Lw
 GB
-LI
+Lw
 GB
 JE
 JE
